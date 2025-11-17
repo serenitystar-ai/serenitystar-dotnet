@@ -1,21 +1,21 @@
 using Microsoft.Extensions.DependencyInjection;
-using Serenity.AIHub.SDK.NET.Core.Client;
-using Serenity.AIHub.SDK.NET.Core.Models;
-using Serenity.AIHub.SDK.NET.Core.Models.Execute;
+using SerenityStar.SDK.NET.Core.Client;
+using SerenityStar.SDK.NET.Core.Models;
+using SerenityStar.SDK.NET.Core.Models.Execute;
 using Xunit;
 
-namespace Serenity.AIHub.SDK.NET.IntegrationTests;
+namespace SerenityStar.SDK.NET.IntegrationTests;
 
 public class ConversationIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityAIHubClient _client;
+    private readonly ISerenityClient _client;
     private bool _skipTests;
 
     public ConversationIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityAIHubClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
         _skipTests = !fixture.HasValidApiKey;
     }
 
@@ -26,7 +26,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange - Define input parameters
         List<ExecuteParameter> inputParameters =
         [
@@ -34,7 +34,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         ];
 
         // Act - Create a conversation with input parameters
-        CreateConversationRes result = await _client.CreateConversation("assistantagent", inputParameters);
+        CreateConversationRes result = await _client.CreateConversation(_fixture.AssistantAgent, inputParameters);
 
         // Assert - Verify the conversation was created successfully
         Assert.NotEqual(Guid.Empty, result.ChatId);
@@ -51,9 +51,9 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Act
-        CreateConversationRes result = await _client.CreateConversation("assistantagent", null);
+        CreateConversationRes result = await _client.CreateConversation(_fixture.AssistantAgent, null);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result.ChatId);
@@ -68,9 +68,9 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Act
-        CreateConversationRes result = await _client.CreateConversation("assistantagent", null, 1);
+        CreateConversationRes result = await _client.CreateConversation(_fixture.AssistantAgent, null, 1);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result.ChatId);
@@ -87,7 +87,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
             _client.CreateConversation("invalid-agent", null));
@@ -100,9 +100,9 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange - Create a conversation first
-        CreateConversationRes conversation = await _client.CreateConversation("assistantagent", null);
+        CreateConversationRes conversation = await _client.CreateConversation(_fixture.AssistantAgent, null);
         Assert.NotEqual(Guid.Empty, conversation.ChatId);
 
         // Act - Send a message to the conversation
@@ -120,7 +120,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
             "german"
         ));
         AgentResult agentResult = await _client.Execute(
-            "assistantagent",
+            _fixture.AssistantAgent,
             input);
 
         // Assert
@@ -144,9 +144,9 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange - Create a conversation
-        CreateConversationRes conversation = await _client.CreateConversation("assistantagent", null);
+        CreateConversationRes conversation = await _client.CreateConversation(_fixture.AssistantAgent, null);
         Assert.NotEqual(Guid.Empty, conversation.ChatId);
 
         // Act & Assert - Send multiple messages
@@ -175,7 +175,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
             ));
 
             AgentResult response = await _client.Execute(
-                "assistantagent", input);
+                _fixture.AssistantAgent, input);
 
             Assert.NotNull(response);
             Assert.NotNull(response.Content);

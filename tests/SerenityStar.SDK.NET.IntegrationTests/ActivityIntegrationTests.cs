@@ -1,14 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
-using Serenity.AIHub.SDK.NET.Core.Client;
-using Serenity.AIHub.SDK.NET.Core.Models.Execute;
+using SerenityStar.SDK.NET.Core.Client;
+using SerenityStar.SDK.NET.Core.Models.Execute;
 using Xunit;
 
-namespace Serenity.AIHub.SDK.NET.IntegrationTests;
+namespace SerenityStar.SDK.NET.IntegrationTests;
 
 public class ActivityIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private ISerenityAIHubClient _client => _fixture.ServiceProvider.GetRequiredService<ISerenityAIHubClient>();
+    private ISerenityClient _client => _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
     private bool _skipTests;
 
     public ActivityIntegrationTests(TestFixture fixture)
@@ -32,7 +32,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         ];
 
         // Act
-        AgentResult result = await _client.Execute("activityagent", input);
+        AgentResult result = await _client.Execute(_fixture.ActivityAgent, input);
 
         // Assert
         Assert.NotNull(result);
@@ -51,7 +51,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
 
         // Act
         HttpRequestException exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Execute("activityagent"));
+            _client.Execute(_fixture.ActivityAgent));
 
         // Assert
         Assert.NotNull(exception);
@@ -65,7 +65,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange
         string[] words = { "swimming", "cycling", "hiking" };
         var responses = new List<string>();
@@ -78,7 +78,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
                 new("word", word)
             ];
 
-            AgentResult result = await _client.Execute("activityagent", input);
+            AgentResult result = await _client.Execute(_fixture.ActivityAgent, input);
 
             Assert.NotNull(result);
             Assert.NotNull(result.Content);
@@ -101,7 +101,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange
         List<ExecuteParameter> input =
         [
@@ -109,7 +109,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         ];
 
         // Act
-        AgentResult result = await _client.Execute("activityagent", input, agentVersion: 25);
+        AgentResult result = await _client.Execute(_fixture.ActivityAgent, input, agentVersion: 25);
 
         // Assert
         Assert.NotNull(result);
@@ -125,7 +125,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange
         List<ExecuteParameter> input =
         [
@@ -133,7 +133,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         ];
 
         // Act
-        AgentResult result = await _client.Execute("activityagent", input);
+        AgentResult result = await _client.Execute(_fixture.ActivityAgent, input);
 
         // Assert
         Assert.NotNull(result);

@@ -1,14 +1,17 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serenity.AIHub.SDK.NET.Extensions;
+using SerenityStar.SDK.NET.Core.Extensions;
+using SerenityStar.SDK.NET.Core.Models;
 
-namespace Serenity.AIHub.SDK.NET.IntegrationTests;
+namespace SerenityStar.SDK.NET.IntegrationTests;
 
 public class TestFixture : IDisposable
 {
     public IServiceProvider ServiceProvider { get; }
     public IConfiguration Configuration { get; }
     public bool HasValidApiKey { get; }
+    public string AssistantAgent { get; }
+    public string ActivityAgent { get; }
 
     public TestFixture()
     {
@@ -21,19 +24,21 @@ public class TestFixture : IDisposable
 
         var services = new ServiceCollection();
 
-        var apiKey = Configuration["SerenityAIHub:ApiKey"];
-        
+        var apiKey = Configuration["SerenityStar:ApiKey"];
+        AssistantAgent = Configuration["SerenityStar:AssistantAgent"] ?? "assistantagent";
+        ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
+
         // Check if we have a valid API key (not null, empty or the placeholder)
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";
-        
+
         if (HasValidApiKey)
         {
-            services.AddSerenityAIHub(apiKey);
+            services.AddSerenityStar(apiKey);
         }
         else
         {
             // Add a placeholder service that will throw a meaningful exception when used
-            services.AddSerenityAIHub("dummy-key-for-build");
+            services.AddSerenityStar("dummy-key-for-build");
             Console.WriteLine("WARNING: No valid API key found. Integration tests will be skipped.");
         }
 
