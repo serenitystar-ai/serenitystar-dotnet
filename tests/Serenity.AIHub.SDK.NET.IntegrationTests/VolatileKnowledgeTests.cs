@@ -59,7 +59,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         // Arrange
         UploadVolatileKnowledgeReq request = new()
         {
-            Content = "This is test content about the Hundred Years War."
+            Content = "https://serenitystar.ai"
         };
 
         // Act
