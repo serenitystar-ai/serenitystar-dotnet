@@ -375,16 +375,54 @@ Console.WriteLine(response.CompletionUsage);
 Console.WriteLine(response.ExecutorTaskLogs);
 ```
 
-### Get proxy information
+### Stream responses with SSE
+
+sarasa
+
+### Proxy Execution Options
+
+The following options can be passed when executing a proxy agent via `ProxyExecutionOptions`:
 
 ```csharp
-using SerenityStar.Models.Conversation;
+using SerenityStar.Models.AIProxy;
 
-// Get proxy configuration and supported models
-ConversationInfoResult proxyInfo = await client.Agents.Proxies.GetInfoByCodeAsync("proxy-agent");
+AgentResult response = await client.Agents.Proxies.ExecuteAsync(
+    "proxy-agent",
+    new ProxyExecutionOptions
+    {
+        // Specify the model to use
+        Model = "gpt-4-turbo",
 
-Console.WriteLine($"Proxy: {proxyInfo.Name}");
-Console.WriteLine($"Description: {proxyInfo.Description}");
+        // Define conversation messages
+        Messages = new List<ProxyExecutionMessage>
+        {
+            new ProxyExecutionMessage
+            {
+                Role = "system",
+                Content = "You are a knowledgeable AI assistant."
+            },
+            new ProxyExecutionMessage
+            {
+                Role = "user",
+                Content = "Can you explain the theory of relativity in simple terms?"
+            }
+        },
+
+        // Model parameters
+        Temperature = 0.7,           // Controls randomness (0-1)
+        MaxTokens = 500,             // Maximum length of response
+        TopP = 0.9,                  // Nucleus sampling parameter
+        TopK = 50,                   // Top-k sampling parameter
+        FrequencyPenalty = 0.5,      // Reduces repetition (-2 to 2)
+        PresencePenalty = 0.2,       // Encourages new topics (-2 to 2)
+
+        // Additional options
+        Vendor = "openai",           // AI provider
+        UserIdentifier = "user_123", // Unique user ID
+        GroupIdentifier = "org_456", // Organization ID
+        UseVision = false            // Enable/disable vision features
+    }
+);
 ```
 
 ## Chat Completions
