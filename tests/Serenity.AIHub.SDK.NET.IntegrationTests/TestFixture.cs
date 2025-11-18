@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serenity.AIHub.SDK.NET.Extensions;
+using System;
+using System.IO;
 
 namespace Serenity.AIHub.SDK.NET.IntegrationTests;
 
@@ -22,10 +24,10 @@ public class TestFixture : IDisposable
         var services = new ServiceCollection();
 
         var apiKey = Configuration["SerenityAIHub:ApiKey"];
-        
+
         // Check if we have a valid API key (not null, empty or the placeholder)
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";
-        
+
         if (HasValidApiKey)
         {
             services.AddSerenityAIHub(apiKey);
@@ -43,8 +45,6 @@ public class TestFixture : IDisposable
     public void Dispose()
     {
         if (ServiceProvider is IDisposable disposable)
-        {
             disposable.Dispose();
-        }
     }
 }

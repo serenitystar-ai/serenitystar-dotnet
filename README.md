@@ -87,6 +87,43 @@ public class YourService
 }
 ```
 
+## Volatile Knowledge
+
+Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time.
+
+### Upload Volatile Knowledge
+
+```csharp
+using FileStream fileStream = File.OpenRead("path/to/document.pdf");
+UploadVolatileKnowledgeRequest uploadRequest = new()
+{
+    FileStream = fileStream,
+    FileName = "document.pdf"
+};
+
+VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
+```
+
+### Check Volatile Knowledge Status
+
+```csharp
+VolatileKnowledge status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
+Console.WriteLine($"Status: {status.Status}");
+
+// Wait until the knowledge is ready
+while (status.Status != "Ready" && status.Status != "Failed")
+{
+    await Task.Delay(1000);
+    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
+}
+
+if (status.Status == "Failed")
+{
+    Console.WriteLine($"Processing failed: {status.Error}");
+}
+```
+
 ## 📚 Documentation
 
 <p>Learn more about Serenity AIHub <a aria-label="serenity documentation" href="https://docs.serenitystar.ai">in our official docs!</a></p>

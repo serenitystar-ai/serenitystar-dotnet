@@ -65,7 +65,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange
         string[] words = { "swimming", "cycling", "hiking" };
         var responses = new List<string>();
@@ -101,7 +101,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange
         List<ExecuteParameter> input =
         [
@@ -125,7 +125,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange
         List<ExecuteParameter> input =
         [
