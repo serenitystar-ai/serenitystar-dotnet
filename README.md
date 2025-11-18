@@ -372,7 +372,7 @@ AgentResult response = await client.Agents.Proxies.ExecuteAsync(
 
 Console.WriteLine(response.Content);
 Console.WriteLine(response.CompletionUsage);
-Console.WriteLine(response.Content);
+Console.WriteLine(response.ExecutorTaskLogs);
 ```
 
 ### Get proxy information

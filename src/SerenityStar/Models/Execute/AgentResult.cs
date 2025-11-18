@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SerenityStar.Models.Execute
 {
@@ -9,35 +11,120 @@ namespace SerenityStar.Models.Execute
     public class AgentResult
     {
         /// <summary>
-        /// The main content or response from the agent.
+        /// The response from the agent.
+        /// Typically, an AI generate answer.
         /// </summary>
         public string Content { get; set; } = string.Empty;
 
         /// <summary>
-        /// The instance ID from the execution.
+        /// If the content is a JSON object, the deserialized object representation of it.
+        /// </summary>
+        public object? JsonContent { get; set; }
+
+        /// <summary>
+        /// The instance id of the agent.
         /// </summary>
         public Guid InstanceId { get; set; }
 
         /// <summary>
-        /// Token usage statistics for the execution.
+        /// Representation of the token counts processed for a completions request.
         /// </summary>
-        public CompletionUsage? CompletionUsage { get; set; }
+        public AgentResultTokenUsage? CompletionUsage { get; set; }
 
         /// <summary>
-        /// Any pending actions that require user input.
+        /// The cost information for this agent execution in the tenant's currency.
         /// </summary>
-        public List<PendingAction>? PendingActions { get; set; }
+        public AgentResultCost? Cost { get; set; }
+
+        /// <summary>
+        /// The results of the actions performed by the Agent, if any.
+        /// Such as the response from Plugins executed or other Agents invoked.
+        /// </summary>
+        public Dictionary<string, object>? ActionResults { get; set; }
+
+        /// <summary>
+        /// Representation of the MetaAnalysis.
+        /// </summary>
+        public object? MetaAnalysis { get; set; }
+
+        /// <summary>
+        /// The list of guardrail rule violations detected during the agent execution.
+        /// </summary>
+        public List<object>? Violations { get; set; }
+
+        /// <summary>
+        /// The time taken to generate the first token.
+        /// </summary>
+        public long? TimeToFirstToken { get; set; }
+
+        /// <summary>
+        /// The tasks executed to complete the request and their duration in milliseconds.
+        /// </summary>
+        public List<ExecutorTaskResult>? ExecutorTaskLogs { get; set; }
+
+        /// <summary>
+        /// The id of the user message.
+        /// </summary>
+        public Guid? UserMessageId { get; set; }
+
+        /// <summary>
+        /// The id of the agent message.
+        /// </summary>
+        public Guid? AgentMessageId { get; set; }
+
+        /// <summary>
+        /// Actions that need to be completed by the user to unlock agent features.
+        /// For example, authentication to external services.
+        /// </summary>
+        public List<PendingAction> PendingActions { get; set; } = new List<PendingAction>();
+
+        /// <summary>
+        /// Collection of sensitive data items that were detected and obfuscated during this request.
+        /// </summary>
+        public List<object> SensitiveData { get; set; } = new List<object>();
 
         /// <summary>
         /// Additional metadata from the execution.
         /// </summary>
         public Dictionary<string, object>? Metadata { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AgentResult"/> class with default values.
+        /// </summary>
+        public AgentResult() { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AgentResult"/> class with the specified content and optional action results,
+        /// attempting to deserialize the content into <see cref="JsonContent"/> if it is valid JSON.
+        /// </summary>
+        [JsonConstructor]
+        public AgentResult(string content, Dictionary<string, object>? actionResults = null)
+        {
+            Content = content;
+            ActionResults = actionResults;
+            JsonContent = TryParseJson(content);
+        }
+
+        private static object? TryParseJson(string jsonString)
+        {
+            if (string.IsNullOrWhiteSpace(jsonString))
+                return null;
+
+            try
+            {
+                return JsonSerializer.Deserialize<dynamic>(jsonString, JsonSerializerOptions.Default);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
     }
 
     /// <summary>
     /// Represents token usage statistics for an agent execution.
     /// </summary>
-    public class CompletionUsage
+    public class AgentResultTokenUsage
     {
         /// <summary>
         /// Number of tokens in the prompt.
@@ -53,5 +140,37 @@ namespace SerenityStar.Models.Execute
         /// Total number of tokens used.
         /// </summary>
         public int TotalTokens { get; set; }
+    }
+
+    /// <summary>
+    /// Represents cost information for an agent execution.
+    /// </summary>
+    public class AgentResultCost
+    {
+        /// <summary>
+        /// The total cost of the execution.
+        /// </summary>
+        public decimal Total { get; set; }
+
+        /// <summary>
+        /// The currency code (e.g., USD, EUR).
+        /// </summary>
+        public string Currency { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Represents the result of an executor task.
+    /// </summary>
+    public class ExecutorTaskResult
+    {
+        /// <summary>
+        /// The name of the task.
+        /// </summary>
+        public string TaskName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The duration of the task in milliseconds.
+        /// </summary>
+        public long DurationMs { get; set; }
     }
 }
