@@ -1,0 +1,372 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using SerenityStar.Models.Conversation;
+using SerenityStar.Models.Execute;
+using SerenityStar.Models.Streaming;
+
+namespace SerenityStar.Agents.Assistants
+{
+    /// <summary>
+    /// Represents a conversation with an assistant agent.
+    /// </summary>
+    public class Conversation
+    {
+        private readonly HttpClient _httpClient;
+        private readonly string _agentCode;
+        private readonly AgentExecutionOptions? _options;
+        private readonly JsonSerializerOptions _jsonOptions;
+        private string? _chatId;
+
+        /// <summary>
+        /// The conversation ID (instanceId from the first message response).
+        /// </summary>
+        public string? ConversationId => _chatId;
+
+        /// <summary>
+        /// Information about the conversation.
+        /// </summary>
+        public ConversationInfoResult? Info { get; private set; }
+
+        internal Conversation(HttpClient httpClient, string agentCode, AgentExecutionOptions? options = null)
+        {
+            _httpClient = httpClient;
+            _agentCode = agentCode;
+            _options = options;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+        }
+
+        /// <summary>
+        /// Creates a new conversation instance for the specified assistant agent.
+        /// The conversation is created automatically when the first message is sent.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client to use for API calls.</param>
+        /// <param name="agentCode">The assistant agent code.</param>
+        /// <param name="options">Optional execution options.</param>
+        /// <returns>A new conversation instance.</returns>sarasa
+        public static Conversation CreateConversation(HttpClient httpClient, string agentCode, AgentExecutionOptions? options = null)
+        {
+            return new Conversation(httpClient, agentCode, options);
+        }
+
+        internal async Task InitializeInfoAsync(CancellationToken cancellationToken = default)
+        {
+            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
+            string url = $"/api/v2/agent/{_agentCode}/info{version}";
+
+            Dictionary<string, object?> requestBody = new Dictionary<string, object?>
+            {
+                ["inputParameters"] = _options?.InputParameters
+            };
+
+            if (_options?.UserIdentifier != null)
+                requestBody["userIdentifier"] = _options.UserIdentifier;
+            if (_options?.Channel != null)
+                requestBody["channel"] = _options.Channel;
+
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            Info = await response.Content.ReadFromJsonAsync<ConversationInfoResult>(_jsonOptions, cancellationToken)
+                   ?? throw new InvalidOperationException("Failed to deserialize conversation info");
+        }
+
+        /// <summary>
+        /// Sends a message in the conversation.
+        /// The conversation is created automatically on the first message.
+        /// Subsequent messages use the instanceId from the first response as chatId.
+        /// </summary>
+        /// <param name="message">The message to send.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The agent's response.</returns>
+        public async Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        {
+            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
+            string url = $"/api/v2/agent/{_agentCode}/execute{version}";
+
+            List<object> parameters = new List<object>
+            {
+                new { Key = "message", Value = message }
+            };
+
+            // Add chatId only if we have it from a previous message
+            if (!string.IsNullOrEmpty(_chatId))
+                parameters.Insert(0, new { Key = "chatId", Value = _chatId });
+            else
+            {
+                // First message - add optional parameters
+                if (_options?.InputParameters != null)
+                    foreach (KeyValuePair<string, object> param in _options.InputParameters)
+                        parameters.Add(new { param.Key, param.Value });
+
+                if (_options?.UserIdentifier != null)
+                    parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
+
+                if (_options?.Channel != null)
+                    parameters.Add(new { Key = "channel", Value = _options.Channel });
+            }
+
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, parameters, _jsonOptions, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
+                   ?? throw new InvalidOperationException("Failed to deserialize response");
+
+            // Store instanceId as chatId for subsequent messages
+            if (string.IsNullOrEmpty(_chatId) && result.InstanceId != Guid.Empty)
+                _chatId = result.InstanceId.ToString();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Streams a message in the conversation.
+        /// The conversation is created automatically on the first message.
+        /// Subsequent messages use the instanceId from the first response as chatId.
+        /// </summary>
+        /// <param name="message">The message to send.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An async enumerable of streaming messages.</returns>
+        public async IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(
+            string message,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
+            string url = $"/api/v2/agent/{_agentCode}/execute{version}";
+
+            List<object> parameters = new List<object>
+            {
+                new { Key = "message", Value = message },
+                new { Key = "stream", Value = true }
+            };
+
+            // Add chatId only if we have it from a previous message
+            if (!string.IsNullOrEmpty(_chatId))
+            {
+                parameters.Insert(0, new { Key = "chatId", Value = _chatId });
+            }
+            else
+            {
+                // First message - add optional parameters
+                if (_options?.InputParameters != null)
+                {
+                    foreach (KeyValuePair<string, object> param in _options.InputParameters)
+                    {
+                        parameters.Add(new { Key = param.Key, Value = param.Value });
+                    }
+                }
+                if (_options?.UserIdentifier != null)
+                {
+                    parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
+                }
+                if (_options?.Channel != null)
+                {
+                    parameters.Add(new { Key = "channel", Value = _options.Channel });
+                }
+            }
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(parameters, options: _jsonOptions)
+            };
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            using (Stream stream = await response.Content.ReadAsStreamAsync())
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                yield return new StreamingAgentMessageStart();
+
+                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+                {
+                    string? line = await reader.ReadLineAsync();
+                    if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
+                        continue;
+
+                    string data = line.Substring(6).Trim();
+                    if (data == "[DONE]")
+                        break;
+
+                    StreamingAgentMessage? msg = ParseStreamingMessage(data);
+                    if (msg != null)
+                    {
+                        // Store instanceId as chatId for subsequent messages
+                        if (msg is StreamingAgentMessageStop stop && string.IsNullOrEmpty(_chatId) && stop.InstanceId.HasValue && stop.InstanceId.Value != Guid.Empty)
+                        {
+                            _chatId = stop.InstanceId.Value.ToString();
+                        }
+                        yield return msg;
+                    }
+                }
+            }
+        }
+
+        private StreamingAgentMessage? ParseStreamingMessage(string json)
+        {
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                JsonElement root = doc.RootElement;
+
+                if (!root.TryGetProperty("type", out JsonElement typeElement))
+                    return null;
+
+                string type = typeElement.GetString() ?? string.Empty;
+
+                return type switch
+                {
+                    "task_start" => new StreamingAgentMessageTaskStart
+                    {
+                        Key = root.GetProperty("key").GetString() ?? string.Empty,
+                        Input = root.GetProperty("input").GetString() ?? string.Empty
+                    },
+                    "content" => new StreamingAgentMessageContent
+                    {
+                        Text = root.GetProperty("text").GetString() ?? string.Empty
+                    },
+                    "task_end" => new StreamingAgentMessageTaskEnd
+                    {
+                        Key = root.GetProperty("key").GetString() ?? string.Empty,
+                        Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
+                        DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
+                    },
+                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _jsonOptions),
+                    "error" => new StreamingAgentMessageError
+                    {
+                        Error = root.GetProperty("error").GetString() ?? string.Empty,
+                        StatusCode = root.TryGetProperty("statusCode", out JsonElement statusElem) ? statusElem.GetInt32() : null
+                    },
+                    _ => null
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a conversation by ID.
+        /// </summary>
+        /// <param name="conversationId">The conversation ID.</param>
+        /// <param name="showExecutorTaskLogs">Whether to include executor task logs.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The conversation details.</returns>
+        public async Task<ConversationDetails> GetConversationByIdAsync(
+            string conversationId,
+            bool showExecutorTaskLogs = false,
+            CancellationToken cancellationToken = default)
+        {
+            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
+            string url = $"/api/v2/agent/{_agentCode}/conversation/{conversationId}{version}?showExecutorTaskLogs={showExecutorTaskLogs}";
+
+            HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConversationDetails>(_jsonOptions, cancellationToken)
+                   ?? throw new InvalidOperationException("Failed to deserialize conversation details");
+        }
+
+        /// <summary>
+        /// Submits feedback for a message.
+        /// </summary>
+        /// <param name="options">The feedback options.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public async Task SubmitFeedbackAsync(SubmitFeedbackOptions options, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(ConversationId))
+                throw new InvalidOperationException("Conversation not initialized");
+
+            string url = $"/api/v2/agent/{_agentCode}/conversation/{ConversationId}/message/{options.AgentMessageId}/feedback";
+
+            Dictionary<string, object> requestBody = new Dictionary<string, object>
+            {
+                ["feedback"] = options.Feedback
+            };
+
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+        }
+
+        /// <summary>
+        /// Removes feedback from a message.
+        /// </summary>
+        /// <param name="options">The remove feedback options.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public async Task RemoveFeedbackAsync(RemoveFeedbackOptions options, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(ConversationId))
+                throw new InvalidOperationException("Conversation not initialized");
+
+            string url = $"/api/v2/agent/{_agentCode}/conversation/{ConversationId}/message/{options.AgentMessageId}/feedback";
+
+            HttpResponseMessage response = await _httpClient.DeleteAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+        }
+
+        /// <summary>
+        /// Gets the connector status.
+        /// </summary>
+        /// <param name="options">The connector status options.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The connector status.</returns>
+        public async Task<ConnectorStatusResult> GetConnectorStatusAsync(
+            GetConnectorStatusOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            string url = $"/api/v2/agent/{_agentCode}/connector/{options.ConnectorId}/status?agentInstanceId={options.AgentInstanceId}";
+
+            HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConnectorStatusResult>(_jsonOptions, cancellationToken)
+                   ?? throw new InvalidOperationException("Failed to deserialize connector status");
+        }
+    }
+}

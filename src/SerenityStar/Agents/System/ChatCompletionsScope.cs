@@ -1,0 +1,90 @@
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Models.Execute;
+
+namespace SerenityStar.Agents.System
+{
+    /// <summary>
+    /// Represents a ChatCompletion agent.
+    /// </summary>
+    public class ChatCompletion : SystemAgentBase
+    {
+        private readonly ChatCompletionOptions _chatOptions;
+
+        internal ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionOptions options)
+            : base(httpClient, agentCode, options)
+        {
+            _chatOptions = options;
+        }
+
+        /// <inheritdoc/>
+        protected override object CreateExecuteBody(bool stream)
+        {
+            List<object> parameters = CreateBaseParameters(stream);
+
+            // Add message
+            parameters.Add(new { Key = "message", Value = _chatOptions.Message });
+
+            // Add messages if provided
+            if (_chatOptions.Messages != null && _chatOptions.Messages.Count > 0)
+            {
+                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_chatOptions.Messages) });
+            }
+
+            // Add input parameters if provided
+            if (_chatOptions.InputParameters != null)
+            {
+                foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
+                {
+                    parameters.Add(new { Key = param.Key, Value = param.Value });
+                }
+            }
+
+            return parameters;
+        }
+    }
+
+    /// <summary>
+    /// Provides methods for interacting with ChatCompletion agents.
+    /// </summary>
+    public class ChatCompletionsScope
+    {
+        private readonly HttpClient _httpClient;
+
+        internal ChatCompletionsScope(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        /// <summary>
+        /// Executes a chat completion agent.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Chat completion options.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public Task<AgentResult> ExecuteAsync(
+            string agentCode,
+            ChatCompletionOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            ChatCompletion chatCompletion = new ChatCompletion(_httpClient, agentCode, options);
+            return chatCompletion.ExecuteAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Creates a chat completion agent for streaming.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Chat completion options.</param>
+        /// <returns>A chat completion instance for streaming.</returns>
+        public ChatCompletion Create(string agentCode, ChatCompletionOptions options)
+        {
+            return new ChatCompletion(_httpClient, agentCode, options);
+        }
+    }
+}
