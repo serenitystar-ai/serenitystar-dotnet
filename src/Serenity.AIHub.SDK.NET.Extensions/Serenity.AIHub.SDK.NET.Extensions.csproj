@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-    <PackageId>Serenity.AIHub.SDK.NET.Extensions</PackageId>
-    <Authors>Matías Rohleder</Authors>
+    <PackageId>SubgenAI.SerenityStar.SDK.Extensions</PackageId>
+    <Authors>Serenity Star team</Authors>
     <Company>Subgen AI</Company>
-    <Description>Extensions for Serenity AI Hub SDK</Description>
-    <PackageProjectUrl>https://github.com/matiasrohleder/Serenity.AIHub.SDK.NET</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/matiasrohleder/Serenity.AIHub.SDK.NET</RepositoryUrl>
+    <Description>Official .NET SDK for Serenity* AI Hub API</Description>
+    <PackageProjectUrl>https://hub.serenitystar.ai/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/serenitystar-ai/serenity-dotnet</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>ai;chat;sdk;serenity;aihub;extensions</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>1.1.6</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
