@@ -49,8 +49,97 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotEmpty(result.Id);
+        Assert.NotEqual(Guid.Empty, result.Id);
         Assert.NotNull(result.Status);
+    }
+
+    [Fact]
+    public async Task UploadVolatileKnowledge_WithContent_ShouldSucceed()
+    {
+        // Arrange
+        UploadVolatileKnowledgeReq request = new()
+        {
+            Content = "https://serenitystar.ai"
+        };
+
+        // Act
+        VolatileKnowledge result = await _client.UploadVolatileKnowledgeAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
+        Assert.NotNull(result.Status);
+    }
+
+    [Fact]
+    public async Task UploadVolatileKnowledge_WithFileAndExpirationDays_ShouldSetExpiration()
+    {
+        // Arrange
+        await EnsureTestFileExistsAsync();
+        using FileStream fileStream = File.OpenRead(_testFilePath);
+        UploadVolatileKnowledgeReq request = new()
+        {
+            FileStream = fileStream,
+            FileName = TestFileName
+        };
+
+        // Act
+        VolatileKnowledge result = await _client.UploadVolatileKnowledgeAsync(
+            request,
+            expirationDays: 7);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
+        if (result.ExpirationDate.HasValue)
+        {
+            DateTime expectedMinDate = DateTime.UtcNow.AddDays(6);
+            DateTime expectedMaxDate = DateTime.UtcNow.AddDays(8);
+            Assert.InRange(result.ExpirationDate.Value, expectedMinDate, expectedMaxDate);
+        }
+    }
+
+    [Fact]
+    public async Task UploadVolatileKnowledge_WithNoExpiration_ShouldNotSetExpirationDate()
+    {
+        // Arrange
+        await EnsureTestFileExistsAsync();
+        using FileStream fileStream = File.OpenRead(_testFilePath);
+        UploadVolatileKnowledgeReq request = new()
+        {
+            FileStream = fileStream,
+            FileName = TestFileName
+        };
+
+        // Act
+        VolatileKnowledge result = await _client.UploadVolatileKnowledgeAsync(
+            request,
+            noExpiration: true);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
+    }
+
+    [Fact]
+    public async Task UploadVolatileKnowledge_WithCallbackUrl_ShouldSucceed()
+    {
+        // Arrange
+        await EnsureTestFileExistsAsync();
+        using FileStream fileStream = File.OpenRead(_testFilePath);
+        UploadVolatileKnowledgeReq request = new()
+        {
+            FileStream = fileStream,
+            FileName = TestFileName,
+            CallbackUrl = "https://example.com/callback"
+        };
+
+        // Act
+        VolatileKnowledge result = await _client.UploadVolatileKnowledgeAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
     }
 
     [Fact]
@@ -66,7 +155,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         VolatileKnowledge uploadedKnowledge = await _client.UploadVolatileKnowledgeAsync(uploadRequest);
-        string knowledgeId = uploadedKnowledge.Id;
+        Guid knowledgeId = uploadedKnowledge.Id;
 
         // Act
         VolatileKnowledge statusResult = await _client.GetVolatileKnowledgeStatusAsync(knowledgeId);
@@ -90,7 +179,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         VolatileKnowledge uploadedKnowledge = await _client.UploadVolatileKnowledgeAsync(request);
-        string knowledgeId = uploadedKnowledge.Id;
+        Guid knowledgeId = uploadedKnowledge.Id;
 
         // Act & Assert
         VolatileKnowledge status = uploadedKnowledge;
@@ -121,7 +210,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         VolatileKnowledge uploadedKnowledge = await _client.UploadVolatileKnowledgeAsync(uploadRequest);
-        string knowledgeId = uploadedKnowledge.Id;
+        Guid knowledgeId = uploadedKnowledge.Id;
 
         // Wait for processing
         VolatileKnowledge status = uploadedKnowledge;
@@ -147,7 +236,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         [
             new ExecuteParameter("chatId", conversation.ChatId),
             new ExecuteParameter("message", "Who was an important figure in the 100 years war?"),
-            new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledgeId }),
+            new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledgeId.ToString() }),
         ];
 
         // Act - Execute agent with volatile knowledge

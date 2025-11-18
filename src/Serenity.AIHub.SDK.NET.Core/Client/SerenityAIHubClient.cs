@@ -128,26 +128,57 @@ public class SerenityAIHubClient : ISerenityAIHubClient
     }
 
     /// <summary>
-    /// Uploads a file as volatile knowledge
+    /// Uploads a file or content as volatile knowledge
     /// </summary>
     /// <param name="request">The upload request containing file stream and filename</param>
+    /// <param name="processEmbeddings">Whether to process embeddings</param>
+    /// <param name="noExpiration">Whether the knowledge should have no expiration</param>
+    /// <param name="expirationDays">The number of days before expiration</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The created volatile knowledge entity</returns>
     public async Task<VolatileKnowledge> UploadVolatileKnowledgeAsync(
         UploadVolatileKnowledgeReq request,
+        bool processEmbeddings = true,
+        bool noExpiration = false,
+        int? expirationDays = null,
         CancellationToken cancellationToken = default)
     {
+        request.Validate();
+
         using MultipartFormDataContent content = new();
-        StreamContent fileContent = new(request.FileStream);
 
-        // Set the content type based on file extension
-        string contentType = GetContentType(request.FileName);
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        // Add content if provided
+        if (!string.IsNullOrEmpty(request.Content))
+            content.Add(new StringContent(request.Content), "Content");
 
-        content.Add(fileContent, "file", request.FileName);
+        // Add file if provided
+        if (request.FileStream is not null)
+        {
+            StreamContent fileContent = new(request.FileStream);
+            string contentType = GetContentType(request.FileName);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "File", request.FileName);
+        }
+
+        // Add callback URL if provided
+        if (!string.IsNullOrEmpty(request.CallbackUrl))
+            content.Add(new StringContent(request.CallbackUrl), "CallbackUrl");
+
+        // Build query parameters
+        List<string> queryParams = new List<string>
+        {
+            $"processEmbeddings={processEmbeddings}",
+            $"noExpiration={noExpiration}"
+        };
+
+        if (expirationDays.HasValue)
+            queryParams.Add($"expirationDays={expirationDays.Value}");
+
+        string queryString = string.Join("&", queryParams);
+        string endpoint = $"volatileknowledge?{queryString}";
 
         HttpResponseMessage response = await _httpClient.PostAsync(
-            "volatileknowledge",
+            endpoint,
             content,
             cancellationToken);
 
@@ -188,7 +219,7 @@ public class SerenityAIHubClient : ISerenityAIHubClient
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The volatile knowledge entity with current status</returns>
     public async Task<VolatileKnowledge> GetVolatileKnowledgeStatusAsync(
-        string knowledgeId,
+        Guid knowledgeId,
         CancellationToken cancellationToken = default)
     {
         HttpResponseMessage response = await _httpClient.GetAsync(

@@ -37,13 +37,19 @@ public interface ISerenityAIHubClient
     Task<AgentResult> Execute(string agentCode, List<ExecuteParameter> input = null, int? agentVersion = null, int apiVersion = 2, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Uploads a file as volatile knowledge
+    /// Uploads a file or content as volatile knowledge
     /// </summary>
-    /// <param name="request">The upload request containing file stream and filename</param>
+    /// <param name="request">The upload request containing file stream or content</param>
+    /// <param name="processEmbeddings">Optional parameter to indicate whether to process embeddings. Default is true.</param>
+    /// <param name="noExpiration">Optional parameter to indicate whether the knowledge should not expire. Default is false.</param>
+    /// <param name="expirationDays">Optional parameter to specify the number of days until expiration.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The created volatile knowledge entity</returns>
     Task<VolatileKnowledge> UploadVolatileKnowledgeAsync(
         UploadVolatileKnowledgeReq request,
+        bool processEmbeddings = true,
+        bool noExpiration = false,
+        int? expirationDays = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -53,6 +59,6 @@ public interface ISerenityAIHubClient
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The volatile knowledge entity with current status</returns>
     Task<VolatileKnowledge> GetVolatileKnowledgeStatusAsync(
-        string knowledgeId,
+        Guid knowledgeId,
         CancellationToken cancellationToken = default);
 }

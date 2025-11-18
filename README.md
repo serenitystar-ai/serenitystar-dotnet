@@ -89,13 +89,13 @@ public class YourService
 
 ## Volatile Knowledge
 
-Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time.
+Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time based on your configuration.
 
 ### Upload Volatile Knowledge
 
 ```csharp
 using FileStream fileStream = File.OpenRead("path/to/document.pdf");
-UploadVolatileKnowledgeRequest uploadRequest = new()
+UploadVolatileKnowledgeReq uploadRequest = new()
 {
     FileStream = fileStream,
     FileName = "document.pdf"
@@ -105,6 +105,40 @@ VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRe
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
+### Upload Volatile Knowledge with Text Content
+
+```csharp
+UploadVolatileKnowledgeReq uploadRequest = new()
+{
+    Content = "This is important information that needs to be processed."
+};
+
+VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
+```
+
+### Upload with Custom Parameters
+
+```csharp
+using FileStream fileStream = File.OpenRead("document.pdf");
+UploadVolatileKnowledgeReq uploadRequest = new()
+{
+    FileStream = fileStream,
+    FileName = "document.pdf",
+    CallbackUrl = "https://your-app.com/knowledge-callback"
+};
+
+VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(
+    uploadRequest,
+    processEmbeddings: true,      // Enable embedding processing (Use `false` for Vision)
+    noExpiration: false,           // Document will expire
+    expirationDays: 7);            // Expire in 7 days
+
+Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}");
+if (knowledge.ExpirationDate.HasValue)
+    Console.WriteLine($"Expires on: {knowledge.ExpirationDate.Value}");
+```
+
 ### Check Volatile Knowledge Status
 
 ```csharp
@@ -112,16 +146,14 @@ VolatileKnowledge status = await client.GetVolatileKnowledgeStatusAsync(knowledg
 Console.WriteLine($"Status: {status.Status}");
 
 // Wait until the knowledge is ready
-while (status.Status != "Ready" && status.Status != "Failed")
+while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
 {
     await Task.Delay(1000);
     status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
 }
 
-if (status.Status == "Failed")
-{
+if (status.Status == VolatileKnowledgeSimpleStatus.Error)
     Console.WriteLine($"Processing failed: {status.Error}");
-}
 ```
 
 ### Use Volatile Knowledge in Agent Execution
@@ -130,8 +162,8 @@ Once the volatile knowledge is ready, you can use it in agent executions by pass
 
 ```csharp
 // Upload and wait for processing
-using FileStream fileStream = File.OpenRead("path/to/document.pdf");
-UploadVolatileKnowledgeRequest uploadRequest = new()
+using FileStream fileStream = File.OpenRead("document.pdf");
+UploadVolatileKnowledgeReq uploadRequest = new()
 {
     FileStream = fileStream,
     FileName = "document.pdf"
@@ -141,24 +173,20 @@ VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRe
 
 // Wait until ready
 VolatileKnowledge status = knowledge;
-while (status.Status != "Ready" && status.Status != "Failed")
+while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
 {
     await Task.Delay(1000);
-    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
+    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id.ToString());
 }
 
 // Execute agent with volatile knowledge
 List<ExecuteParameter> parameters = new();
 parameters.Add(new ExecuteParameter("message", "What does this document say about pricing?"));
 parameters.Add(new ExecuteParameter("chatId", "your-chat-id"));
+parameters.Add(new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledge.Id.ToString() }));
 
-ExecuteResult result = await client.Execute(
-    "assistantagent",
-    parameters,
-    volatileKnowledgeIds: new List<string> { knowledge.Id }
-);
-
-Console.WriteLine($"Agent response: {result.Response}");
+AgentResult result = await client.Execute("assistantagent", parameters);
+Console.WriteLine($"Agent response: {result.Content}");
 ```
 
 ## 📚 Documentation
