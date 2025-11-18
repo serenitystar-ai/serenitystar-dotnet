@@ -432,82 +432,46 @@ Chat Completions provide a simplified interface for single-turn or multi-turn co
 ### Execute a chat completion
 
 ```csharp
+using SerenityStar.Client;
 using SerenityStar.Models.ChatCompletion;
 using SerenityStar.Models.Execute;
 
-AgentResult response = await client.Agents.ChatCompletions.ExecuteAsync(
-    "Health-Coach",
-    new ChatCompletionOptions
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Execute chat completion (basic example)
+AgentResult response = await client.Agents.ChatCompletions.ExecuteAsync("AgentCreator", new ChatCompletionOptions
+{
+    Message = "Hello!!!"
+});
+
+Console.WriteLine(response.Content); // AI-generated response
+Console.WriteLine($"Completion Usage: {response.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
+
+// Execute chat completion (advanced example)
+AgentResult responseAdvanced = await client.Agents.ChatCompletions.ExecuteAsync("Health-Coach", new ChatCompletionOptions
+{
+    UserIdentifier = "user-123",
+    AgentVersion = 2,
+    Channel = "web",
+    VolatileKnowledgeIds = new List<string> { "knowledge-1", "knowledge-2" },
+    Message = "Hi! How can I eat healthier?",
+    Messages = new List<ChatMessage>
     {
-        Message = "Hi! How can I eat healthier?",
-        Messages = new List<ChatMessage>
+        new ChatMessage
         {
-            new ChatMessage
-            {
-                Role = "system",
-                Content = "You are a professional health coach."
-            },
-            new ChatMessage
-            {
-                Role = "assistant",
-                Content = "Hi there! How can I assist you?"
-            }
-        },
-        UserIdentifier = "user-123"
+            Role = "assistant",
+            Content = "Hi there! How can I assist you?"
+        }
     }
-);
+});
 
-Console.WriteLine(response.Content);
+Console.WriteLine(responseAdvanced.Content); // AI-generated response
+Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 ```
 
-### Multi-turn conversation with chat completions
+### Stream responses with SSE
 
-```csharp
-using SerenityStar.Models.ChatCompletion;
-
-List<ChatMessage> conversationHistory = new List<ChatMessage>
-{
-    new ChatMessage { Role = "system", Content = "You are a helpful fitness advisor." }
-};
-
-// First message
-ChatCompletionOptions options = new ChatCompletionOptions
-{
-    Message = "What's a good workout routine for beginners?",
-    Messages = conversationHistory
-};
-
-AgentResult response1 = await client.Agents.ChatCompletions.ExecuteAsync("Health-Coach", options);
-Console.WriteLine($"Assistant: {response1.Content}");
-
-// Add to history
-conversationHistory.Add(new ChatMessage { Role = "user", Content = options.Message });
-conversationHistory.Add(new ChatMessage { Role = "assistant", Content = response1.Content });
-
-// Follow-up message
-options.Message = "How many days per week should I exercise?";
-options.Messages = conversationHistory;
-
-AgentResult response2 = await client.Agents.ChatCompletions.ExecuteAsync("Health-Coach", options);
-Console.WriteLine($"Assistant: {response2.Content}");
-```
-
-### Get chat completion agent information
-
-```csharp
-using SerenityStar.Models.Conversation;
-
-ConversationInfoResult chatInfo = await client.Agents.ChatCompletions.GetInfoByCodeAsync("Health-Coach");
-
-Console.WriteLine($"Agent: {chatInfo.Name}");
-Console.WriteLine($"Version: {chatInfo.LatestVersion}");
-```
-
-## 📚 Documentation
-
-- [Getting Started](https://docs.serenitystar.ai/docs/getting-started/introduction)
-- [API Reference](https://docs.serenitystar.ai/docs/api/aihub/serenity-star-api-docs)
-- [Agents](https://docs.serenitystar.ai/docs/serenity-aihub/agents)
+sarasa
 
 ## 📄 License
 
