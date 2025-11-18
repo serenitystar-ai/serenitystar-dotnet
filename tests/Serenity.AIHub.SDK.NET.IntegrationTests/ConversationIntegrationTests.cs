@@ -26,7 +26,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange - Define input parameters
         List<ExecuteParameter> inputParameters =
         [
@@ -51,7 +51,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Act
         CreateConversationRes result = await _client.CreateConversation("assistantagent", null);
 
@@ -68,7 +68,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Act
         CreateConversationRes result = await _client.CreateConversation("assistantagent", null, 1);
 
@@ -87,7 +87,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
             _client.CreateConversation("invalid-agent", null));
@@ -100,7 +100,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange - Create a conversation first
         CreateConversationRes conversation = await _client.CreateConversation("assistantagent", null);
         Assert.NotEqual(Guid.Empty, conversation.ChatId);
@@ -144,7 +144,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         {
             return; // Skip test when no valid API key
         }
-        
+
         // Arrange - Create a conversation
         CreateConversationRes conversation = await _client.CreateConversation("assistantagent", null);
         Assert.NotEqual(Guid.Empty, conversation.ChatId);

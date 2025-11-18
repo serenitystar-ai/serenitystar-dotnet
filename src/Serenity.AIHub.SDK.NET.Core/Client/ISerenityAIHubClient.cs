@@ -1,5 +1,6 @@
 using Serenity.AIHub.SDK.NET.Core.Models;
 using Serenity.AIHub.SDK.NET.Core.Models.Execute;
+using Serenity.AIHub.SDK.NET.Core.Models.VolatileKnowledge;
 
 namespace Serenity.AIHub.SDK.NET.Core.Client;
 
@@ -34,4 +35,24 @@ public interface ISerenityAIHubClient
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The response from the agent.</returns>
     Task<AgentResult> Execute(string agentCode, List<ExecuteParameter> input = null, int? agentVersion = null, int apiVersion = 2, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Uploads a file as volatile knowledge
+    /// </summary>
+    /// <param name="request">The upload request containing file stream and filename</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The created volatile knowledge entity</returns>
+    Task<VolatileKnowledge> UploadVolatileKnowledgeAsync(
+        UploadVolatileKnowledgeReq request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the status of a volatile knowledge by ID
+    /// </summary>
+    /// <param name="knowledgeId">The ID of the volatile knowledge</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The volatile knowledge entity with current status</returns>
+    Task<VolatileKnowledge> GetVolatileKnowledgeStatusAsync(
+        string knowledgeId,
+        CancellationToken cancellationToken = default);
 }

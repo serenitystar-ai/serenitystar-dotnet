@@ -1,10 +1,11 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Serenity.AIHub.SDK.NET.Core.Constants;
 using Serenity.AIHub.SDK.NET.Core.Models;
 using Serenity.AIHub.SDK.NET.Core.Models.Execute;
+using Serenity.AIHub.SDK.NET.Core.Models.VolatileKnowledge;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Serenity.AIHub.SDK.NET.Core.Client;
 
@@ -124,5 +125,85 @@ public class SerenityAIHubClient : ISerenityAIHubClient
 
         return await response.Content.ReadFromJsonAsync<AgentResult>(JsonOptions, cancellationToken)
                ?? throw new InvalidOperationException("Failed to deserialize response");
+    }
+
+    /// <summary>
+    /// Uploads a file as volatile knowledge
+    /// </summary>
+    /// <param name="request">The upload request containing file stream and filename</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The created volatile knowledge entity</returns>
+    public async Task<VolatileKnowledge> UploadVolatileKnowledgeAsync(
+        UploadVolatileKnowledgeReq request,
+        CancellationToken cancellationToken = default)
+    {
+        using MultipartFormDataContent content = new();
+        StreamContent fileContent = new(request.FileStream);
+
+        // Set the content type based on file extension
+        string contentType = GetContentType(request.FileName);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
+        content.Add(fileContent, "file", request.FileName);
+
+        HttpResponseMessage response = await _httpClient.PostAsync(
+            "volatileknowledge",
+            content,
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            string errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+        }
+
+        string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        VolatileKnowledge result = JsonSerializer.Deserialize<VolatileKnowledge>(responseBody, JsonOptions);
+
+        return result ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
+    }
+
+    private static string GetContentType(string fileName)
+    {
+        string extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".txt" => "text/plain",
+            ".csv" => "text/csv",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".ppt" => "application/vnd.ms-powerpoint",
+            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            _ => "application/octet-stream"
+        };
+    }
+
+    /// <summary>
+    /// Gets the status of a volatile knowledge by ID
+    /// </summary>
+    /// <param name="knowledgeId">The ID of the volatile knowledge</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The volatile knowledge entity with current status</returns>
+    public async Task<VolatileKnowledge> GetVolatileKnowledgeStatusAsync(
+        string knowledgeId,
+        CancellationToken cancellationToken = default)
+    {
+        HttpResponseMessage response = await _httpClient.GetAsync(
+            $"volatileknowledge/{knowledgeId}",
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            string errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+        }
+
+        string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        VolatileKnowledge result = JsonSerializer.Deserialize<VolatileKnowledge>(responseBody, JsonOptions);
+
+        return result ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
     }
 }
