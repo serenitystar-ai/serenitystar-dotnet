@@ -189,18 +189,130 @@ ConversationResult conversationWithLogs = await client.Agents.Assistants.GetConv
 Console.WriteLine($"Executor Task Logs: {conversationWithLogs.ExecutorTaskLogs}");
 ```
 
-### Get conversation by id
+### Stream message with SSE
+// sarasa
+
+### Message feedback
+
+You can collect user feedback on agent responses to help improve the quality of your assistant.
+
+#### Submit feedback
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.MessageFeedback;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Send a message
+AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
+
+// Submit positive feedback (thumbs up)
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackOptions
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = true
+});
+
+// Or submit negative feedback (thumbs down)
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackOptions
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = false
+});
+```
+
+#### Remove feedback
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.MessageFeedback;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Send a message
+AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
+
+// Submit feedback first
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackOptions
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = true
+});
+
+// Remove the feedback if the user changes their mind
+await conversation.RemoveFeedbackAsync(new RemoveFeedbackOptions
+{
+    AgentMessageId = response.AgentMessageId!.Value
+});
+```
+
+### Connector Status
+
+Check the connection status of an agent's connector.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Connector;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Send a message that might require a connector
+AgentResult response = await conversation.SendMessageAsync("I need a summary of my latest meeting notes stored in google drive");
+
+// Here the user should complete the authentication process.
+
+// Check connector status for this conversation (you can use a loop to check every 5 seconds)
+ConnectorStatusResponse status = await conversation.GetConnectorStatusAsync(new GetConnectorStatusOptions
+{
+    AgentInstanceId = Guid.Parse(conversation.ConversationId!),
+    // Get the connector id using response.PendingActions[index].ConnectorId
+    ConnectorId = Guid.Parse("connector-uuid")
+});
+
+Console.WriteLine($"Is Connected: {status.IsConnected}"); // true or false
+
+// You can use this to determine if a connector needs authentication
+if (!status.IsConnected)
+{
+    Console.WriteLine("Connector is not connected. Please authenticate.");
+    // After user authenticates the connector...
+}
+
+// Once connected, send the message again
+// The agent will now have access to Google Drive to retrieve the meeting notes
+AgentResult newResponse = await conversation.SendMessageAsync("I need a summary of my latest meeting notes stored in google drive");
+Console.WriteLine(newResponse.Content); // Summary of the meeting notes
+```
 
 ## Activities
 
 Activities are single-execution agents designed for one-time tasks like translations, data processing, or content generation. Unlike assistants, they don't maintain conversation history.
 
-### Stream message with SSE
+### Execute an activity agent
 
 ```csharp
+using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 
-AgentResult response = await client.Agents.Activities.ExecuteAsync(
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Execute activity (basic example)
+AgentResult response = await client.Agents.Activities.ExecuteAsync("translator-activity");
+
+Console.WriteLine(response.Content);
+
+// Execute activity (advanced example)
+AgentResult responseAdvanced = await client.Agents.Activities.ExecuteAsync(
     "translator-activity",
     new AgentExecutionOptions
     {
@@ -208,43 +320,28 @@ AgentResult response = await client.Agents.Activities.ExecuteAsync(
         {
             ["targetLanguage"] = "russian",
             ["textToTranslate"] = "hello world"
-        },
-        AgentVersion = 1,
-        UserIdentifier = "user-123"
+        }
     }
 );
 
-Console.WriteLine($"Translation: {response.Content}");
-Console.WriteLine($"Tokens Used: {response.CompletionUsage?.TotalTokens}");
+Console.WriteLine(responseAdvanced.Content); // Привет, мир!
+Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
+
+if (responseAdvanced.ExecutorTaskLogs != null)
+    foreach (ExecutorTaskLog log in responseAdvanced.ExecutorTaskLogs)
+        Console.WriteLine($"Task: {log.Description}, Duration: {log.Duration}ms");
 ```
 
-### Get activity information
 
-```csharp
-using SerenityStar.Models.Conversation;
+### Stream message with SSE
 
-// Get activity agent information
-ConversationInfoResult activityInfo = await client.Agents.Activities.GetInfoByCodeAsync("translator-activity");
-
-Console.WriteLine($"Activity: {activityInfo.Name}");
-Console.WriteLine($"Type: {activityInfo.AgentType}");
-
-// Check supported parameters
-if (activityInfo.InputParameters != null)
-{
-    Console.WriteLine("\nSupported Parameters:");
-    foreach (var param in activityInfo.InputParameters)
-    {
-        Console.WriteLine($"- {param.Key}");
-    }
-}
-```
+sarasa
 
 ## Proxies
 
 Proxies provide direct access to AI models with consistent interfaces across different providers. They're ideal when you need fine-grained control over model parameters.
 
-### Execute a proxy
+### Execute a proxy agent
 
 ```csharp
 using SerenityStar.Models.AIProxy;
@@ -273,6 +370,8 @@ AgentResult response = await client.Agents.Proxies.ExecuteAsync(
     }
 );
 
+Console.WriteLine(response.Content);
+Console.WriteLine(response.CompletionUsage);
 Console.WriteLine(response.Content);
 ```
 
