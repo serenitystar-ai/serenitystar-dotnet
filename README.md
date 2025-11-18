@@ -124,6 +124,43 @@ if (status.Status == "Failed")
 }
 ```
 
+### Use Volatile Knowledge in Agent Execution
+
+Once the volatile knowledge is ready, you can use it in agent executions by passing the knowledge IDs:
+
+```csharp
+// Upload and wait for processing
+using FileStream fileStream = File.OpenRead("path/to/document.pdf");
+UploadVolatileKnowledgeRequest uploadRequest = new()
+{
+    FileStream = fileStream,
+    FileName = "document.pdf"
+};
+
+VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+
+// Wait until ready
+VolatileKnowledge status = knowledge;
+while (status.Status != "Ready" && status.Status != "Failed")
+{
+    await Task.Delay(1000);
+    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
+}
+
+// Execute agent with volatile knowledge
+List<ExecuteParameter> parameters = new();
+parameters.Add(new ExecuteParameter("message", "What does this document say about pricing?"));
+parameters.Add(new ExecuteParameter("chatId", "your-chat-id"));
+
+ExecuteResult result = await client.Execute(
+    "assistantagent",
+    parameters,
+    volatileKnowledgeIds: new List<string> { knowledge.Id }
+);
+
+Console.WriteLine($"Agent response: {result.Response}");
+```
+
 ## 📚 Documentation
 
 <p>Learn more about Serenity AIHub <a aria-label="serenity documentation" href="https://docs.serenitystar.ai">in our official docs!</a></p>

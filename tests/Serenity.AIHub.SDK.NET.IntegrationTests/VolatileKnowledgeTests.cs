@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Serenity.AIHub.SDK.NET.Core.Client;
 using Serenity.AIHub.SDK.NET.Core.Models.VolatileKnowledge;
+using Serenity.AIHub.SDK.NET.Core.Models;
 using Xunit;
+using Serenity.AIHub.SDK.NET.Core.Models.Execute;
 
 namespace Serenity.AIHub.SDK.NET.IntegrationTests;
 
@@ -48,7 +50,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         // Assert
         Assert.NotNull(result);
         Assert.NotEmpty(result.Id);
-        Assert.NotEmpty(result.Status);
+        Assert.NotNull(result.Status);
     }
 
     [Fact]
@@ -72,7 +74,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         // Assert
         Assert.NotNull(statusResult);
         Assert.Equal(knowledgeId, statusResult.Id);
-        Assert.NotEmpty(statusResult.Status);
+        Assert.NotNull(statusResult.Status);
     }
 
     [Fact]
@@ -95,14 +97,64 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         int maxAttempts = 30;
         int attempts = 0;
 
-        while (status.Status != "Ready" && status.Status != "Failed" && attempts < maxAttempts)
+        while (status.Status != VolatileKnowledgeSimpleStatus.Invalid && status.Status != VolatileKnowledgeSimpleStatus.Error && attempts < maxAttempts)
         {
             await Task.Delay(1000);
             status = await _client.GetVolatileKnowledgeStatusAsync(knowledgeId);
             attempts++;
         }
 
-        Assert.NotEqual("Failed", status.Status);
-        Assert.Equal("Ready", status.Status);
+        Assert.NotEqual(VolatileKnowledgeSimpleStatus.Error, status.Status);
+        Assert.Equal(VolatileKnowledgeSimpleStatus.Success, status.Status);
+    }
+
+    [Fact]
+    public async Task ExecuteAgentWithVolatileKnowledge_ShouldUseUploadedDocument()
+    {
+        // Arrange - Upload volatile knowledge
+        await EnsureTestFileExistsAsync();
+        using FileStream fileStream = File.OpenRead(_testFilePath);
+        UploadVolatileKnowledgeReq uploadRequest = new()
+        {
+            FileStream = fileStream,
+            FileName = TestFileName
+        };
+
+        VolatileKnowledge uploadedKnowledge = await _client.UploadVolatileKnowledgeAsync(uploadRequest);
+        string knowledgeId = uploadedKnowledge.Id;
+
+        // Wait for processing
+        VolatileKnowledge status = uploadedKnowledge;
+        int maxAttempts = 30;
+        int attempts = 0;
+
+        while (status.Status != VolatileKnowledgeSimpleStatus.Invalid && status.Status != VolatileKnowledgeSimpleStatus.Error && attempts < maxAttempts)
+        {
+            await Task.Delay(1000);
+            status = await _client.GetVolatileKnowledgeStatusAsync(knowledgeId);
+            attempts++;
+        }
+
+        Assert.Equal(VolatileKnowledgeSimpleStatus.Success, status.Status);
+
+        // Create conversation
+        CreateConversationRes conversation = await _client.CreateConversation("assistantagent");
+        Assert.NotNull(conversation);
+        Assert.NotEqual(Guid.Empty, conversation.ChatId);
+
+        // Arrange - Prepare execution parameters
+        List<ExecuteParameter> parameters =
+        [
+            new ExecuteParameter("chatId", conversation.ChatId),
+            new ExecuteParameter("message", "Who was an important figure in the 100 years war?"),
+            new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledgeId }),
+        ];
+
+        // Act - Execute agent with volatile knowledge
+        AgentResult result = await _client.Execute("assistantagent", parameters);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Content);
     }
 }
