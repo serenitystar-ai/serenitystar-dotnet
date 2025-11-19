@@ -1,4 +1,6 @@
-namespace SerenityStar.Models.Conversation
+using System;
+
+namespace SerenityStar.Models.MessageFeedback
 {
     /// <summary>
     /// Options for submitting feedback on a message.
@@ -8,7 +10,7 @@ namespace SerenityStar.Models.Conversation
         /// <summary>
         /// The ID of the agent message to provide feedback for.
         /// </summary>
-        public string AgentMessageId { get; set; } = string.Empty;
+        public Guid AgentMessageId { get; set; } = Guid.Empty;
 
         /// <summary>
         /// The feedback value - true for positive, false for negative.

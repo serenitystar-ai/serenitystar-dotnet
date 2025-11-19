@@ -7,8 +7,10 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.MessageFeedback;
 using SerenityStar.Models.Streaming;
 
 namespace SerenityStar.Agents.Conversational

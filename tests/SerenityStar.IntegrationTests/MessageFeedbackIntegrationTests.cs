@@ -4,6 +4,7 @@ using SerenityStar.Models.Execute;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Agents.Conversational;
 using Xunit;
+using SerenityStar.Models.MessageFeedback;
 
 namespace SerenityStar.IntegrationTests;
 
@@ -31,7 +32,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Act - Submit positive feedback
         SubmitFeedbackOptions feedbackOptions = new()
         {
-            AgentMessageId = agentMessageId,
+            AgentMessageId = Guid.Parse(agentMessageId),
             Feedback = true // Positive feedback
         };
 
@@ -54,7 +55,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Act - Submit negative feedback
         SubmitFeedbackOptions feedbackOptions = new()
         {
-            AgentMessageId = agentMessageId,
+            AgentMessageId = Guid.Parse(agentMessageId),
             Feedback = false // Negative feedback
         };
 
@@ -77,7 +78,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Submit feedback first
         SubmitFeedbackOptions feedbackOptions = new()
         {
-            AgentMessageId = agentMessageId,
+            AgentMessageId = Guid.Parse(agentMessageId),
             Feedback = true
         };
         await conversation.SubmitFeedbackAsync(feedbackOptions);
@@ -88,7 +89,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Act - Remove the feedback
         RemoveFeedbackOptions removeOptions = new()
         {
-            AgentMessageId = agentMessageId
+            AgentMessageId = Guid.Parse(agentMessageId)
         };
 
         await conversation.RemoveFeedbackAsync(removeOptions);
@@ -115,7 +116,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
             {
                 SubmitFeedbackOptions feedbackOptions = new()
                 {
-                    AgentMessageId = result.AgentMessageId?.ToString() ?? "invalid-id",
+                    AgentMessageId = Guid.Parse(result.AgentMessageId?.ToString() ?? "00000000-0000-0000-0000-000000000000"),
                     Feedback = true
                 };
 
@@ -141,7 +142,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
 
         SubmitFeedbackOptions feedbackOptions = new()
         {
-            AgentMessageId = "invalid-message-id-that-does-not-exist",
+            AgentMessageId = Guid.Parse("00000000-0000-0000-0000-000000000000"),
             Feedback = true
         };
 
@@ -159,7 +160,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
 
         RemoveFeedbackOptions removeOptions = new()
         {
-            AgentMessageId = "invalid-message-id-that-does-not-exist"
+            AgentMessageId = Guid.Empty
         };
 
         // Act & Assert
@@ -185,7 +186,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
             {
                 SubmitFeedbackOptions feedbackOptions = new()
                 {
-                    AgentMessageId = result.AgentMessageId?.ToString() ?? "invalid-id",
+                    AgentMessageId = Guid.Parse(result.AgentMessageId?.ToString() ?? "invalid-id"),
                     Feedback = feedbackValues[i]
                 };
 
@@ -213,7 +214,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Act - Submit feedback
         SubmitFeedbackOptions submitOptions = new()
         {
-            AgentMessageId = result.AgentMessageId?.ToString() ?? "invalid-id",
+            AgentMessageId = Guid.Parse(result.AgentMessageId?.ToString() ?? "invalid-id"),
             Feedback = true
         };
         await conversation.SubmitFeedbackAsync(submitOptions);
@@ -224,7 +225,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Remove feedback
         RemoveFeedbackOptions removeOptions = new()
         {
-            AgentMessageId = result.AgentMessageId?.ToString() ?? "invalid-id"
+            AgentMessageId = Guid.Parse(result.AgentMessageId?.ToString() ?? "invalid-id")
         };
         await conversation.RemoveFeedbackAsync(removeOptions);
 
@@ -250,7 +251,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
             {
                 SubmitFeedbackOptions feedbackOptions = new()
                 {
-                    AgentMessageId = result.AgentMessageId?.ToString() ?? "invalid-id",
+                    AgentMessageId = Guid.Parse(result.AgentMessageId?.ToString() ?? "00000000-0000-0000-0000-000000000000"),
                     Feedback = true
                 };
 

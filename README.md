@@ -753,7 +753,7 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     FileName = "document.pdf"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
@@ -765,7 +765,7 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     Content = "This is important information that needs to be processed."
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
@@ -780,7 +780,7 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     CallbackUrl = "https://your-app.com/knowledge-callback"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(
+VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(
     uploadRequest,
     processEmbeddings: true,      // Enable embedding processing (Use `false` for Vision)
     noExpiration: false,           // Document will expire
@@ -794,14 +794,14 @@ if (knowledge.ExpirationDate.HasValue)
 ### Check Volatile Knowledge Status
 
 ```csharp
-VolatileKnowledge status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
+VolatileKnowledge status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 Console.WriteLine($"Status: {status.Status}");
 
 // Wait until the knowledge is ready
 while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
 {
     await Task.Delay(1000);
-    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
+    status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 }
 
 if (status.Status == VolatileKnowledgeSimpleStatus.Error)
@@ -821,14 +821,14 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     FileName = "document.pdf"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
 
 // Wait until ready
 VolatileKnowledge status = knowledge;
 while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
 {
     await Task.Delay(1000);
-    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id.ToString());
+    status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 }
 
 // Execute agent with volatile knowledge
