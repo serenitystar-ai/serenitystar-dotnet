@@ -45,9 +45,7 @@ namespace SerenityStar.Agents.System
             List<object> parameters = new List<object>();
 
             if (stream)
-            {
                 parameters.Add(new { Key = "stream", Value = true });
-            }
 
             return parameters;
         }
