@@ -20,6 +20,26 @@ namespace SerenityStar.Agents.Conversational
         }
 
         /// <summary>
+        /// Creates a new conversation with an assistant agent.
+        /// The conversation is created automatically when the first message is sent.
+        /// </summary>
+        /// <param name="agentCode">The assistant agent code.</param>
+        /// <param name="conversationId">Optional existing conversation ID to resume.</param>
+        /// <param name="options">Optional execution options.</param>
+        /// <returns>A new conversation instance.</returns>
+        public Conversation CreateConversation(
+            string agentCode,
+            string? conversationId = null,
+            AgentExecutionOptions? options = null)
+        {
+            Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, options);
+            if (!string.IsNullOrEmpty(conversationId))
+                conversation.SetConversationId(conversationId);
+
+            return conversation;
+        }
+
+        /// <summary>
         /// Gets information about an assistant agent.
         /// </summary>
         /// <param name="agentCode">The agent code.</param>

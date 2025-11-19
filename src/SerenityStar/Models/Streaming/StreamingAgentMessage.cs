@@ -153,6 +153,11 @@ namespace SerenityStar.Models.Streaming
         public string? UserMessageId { get; set; }
 
         /// <summary>
+        /// The complete agent result with all execution details.
+        /// </summary>
+        public AgentResult? Result { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="StreamingAgentMessageStop"/> class.
         /// </summary>
         public StreamingAgentMessageStop()

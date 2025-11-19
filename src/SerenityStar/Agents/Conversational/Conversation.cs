@@ -22,6 +22,7 @@ namespace SerenityStar.Agents.Conversational
         private readonly string _agentCode;
         private readonly AgentExecutionOptions? _options;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly JsonSerializerOptions _snakeCaseJsonOptions;
         private string? _chatId;
 
         /// <summary>
@@ -44,6 +45,20 @@ namespace SerenityStar.Agents.Conversational
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+            _snakeCaseJsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
+        }
+
+        /// <summary>
+        /// Sets the conversation ID (for resuming existing conversations).
+        /// </summary>
+        /// <param name="conversationId">The conversation ID to set.</param>
+        internal void SetConversationId(string conversationId)
+        {
+            _chatId = conversationId;
         }
 
         /// <summary>
@@ -62,7 +77,7 @@ namespace SerenityStar.Agents.Conversational
         internal async Task InitializeInfoAsync(CancellationToken cancellationToken = default)
         {
             string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
-            string url = $"/api/v2/agent/{_agentCode}/info{version}";
+            string url = $"/api/v2/agent/{_agentCode}/{version}/conversation/info";
 
             Dictionary<string, object?> requestBody = new Dictionary<string, object?>
             {
@@ -216,10 +231,15 @@ namespace SerenityStar.Agents.Conversational
                     StreamingAgentMessage? msg = ParseStreamingMessage(data);
                     if (msg != null)
                     {
-                        // Store instanceId as chatId for subsequent messages
-                        if (msg is StreamingAgentMessageStop stop && string.IsNullOrEmpty(_chatId) && stop.InstanceId.HasValue && stop.InstanceId.Value != Guid.Empty)
+                        // Store conversationId from the stop message
+                        if (msg is StreamingAgentMessageStop stop && string.IsNullOrEmpty(_chatId))
                         {
-                            _chatId = stop.InstanceId.Value.ToString();
+                            // Try to get instanceId from the result object
+                            if (stop.Result?.InstanceId != Guid.Empty && stop.Result?.InstanceId != null)
+                                _chatId = stop.Result.InstanceId.ToString();
+                            // Fallback to direct InstanceId property if available
+                            else if (stop.InstanceId.HasValue && stop.InstanceId.Value != Guid.Empty)
+                                _chatId = stop.InstanceId.Value.ToString();
                         }
                         yield return msg;
                     }
@@ -256,7 +276,7 @@ namespace SerenityStar.Agents.Conversational
                         Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
                         DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
                     },
-                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _jsonOptions),
+                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _snakeCaseJsonOptions),
                     "error" => new StreamingAgentMessageError
                     {
                         Error = root.GetProperty("error").GetString() ?? string.Empty,

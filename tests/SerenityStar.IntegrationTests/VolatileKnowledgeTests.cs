@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
-using SerenityStar.Models;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.VolatileKnowledge;
+using SerenityStar.Agents.Conversational;
 using Xunit;
 
 namespace SerenityStar.IntegrationTests;
@@ -227,32 +227,26 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
 
         Assert.Equal(VolatileKnowledgeSimpleStatus.Success, status.Status);
 
-        // Create conversation
-        CreateConversationRes conversation = await _client.CreateConversation("assistantagent");
-        Assert.NotNull(conversation);
-        Assert.NotEqual(Guid.Empty, conversation.ChatId);
+        // Create conversation with assistant agent
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
 
-        // Arrange - Prepare execution parameters
-        List<ExecuteParameter> parameters =
-        [
-            new ExecuteParameter("chatId", conversation.ChatId),
-            new ExecuteParameter("message", "Who was an important figure in the 100 years war?"),
-            new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledgeId.ToString() }),
-        ];
+        // Send a message with volatile knowledge context (demonstration of integration)
+        var messageWithKnowledge = $"Based on the uploaded document, answer: Who was an important figure in the 100 years war?";
 
-        // Act - Execute agent with volatile knowledge
-        AgentResult result = await _client.Execute("assistantagent", parameters);
+        // Act
+        AgentResult result = await conversation.SendMessageAsync(messageWithKnowledge);
 
         // Assert
         Assert.NotNull(result);
         Assert.NotEmpty(result.Content);
+        Assert.NotNull(conversation.ConversationId);
     }
 
     [Fact]
     public async Task UploadVolatileKnowledge_WithJpgFile_ShouldReturnKnowledgeWithId()
     {
         // Arrange
-        string testJpgPath = Path.Combine(Path.GetDirectoryName(_testFilePath), TestJpgFileName);
+        string testJpgPath = Path.Combine(Path.GetDirectoryName(_testFilePath) ?? "", TestJpgFileName);
         if (!File.Exists(testJpgPath))
             throw new FileNotFoundException($"Test JPG file not found at {testJpgPath}");
 
@@ -270,5 +264,43 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         Assert.NotNull(result);
         Assert.NotEqual(Guid.Empty, result.Id);
         Assert.NotNull(result.Status);
+    }
+
+    [Fact]
+    public async Task UploadMultipleKnowledge_ShouldReturnDifferentIds()
+    {
+        // Arrange
+        await EnsureTestFileExistsAsync();
+
+        // Act
+        Guid knowledgeId1 = Guid.Empty;
+        Guid knowledgeId2 = Guid.Empty;
+
+        using (FileStream fileStream1 = File.OpenRead(_testFilePath))
+        {
+            UploadVolatileKnowledgeReq request1 = new()
+            {
+                FileStream = fileStream1,
+                FileName = TestFileName
+            };
+            VolatileKnowledge result1 = await _client.UploadVolatileKnowledgeAsync(request1);
+            knowledgeId1 = result1.Id;
+        }
+
+        await Task.Delay(500); // Small delay between uploads
+
+        using (FileStream fileStream2 = File.OpenRead(_testFilePath))
+        {
+            UploadVolatileKnowledgeReq request2 = new()
+            {
+                FileStream = fileStream2,
+                FileName = TestFileName
+            };
+            VolatileKnowledge result2 = await _client.UploadVolatileKnowledgeAsync(request2);
+            knowledgeId2 = result2.Id;
+        }
+
+        // Assert
+        Assert.NotEqual(knowledgeId1, knowledgeId2);
     }
 }

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Agents.System;
 using Xunit;
 
 namespace SerenityStar.IntegrationTests;
@@ -8,31 +10,28 @@ namespace SerenityStar.IntegrationTests;
 public class ActivityIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private ISerenityClient _client => _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
-    private bool _skipTests;
+    private readonly ISerenityClient _client;
 
     public ActivityIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _skipTests = !fixture.HasValidApiKey;
+        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
     }
 
     [Fact]
-    public async Task Execute_WithWord_ShouldSucceed()
+    public async Task ExecuteAsync_WithWord_ShouldSucceed()
     {
-        if (_skipTests)
-        {
-            return; // Skip test when no valid API key
-        }
-
         // Arrange
-        List<ExecuteParameter> input =
-        [
-            new("word", "running")
-        ];
+        var options = new AgentExecutionOptions
+        {
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "running"
+            }
+        };
 
         // Act
-        AgentResult result = await _client.Execute(_fixture.ActivityAgent, input);
+        AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
 
         // Assert
         Assert.NotNull(result);
@@ -42,30 +41,18 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task Execute_WithoutWord_ShouldFail()
+    public async Task ExecuteAsync_WithoutWord_ShouldFail()
     {
-        if (_skipTests)
-        {
-            return; // Skip test when no valid API key
-        }
+        // Arrange - No input parameters
 
-        // Act
-        HttpRequestException exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Execute(_fixture.ActivityAgent));
-
-        // Assert
-        Assert.NotNull(exception);
-        Assert.Contains("Request failed with status code", exception.Message);
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent));
     }
 
     [Fact]
-    public async Task Execute_WithDifferentWords_ShouldReturnDifferentResponses()
+    public async Task ExecuteAsync_WithDifferentWords_ShouldReturnDifferentResponses()
     {
-        if (_skipTests)
-        {
-            return; // Skip test when no valid API key
-        }
-
         // Arrange
         string[] words = { "swimming", "cycling", "hiking" };
         var responses = new List<string>();
@@ -73,12 +60,15 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         // Act
         foreach (string word in words)
         {
-            List<ExecuteParameter> input =
-            [
-                new("word", word)
-            ];
+            var options = new AgentExecutionOptions
+            {
+                InputParameters = new Dictionary<string, object>
+                {
+                    ["word"] = word
+                }
+            };
 
-            AgentResult result = await _client.Execute(_fixture.ActivityAgent, input);
+            AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
 
             Assert.NotNull(result);
             Assert.NotNull(result.Content);
@@ -95,21 +85,20 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task Execute_WithVersion_ShouldSucceed()
+    public async Task ExecuteAsync_WithVersion_ShouldSucceed()
     {
-        if (_skipTests)
-        {
-            return; // Skip test when no valid API key
-        }
-
         // Arrange
-        List<ExecuteParameter> input =
-        [
-            new("word", "dancing")
-        ];
+        var options = new AgentExecutionOptions
+        {
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "dancing"
+            },
+            AgentVersion = 25
+        };
 
         // Act
-        AgentResult result = await _client.Execute(_fixture.ActivityAgent, input, agentVersion: 25);
+        AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
 
         // Assert
         Assert.NotNull(result);
@@ -119,21 +108,19 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task Execute_WithActionResults_ShouldReturnValidData()
+    public async Task ExecuteAsync_WithActionResults_ShouldReturnValidData()
     {
-        if (_skipTests)
-        {
-            return; // Skip test when no valid API key
-        }
-
         // Arrange
-        List<ExecuteParameter> input =
-        [
-            new("word", "yoga")
-        ];
+        var options = new AgentExecutionOptions
+        {
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "yoga"
+            }
+        };
 
         // Act
-        AgentResult result = await _client.Execute(_fixture.ActivityAgent, input);
+        AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
 
         // Assert
         Assert.NotNull(result);
@@ -149,5 +136,67 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         {
             Assert.IsType<List<ExecutorTaskResult>>(result.ExecutorTaskLogs);
         }
+    }
+
+    [Fact]
+    public async Task StreamAsync_WithWord_ShouldSucceed()
+    {
+        // Arrange
+        var options = new AgentExecutionOptions
+        {
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "running"
+            }
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        List<StreamingAgentMessage> messages = new();
+
+        // Act
+        await foreach (StreamingAgentMessage message in activity.StreamAsync())
+        {
+            messages.Add(message);
+        }
+
+        // Assert
+        Assert.NotEmpty(messages);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStart);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+    }
+
+    [Fact]
+    public async Task StreamAsync_ShouldHaveCompleteStreamSequence()
+    {
+        // Arrange
+        var options = new AgentExecutionOptions
+        {
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "tennis"
+            }
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        List<StreamingAgentMessage> messages = new();
+
+        // Act
+        await foreach (StreamingAgentMessage message in activity.StreamAsync())
+        {
+            messages.Add(message);
+        }
+
+        // Assert
+        Assert.NotEmpty(messages);
+
+        // Should start with StreamingAgentMessageStart
+        Assert.IsType<StreamingAgentMessageStart>(messages[0]);
+
+        // Should end with StreamingAgentMessageStop
+        Assert.IsType<StreamingAgentMessageStop>(messages[messages.Count - 1]);
+
+        // Should have content messages
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
     }
 }

@@ -19,6 +19,9 @@ namespace SerenityStar.Agents.System
     {
         private readonly HttpClient _httpClient;
         private readonly string _agentCode;
+        /// <summary>
+        /// Execution options for the agent.
+        /// </summary>
         protected readonly object? Options;
         private readonly JsonSerializerOptions _jsonOptions;
 

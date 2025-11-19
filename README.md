@@ -190,7 +190,103 @@ Console.WriteLine($"Executor Task Logs: {conversationWithLogs.ExecutorTaskLogs}"
 ```
 
 ### Stream message with SSE
-// sarasa
+
+You can stream responses from assistant agents using Server-Sent Events (SSE). This is useful for real-time response processing and providing a better user experience with progressive message display.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Streaming;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Stream a message - get updates as they arrive
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Tell me a quick recipe"))
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart start:
+            Console.WriteLine("Stream started");
+            break;
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // Display content as it arrives
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"Task started: {taskStart.Key}");
+            break;
+
+        case StreamingAgentMessageTaskEnd taskEnd:
+            Console.WriteLine($"Task completed: {taskEnd.Key} (Duration: {taskEnd.DurationMs}ms)");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine("\nStream completed");
+            Console.WriteLine($"Conversation ID: {stop.InstanceId}");
+            if (stop.CompletionUsage != null)
+            {
+                Console.WriteLine($"Tokens used - Input: {stop.CompletionUsage.PromptTokens}, Output: {stop.CompletionUsage.CompletionTokens}");
+            }
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"Error: {error.Error}");
+            break;
+    }
+}
+```
+
+#### Stream subsequent messages
+
+Once a conversation is created, you can stream additional messages using the same conversation instance:
+
+```csharp
+// First message stream (creates the conversation)
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("What's a healthy breakfast?"))
+{
+    if (message is StreamingAgentMessageContent content)
+        Console.Write(content.Text);
+}
+
+// Subsequent message stream (uses existing conversation)
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Can you add protein options?"))
+{
+    if (message is StreamingAgentMessageContent content)
+        Console.Write(content.Text);
+}
+```
+
+#### Stream with execution options
+
+You can customize the streaming behaviour with execution options:
+
+```csharp
+// Create conversation with options
+Conversation conversation = client.Agents.Assistants.CreateConversation(
+    "chef-assistant",
+    options: new AgentExecutionOptions
+    {
+        InputParameters = new Dictionary<string, object>
+        {
+            ["mealType"] = "dinner",
+            ["servings"] = 4
+        },
+        UserIdentifier = "user-456",
+        Channel = "mobile-app",
+        AgentVersion = 2
+    }
+);
+
+// Stream message with the configured options
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("I need a recipe"))
+{
+    if (message is StreamingAgentMessageContent content)
+        Console.Write(content.Text);
+}
+```
 
 ### Message feedback
 
@@ -335,7 +431,61 @@ if (responseAdvanced.ExecutorTaskLogs != null)
 
 ### Stream message with SSE
 
-sarasa
+Activities support streaming responses using Server-Sent Events (SSE). This allows you to process results as they're generated.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create an activity for streaming
+var options = new AgentExecutionOptions
+{
+    InputParameters = new Dictionary<string, object>
+    {
+        ["textToTranslate"] = "hello world",
+        ["targetLanguage"] = "spanish"
+    }
+};
+
+Activity activity = client.Agents.Activities.Create("translator-activity", options);
+
+// Stream the response
+await foreach (StreamingAgentMessage message in activity.StreamAsync())
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart:
+            Console.WriteLine("Translation started...");
+            break;
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // "Hola" "mundo"
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"Task: {taskStart.Key}");
+            break;
+
+        case StreamingAgentMessageTaskEnd taskEnd:
+            Console.WriteLine($"Task completed in {taskEnd.DurationMs}ms");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine($"\nTranslation complete!");
+            if (stop.CompletionUsage != null)
+                Console.WriteLine($"Tokens used: {stop.CompletionUsage.TotalTokens}");
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"Error: {error.Error}");
+            break;
+    }
+}
+```
 
 ## Proxies
 
@@ -377,7 +527,66 @@ Console.WriteLine(response.ExecutorTaskLogs);
 
 ### Stream responses with SSE
 
-sarasa
+Proxies support streaming responses, perfect for real-time AI model interactions. You can process tokens as they arrive.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a proxy for streaming
+var options = new ProxyExecutionOptions
+{
+    Model = "gpt-4o-mini-2024-07-18",
+    Messages = new List<ChatMessage>
+    {
+        new() { Role = "user", Content = "Write a short poem about programming" }
+    },
+    Temperature = 0.7f,
+    MaxTokens = 200
+};
+
+Proxy proxy = client.Agents.Proxies.Create("openai-proxy", options);
+
+// Stream the response
+Console.WriteLine("Poem: ");
+await foreach (StreamingAgentMessage message in proxy.StreamAsync())
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart:
+            break; // Generation started
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // Print each chunk as it arrives
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"\nStarting: {taskStart.Key}");
+            break;
+
+        case StreamingAgentMessageTaskEnd taskEnd:
+            Console.WriteLine($"Completed in {taskEnd.DurationMs}ms");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine("\n\nGeneration complete!");
+            if (stop.CompletionUsage != null)
+            {
+                Console.WriteLine($"Input tokens: {stop.CompletionUsage.PromptTokens}");
+                Console.WriteLine($"Output tokens: {stop.CompletionUsage.CompletionTokens}");
+            }
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"Error: {error.Error}");
+            break;
+    }
+}
+```
 
 ### Proxy Execution Options
 
@@ -471,7 +680,64 @@ Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTo
 
 ### Stream responses with SSE
 
-sarasa
+Chat completions support streaming for real-time chat interactions. Process model responses token-by-token.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a chat completion for streaming
+var options = new ChatCompletionOptions
+{
+    Message = "Explain quantum computing in simple terms",
+    UserIdentifier = "user-123"
+};
+
+ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create("assistant-chat", options);
+
+// Stream the response
+Console.WriteLine("Answer: ");
+await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart:
+            break; // Stream initialized
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // Print each chunk
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"\n[Processing: {taskStart.Key}]");
+            break;
+
+        case StreamingAgentMessageTaskEnd taskEnd:
+            Console.WriteLine($"[Task completed in {taskEnd.DurationMs}ms]");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine("\n\n[Response complete]");
+            if (stop.CompletionUsage != null)
+            {
+                Console.WriteLine($"Tokens - Input: {stop.CompletionUsage.PromptTokens}, Output: {stop.CompletionUsage.CompletionTokens}");
+            }
+            if (stop.TimeToFirstToken.HasValue)
+            {
+                Console.WriteLine($"Time to first token: {stop.TimeToFirstToken}ms");
+            }
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"[Error: {error.Error}]");
+            break;
+    }
+}
+```
 
 ## Volatile Knowledge
 

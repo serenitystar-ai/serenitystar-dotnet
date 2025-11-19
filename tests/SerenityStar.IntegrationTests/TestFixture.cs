@@ -21,23 +21,21 @@ public class TestFixture : IDisposable
             .AddEnvironmentVariables()
             .Build();
 
-        var services = new ServiceCollection();
+        ServiceCollection services = new();
 
-        var apiKey = Configuration["SerenityStar:ApiKey"];
+        string? apiKey = Configuration["SerenityStar:ApiKey"];
         AssistantAgent = Configuration["SerenityStar:AssistantAgent"] ?? "assistantagent";
         ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
 
         // Check if we have a valid API key (not null, empty or the placeholder)
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";
 
-        if (HasValidApiKey)
-            services.AddSerenityStar(apiKey);
-        else
-        {
-            // Add a placeholder service that will throw a meaningful exception when used
-            services.AddSerenityStar("dummy-key-for-build");
-            Console.WriteLine("WARNING: No valid API key found. Integration tests will be skipped.");
-        }
+        if (!HasValidApiKey)
+            throw new InvalidOperationException(
+                "No valid API key found. Please set 'SerenityStar:ApiKey' in appsettings.Development.json or environment variables. " +
+                "Integration tests require a valid Serenity Star API key to run.");
+
+        services.AddSerenityStar(apiKey!);
 
         ServiceProvider = services.BuildServiceProvider();
     }
