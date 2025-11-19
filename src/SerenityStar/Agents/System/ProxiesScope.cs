@@ -1,84 +1,199 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.Execute;
+using SerenityStar.Models.Streaming;
 
 namespace SerenityStar.Agents.System
 {
     /// <summary>
     /// Represents a Proxy agent.
     /// </summary>
-    public class Proxy : SystemAgentBase
+    public class Proxy
     {
+        private readonly HttpClient _httpClient;
+        private readonly string _agentCode;
         private readonly ProxyExecutionOptions _proxyOptions;
+        private readonly JsonSerializerOptions _jsonOptions;
 
         internal Proxy(HttpClient httpClient, string agentCode, ProxyExecutionOptions options)
-            : base(httpClient, agentCode, options)
         {
+            _httpClient = httpClient;
+            _agentCode = agentCode;
             _proxyOptions = options;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
         }
 
-        /// <inheritdoc/>
-        protected override object CreateExecuteBody(bool stream)
+        /// <summary>
+        /// Creates the execute body as a direct JSON object (not parameters).
+        /// </summary>
+        private object CreateExecuteBody(bool stream)
         {
-            List<object> parameters = CreateBaseParameters(stream);
+            var body = new Dictionary<string, object>();
 
-            // Add proxy-specific parameters
-            parameters.Add(new { Key = "model", Value = _proxyOptions.Model });
+            // Add model (required)
+            body["model"] = _proxyOptions.Model;
 
+            // Add messages (required)
             if (_proxyOptions.Messages != null && _proxyOptions.Messages.Count > 0)
             {
-                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_proxyOptions.Messages) });
+                body["messages"] = _proxyOptions.Messages;
             }
 
+            // Add optional parameters
             if (_proxyOptions.Temperature.HasValue)
-            {
-                parameters.Add(new { Key = "temperature", Value = _proxyOptions.Temperature.Value });
-            }
+                body["temperature"] = _proxyOptions.Temperature.Value;
 
             if (_proxyOptions.MaxTokens.HasValue)
-            {
-                parameters.Add(new { Key = "max_tokens", Value = _proxyOptions.MaxTokens.Value });
-            }
+                body["max_tokens"] = _proxyOptions.MaxTokens.Value;
 
             if (_proxyOptions.TopP.HasValue)
-            {
-                parameters.Add(new { Key = "top_p", Value = _proxyOptions.TopP.Value });
-            }
+                body["top_p"] = _proxyOptions.TopP.Value;
 
             if (_proxyOptions.TopK.HasValue)
-            {
-                parameters.Add(new { Key = "top_k", Value = _proxyOptions.TopK.Value });
-            }
+                body["top_k"] = _proxyOptions.TopK.Value;
 
             if (_proxyOptions.FrequencyPenalty.HasValue)
-            {
-                parameters.Add(new { Key = "frequency_penalty", Value = _proxyOptions.FrequencyPenalty.Value });
-            }
+                body["frequency_penalty"] = _proxyOptions.FrequencyPenalty.Value;
 
             if (_proxyOptions.PresencePenalty.HasValue)
-            {
-                parameters.Add(new { Key = "presence_penalty", Value = _proxyOptions.PresencePenalty.Value });
-            }
+                body["presence_penalty"] = _proxyOptions.PresencePenalty.Value;
+
+            if (_proxyOptions.UserIdentifier != null)
+                body["userIdentifier"] = _proxyOptions.UserIdentifier;
 
             if (_proxyOptions.Vendor != null)
-            {
-                parameters.Add(new { Key = "vendor", Value = _proxyOptions.Vendor });
-            }
+                body["vendor"] = _proxyOptions.Vendor;
 
             if (_proxyOptions.GroupIdentifier != null)
-            {
-                parameters.Add(new { Key = "groupIdentifier", Value = _proxyOptions.GroupIdentifier });
-            }
+                body["groupIdentifier"] = _proxyOptions.GroupIdentifier;
 
             if (_proxyOptions.UseVision.HasValue)
+                body["useVision"] = _proxyOptions.UseVision.Value;
+
+            if (stream)
+                body["stream"] = true;
+
+            return body;
+        }
+
+        /// <summary>
+        /// Executes the proxy agent.
+        /// </summary>
+        public async Task<AgentResult> ExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            string url = $"/api/v2/agent/{_agentCode}/execute";
+            object body = CreateExecuteBody(false);
+
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, body, _jsonOptions, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
             {
-                parameters.Add(new { Key = "useVision", Value = _proxyOptions.UseVision.Value });
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return parameters;
+            return await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
+                   ?? throw new InvalidOperationException("Failed to deserialize response");
+        }
+
+        /// <summary>
+        /// Streams execution results from the proxy agent.
+        /// </summary>
+        public async IAsyncEnumerable<StreamingAgentMessage> StreamAsync(
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            string url = $"/api/v2/agent/{_agentCode}/execute";
+            object body = CreateExecuteBody(true);
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(body, options: _jsonOptions)
+            };
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            using Stream stream = await response.Content.ReadAsStreamAsync();
+            using StreamReader reader = new(stream);
+            yield return new StreamingAgentMessageStart();
+
+            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            {
+                string? line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
+                    continue;
+
+                string data = line.Substring(6).Trim();
+                if (data == "[DONE]")
+                    break;
+
+                StreamingAgentMessage? msg = ParseStreamingMessage(data);
+                if (msg != null)
+                    yield return msg;
+            }
+        }
+
+        private StreamingAgentMessage? ParseStreamingMessage(string json)
+        {
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                JsonElement root = doc.RootElement;
+
+                if (!root.TryGetProperty("type", out JsonElement typeElement))
+                    return null;
+
+                string type = typeElement.GetString() ?? string.Empty;
+
+                return type switch
+                {
+                    "task_start" => new StreamingAgentMessageTaskStart
+                    {
+                        Key = root.GetProperty("key").GetString() ?? string.Empty,
+                        Input = root.GetProperty("input").GetString() ?? string.Empty
+                    },
+                    "content" => new StreamingAgentMessageContent
+                    {
+                        Text = root.GetProperty("text").GetString() ?? string.Empty
+                    },
+                    "task_end" => new StreamingAgentMessageTaskEnd
+                    {
+                        Key = root.GetProperty("key").GetString() ?? string.Empty,
+                        Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
+                        DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
+                    },
+                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _jsonOptions),
+                    "error" => new StreamingAgentMessageError
+                    {
+                        Error = root.GetProperty("error").GetString() ?? string.Empty,
+                        StatusCode = root.TryGetProperty("statusCode", out JsonElement statusElem) ? statusElem.GetInt32() : null
+                    },
+                    _ => null
+                };
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 
@@ -101,7 +216,7 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Proxy execution options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public Task<Models.Execute.AgentResult> ExecuteAsync(
+        public Task<AgentResult> ExecuteAsync(
             string agentCode,
             ProxyExecutionOptions options,
             CancellationToken cancellationToken = default)

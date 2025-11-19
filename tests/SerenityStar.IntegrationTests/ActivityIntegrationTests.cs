@@ -22,7 +22,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithWord_ShouldSucceed()
     {
         // Arrange
-        var options = new AgentExecutionOptions
+        AgentExecutionOptions options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -54,13 +54,13 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithDifferentWords_ShouldReturnDifferentResponses()
     {
         // Arrange
-        string[] words = { "swimming", "cycling", "hiking" };
+        string[] words = ["swimming", "cycling", "hiking"];
         var responses = new List<string>();
 
         // Act
         foreach (string word in words)
         {
-            var options = new AgentExecutionOptions
+            AgentExecutionOptions options = new()
             {
                 InputParameters = new Dictionary<string, object>
                 {
@@ -88,7 +88,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithVersion_ShouldSucceed()
     {
         // Arrange
-        var options = new AgentExecutionOptions
+        AgentExecutionOptions options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -111,7 +111,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithActionResults_ShouldReturnValidData()
     {
         // Arrange
-        var options = new AgentExecutionOptions
+        AgentExecutionOptions options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -128,21 +128,17 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         Assert.NotEmpty(result.Content);
 
         if (result.ActionResults != null)
-        {
             Assert.IsType<Dictionary<string, object>>(result.ActionResults);
-        }
 
         if (result.ExecutorTaskLogs != null)
-        {
             Assert.IsType<List<ExecutorTaskResult>>(result.ExecutorTaskLogs);
-        }
     }
 
     [Fact]
     public async Task StreamAsync_WithWord_ShouldSucceed()
     {
         // Arrange
-        var options = new AgentExecutionOptions
+        AgentExecutionOptions options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -151,13 +147,11 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         };
 
         Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
-        List<StreamingAgentMessage> messages = new();
+        List<StreamingAgentMessage> messages = [];
 
         // Act
         await foreach (StreamingAgentMessage message in activity.StreamAsync())
-        {
             messages.Add(message);
-        }
 
         // Assert
         Assert.NotEmpty(messages);
@@ -170,7 +164,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_ShouldHaveCompleteStreamSequence()
     {
         // Arrange
-        var options = new AgentExecutionOptions
+        AgentExecutionOptions options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -183,9 +177,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
 
         // Act
         await foreach (StreamingAgentMessage message in activity.StreamAsync())
-        {
             messages.Add(message);
-        }
 
         // Assert
         Assert.NotEmpty(messages);
@@ -194,7 +186,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         Assert.IsType<StreamingAgentMessageStart>(messages[0]);
 
         // Should end with StreamingAgentMessageStop
-        Assert.IsType<StreamingAgentMessageStop>(messages[messages.Count - 1]);
+        Assert.IsType<StreamingAgentMessageStop>(messages[^1]);
 
         // Should have content messages
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);

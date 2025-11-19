@@ -70,8 +70,6 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Optional execution options.</param>
         /// <returns>An activity instance for streaming.</returns>
         public Activity Create(string agentCode, AgentExecutionOptions? options = null)
-        {
-            return new Activity(_httpClient, agentCode, options);
-        }
+            => new Activity(_httpClient, agentCode, options);
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using SerenityStar.Models.ChatCompletion;
@@ -14,11 +15,17 @@ namespace SerenityStar.Agents.System
     public class ChatCompletion : SystemAgentBase
     {
         private readonly ChatCompletionOptions _chatOptions;
+        private readonly JsonSerializerOptions _jsonOptions;
 
         internal ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionOptions options)
             : base(httpClient, agentCode, options)
         {
             _chatOptions = options;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
         }
 
         /// <inheritdoc/>
@@ -31,18 +38,12 @@ namespace SerenityStar.Agents.System
 
             // Add messages if provided
             if (_chatOptions.Messages != null && _chatOptions.Messages.Count > 0)
-            {
-                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_chatOptions.Messages) });
-            }
+                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_chatOptions.Messages, _jsonOptions) });
 
             // Add input parameters if provided
             if (_chatOptions.InputParameters != null)
-            {
                 foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
-                {
                     parameters.Add(new { Key = param.Key, Value = param.Value });
-                }
-            }
 
             return parameters;
         }

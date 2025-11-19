@@ -11,6 +11,8 @@ public class TestFixture : IDisposable
     public bool HasValidApiKey { get; }
     public string AssistantAgent { get; }
     public string ActivityAgent { get; }
+    public string ProxyAgent { get; }
+    public string ChatCompletionAgent { get; }
 
     public TestFixture()
     {
@@ -26,6 +28,8 @@ public class TestFixture : IDisposable
         string? apiKey = Configuration["SerenityStar:ApiKey"];
         AssistantAgent = Configuration["SerenityStar:AssistantAgent"] ?? "assistantagent";
         ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
+        ProxyAgent = Configuration["SerenityStar:ProxyAgent"] ?? "proxyagent";
+        ChatCompletionAgent = Configuration["SerenityStar:ChatCompletionAgent"] ?? "chatcompletionagent";
 
         // Check if we have a valid API key (not null, empty or the placeholder)
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";
