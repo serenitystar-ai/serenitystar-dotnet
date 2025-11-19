@@ -2,7 +2,6 @@ using Microsoft.Extensions.Options;
 using SerenityStar.Agents;
 using SerenityStar.Constants;
 using SerenityStar.Models;
-using SerenityStar.Models.Execute;
 using SerenityStar.Models.VolatileKnowledge;
 using System;
 using System.Collections.Generic;
@@ -79,32 +78,6 @@ namespace SerenityStar.Client
             baseUrl ??= ClientConstants.BaseUrl;
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(timeout ?? 100);
-        }
-
-        /// <inheritdoc />
-        public async Task<AgentResult> Execute(string agentCode, List<ExecuteParameter>? input = null, int? agentVersion = null, int apiVersion = 2, CancellationToken cancellationToken = default) // sarasa ver si hace falta tenerlo
-        {
-            if (string.IsNullOrEmpty(agentCode))
-                throw new ArgumentNullException(nameof(agentCode));
-
-            input ??= new List<ExecuteParameter>();
-
-            string version = agentVersion.HasValue ? $"/{agentVersion}" : string.Empty;
-
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
-                $"/api/v{apiVersion}/agent/{agentCode}/execute{version}",
-                input,
-                JsonOptions,
-                cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            return await response.Content.ReadFromJsonAsync<AgentResult>(JsonOptions, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize response");
         }
 
         /// <inheritdoc />

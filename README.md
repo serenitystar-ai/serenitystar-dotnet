@@ -832,12 +832,8 @@ while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status !
 }
 
 // Execute agent with volatile knowledge
-List<ExecuteParameter> parameters = new();
-parameters.Add(new ExecuteParameter("message", "What does this document say about pricing?"));
-parameters.Add(new ExecuteParameter("chatId", "your-chat-id"));
-parameters.Add(new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledge.Id.ToString() }));
-
-AgentResult result = await client.Execute("assistantagent", parameters);
+Conversation conversation = client.Agents.Assistants.CreateConversation("assistantagent");
+AgentResult result = await conversation.SendMessageAsync("Based on the uploaded document, what does it say about pricing?");
 Console.WriteLine($"Agent response: {result.Content}");
 ```
 
