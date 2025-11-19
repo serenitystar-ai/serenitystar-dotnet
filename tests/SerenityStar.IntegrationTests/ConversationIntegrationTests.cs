@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
-using SerenityStar.Agents.Assistants;
+using SerenityStar.Agents.Conversational;
 using Xunit;
 
 namespace SerenityStar.IntegrationTests;

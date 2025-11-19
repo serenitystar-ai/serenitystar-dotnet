@@ -11,7 +11,7 @@ using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 
-namespace SerenityStar.Agents.Assistants
+namespace SerenityStar.Agents.Conversational
 {
     /// <summary>
     /// Represents a conversation with an assistant agent.

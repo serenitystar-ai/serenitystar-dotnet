@@ -1,4 +1,4 @@
-using SerenityStar.Agents.Assistants;
+using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using System.Net.Http;
 

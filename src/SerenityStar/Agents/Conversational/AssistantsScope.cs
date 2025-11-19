@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 
-namespace SerenityStar.Agents.Assistants
+namespace SerenityStar.Agents.Conversational
 {
     /// <summary>
     /// Provides methods for interacting with Assistant agents.
