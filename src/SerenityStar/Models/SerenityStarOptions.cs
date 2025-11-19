@@ -18,11 +18,11 @@ namespace SerenityStar.Models
         /// <summary>
         /// Gets or sets the assistant agent name.
         /// </summary>
-        public string AssistantAgent { get; set; } = "assistantagent";
+        public string? AssistantAgent { get; set; }
 
         /// <summary>
         /// Gets or sets the activity agent name.
         /// </summary>
-        public string ActivityAgent { get; set; } = "activityagent";
+        public string? ActivityAgent { get; set; }
     }
 }
