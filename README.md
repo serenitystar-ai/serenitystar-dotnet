@@ -38,12 +38,46 @@ dotnet add package SubgenAI.SerenityStar.SDK
 
 ## 🔧 Usage
 
-### Direct Instantiation
+### Direct Instantiation with Factory Method
 
 ```csharp
 using SerenityStar.Client;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Execute an activity agent
+AgentResult response = await client.Agents.Activities.ExecuteAsync("marketing-campaign");
+Console.WriteLine(response.Content);
+```
+
+### Direct Instantiation with Builder Pattern
+
+```csharp
+using SerenityStar.Client;
+
+SerenityClient client = new SerenityClientBuilder()
+    .WithApiKey("your-api-key")
+    .WithBaseUrl("https://api.serenitystar.ai") // Optional
+    .WithTimeout(30)                             // Optional
+    .Build();
+
+// Execute an activity agent
+AgentResult response = await client.Agents.Activities.ExecuteAsync("marketing-campaign");
+Console.WriteLine(response.Content);
+```
+
+### Using a Custom HttpClient with Builder
+
+```csharp
+using SerenityStar.Client;
+
+var customHttpClient = new HttpClient();
+// Configure your custom HttpClient as needed
+
+SerenityClient client = new SerenityClientBuilder()
+    .WithApiKey("your-api-key")
+    .WithHttpClient(customHttpClient)
+    .Build();
 
 // Execute an activity agent
 AgentResult response = await client.Agents.Activities.ExecuteAsync("marketing-campaign");

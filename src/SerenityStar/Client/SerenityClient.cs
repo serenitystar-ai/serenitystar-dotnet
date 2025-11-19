@@ -31,40 +31,38 @@ namespace SerenityStar.Client
             string apiKey = options.Value.ApiKey ?? throw new ArgumentNullException(nameof(options), "The ApiKey property of the options. Value object is null.");
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-            ConfigureHttpClient(_httpClient, apiKey);
+            // Configure the API key header
+            _httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
             Agents = new AgentsScope(_httpClient);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SerenityClient"/> class for direct instantiation.
+        /// Creates a new <see cref="SerenityClient"/> instance for direct instantiation.
+        /// This is a convenience method that uses the builder pattern internally.
         /// </summary>
         /// <param name="apiKey">The API key to use for authentication.</param>
-        /// <param name="baseUrl">The base URL to use for the API.</param>
-        /// <param name="timeout">The timeout in seconds.</param>
+        /// <param name="baseUrl">The base URL to use for the API. Defaults to the standard Serenity Star endpoint.</param>
+        /// <param name="timeout">The timeout in seconds. Defaults to 100 seconds.</param>
+        /// <returns>A configured SerenityClient instance.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when apiKey is null or empty.</exception>
         public static SerenityClient Create(string apiKey, string? baseUrl = null, int? timeout = null)
         {
-            if (string.IsNullOrEmpty(apiKey))
-                throw new ArgumentNullException(nameof(apiKey));
-
-            HttpClient httpClient = new HttpClient();
-            ConfigureHttpClient(httpClient, apiKey, baseUrl, timeout);
-
-            return new SerenityClient(httpClient);
+            return new SerenityClientBuilder()
+                .WithApiKey(apiKey)
+                .WithBaseUrl(baseUrl ?? ClientConstants.BaseUrl)
+                .WithTimeout(timeout ?? 100)
+                .Build();
         }
 
-        // Private constructor for direct instantiation
-        private SerenityClient(HttpClient httpClient)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerenityClient"/> class.
+        /// This constructor is for internal use by the builder pattern.
+        /// </summary>
+        /// <param name="httpClient">The configured HTTP client.</param>
+        internal SerenityClient(HttpClient httpClient)
         {
             _httpClient = httpClient;
             Agents = new AgentsScope(_httpClient);
-        }
-
-        private static void ConfigureHttpClient(HttpClient client, string apiKey, string? baseUrl = null, int? timeout = null)
-        {
-            client.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
-            baseUrl ??= ClientConstants.BaseUrl;
-            client.BaseAddress = new Uri(baseUrl);
-            client.Timeout = TimeSpan.FromSeconds(timeout ?? 100);
         }
     }
 }

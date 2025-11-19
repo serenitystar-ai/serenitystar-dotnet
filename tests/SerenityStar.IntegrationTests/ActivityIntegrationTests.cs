@@ -191,4 +191,34 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         // Should have content messages
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_WithBuilderClient_ShouldSucceed()
+    {
+        // Arrange - Create client using builder pattern
+        string? apiKey = _fixture.Configuration["SerenityStar:ApiKey"];
+        if (string.IsNullOrEmpty(apiKey))
+            throw new InvalidOperationException("API key is required for this test");
+
+        SerenityClient serenityClient = new SerenityClientBuilder()
+            .WithApiKey(apiKey)
+            .Build();
+
+        AgentExecutionOptions options = new()
+        {
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "running"
+            }
+        };
+
+        // Act
+        AgentResult result = await serenityClient.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+    }
 }
