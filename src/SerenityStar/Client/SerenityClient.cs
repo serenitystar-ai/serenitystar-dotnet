@@ -160,10 +160,9 @@ namespace SerenityStar.Client
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            string responseBody = await response.Content.ReadAsStringAsync();
-            VolatileKnowledge result = JsonSerializer.Deserialize<VolatileKnowledge>(responseBody, JsonOptions);
+            VolatileKnowledge? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledge>(cancellationToken: cancellationToken);
 
-            return result ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
+            return volatileKnowledge ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
         }
 
         /// <inheritdoc />
@@ -181,10 +180,9 @@ namespace SerenityStar.Client
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            string responseBody = await response.Content.ReadAsStringAsync();
-            VolatileKnowledge result = JsonSerializer.Deserialize<VolatileKnowledge>(responseBody, JsonOptions);
+            VolatileKnowledge? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledge>(cancellationToken: cancellationToken);
 
-            return result ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
+            return volatileKnowledge ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
         }
 
         #region Private Methods
