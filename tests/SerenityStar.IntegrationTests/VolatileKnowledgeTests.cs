@@ -1,11 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using Serenity.AIHub.SDK.NET.Core.Client;
-using Serenity.AIHub.SDK.NET.Core.Models.VolatileKnowledge;
-using Serenity.AIHub.SDK.NET.Core.Models;
 using Xunit;
-using Serenity.AIHub.SDK.NET.Core.Models.Execute;
-using SerenityStar.IntegrationTests;
 using SerenityStar.Models.VolatileKnowledge;
+using SerenityStar.Models;
+using SerenityStar.Models.Execute;
 
 namespace SerenityStar.IntegrationTests;
 
