@@ -13,7 +13,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
     /// <summary>
     /// Provides methods for uploading and managing volatile knowledge.
     /// </summary>
-    public class VolatileKnowledgeScope
+    public sealed class VolatileKnowledgeScope
     {
         private readonly HttpClient _httpClient;
 

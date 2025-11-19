@@ -12,12 +12,12 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Represents a ChatCompletion agent.
     /// </summary>
-    public class ChatCompletion : SystemAgentBase
+    public sealed class ChatCompletion : SystemAgentBase
     {
-        private readonly ChatCompletionOptions _chatOptions;
+        private readonly ChatCompletionReq _chatOptions;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        internal ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionOptions options)
+        internal ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionReq options)
             : base(httpClient, agentCode, options)
         {
             _chatOptions = options;
@@ -52,7 +52,7 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Provides methods for interacting with ChatCompletion agents.
     /// </summary>
-    public class ChatCompletionsScope
+    public sealed class ChatCompletionsScope
     {
         private readonly HttpClient _httpClient;
 
@@ -70,7 +70,7 @@ namespace SerenityStar.Agents.System
         /// <returns>A task that represents the asynchronous operation.</returns>
         public Task<AgentResult> ExecuteAsync(
             string agentCode,
-            ChatCompletionOptions options,
+            ChatCompletionReq options,
             CancellationToken cancellationToken = default)
         {
             ChatCompletion chatCompletion = new ChatCompletion(_httpClient, agentCode, options);
@@ -83,7 +83,7 @@ namespace SerenityStar.Agents.System
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Chat completion options.</param>
         /// <returns>A chat completion instance for streaming.</returns>
-        public ChatCompletion Create(string agentCode, ChatCompletionOptions options)
+        public ChatCompletion Create(string agentCode, ChatCompletionReq options)
         {
             return new ChatCompletion(_httpClient, agentCode, options);
         }

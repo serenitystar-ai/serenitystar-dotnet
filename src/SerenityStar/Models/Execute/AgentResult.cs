@@ -8,7 +8,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Represents the result of an agent execution.
     /// </summary>
-    public class AgentResult
+    public sealed class AgentResult
     {
         /// <summary>
         /// The response from the agent.
@@ -124,7 +124,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Represents token usage statistics for an agent execution.
     /// </summary>
-    public class AgentResultTokenUsage
+    public sealed class AgentResultTokenUsage
     {
         /// <summary>
         /// Number of tokens in the prompt.
@@ -145,7 +145,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Represents cost information for an agent execution.
     /// </summary>
-    public class AgentResultCost
+    public sealed class AgentResultCost
     {
         /// <summary>
         /// The total cost of the execution.
@@ -161,7 +161,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Represents the result of an executor task.
     /// </summary>
-    public class ExecutorTaskResult
+    public sealed class ExecutorTaskResult
     {
         /// <summary>
         /// The name of the task.

@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Represents a parameter for agent execution.
     /// </summary>
-    public class ExecuteParameter
+    public sealed class ExecuteParameter
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ExecuteParameter"/> class.

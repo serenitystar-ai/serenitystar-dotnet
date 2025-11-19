@@ -8,7 +8,7 @@ namespace SerenityStar.Agents
     /// <summary>
     /// Provides access to all agent types.
     /// </summary>
-    public class AgentsScope
+    public sealed class AgentsScope
     {
         /// <summary>
         /// Interact with Activity agents.

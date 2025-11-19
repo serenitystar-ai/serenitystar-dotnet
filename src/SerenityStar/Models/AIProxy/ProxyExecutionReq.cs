@@ -5,7 +5,7 @@ namespace SerenityStar.Models.AIProxy
     /// <summary>
     /// Options for executing a proxy agent.
     /// </summary>
-    public class ProxyExecutionOptions
+    public sealed class ProxyExecutionReq
     {
         /// <summary>
         /// The model to use for the execution.

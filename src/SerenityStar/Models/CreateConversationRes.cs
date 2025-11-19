@@ -5,7 +5,7 @@ namespace SerenityStar.Models
     /// <summary>
     /// Represents the response from creating a conversation.
     /// </summary>
-    public class CreateConversationRes
+    public sealed class CreateConversationRes
     {
         /// <summary>
         /// Gets or sets the chat ID.

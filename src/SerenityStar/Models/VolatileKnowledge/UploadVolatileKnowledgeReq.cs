@@ -7,7 +7,7 @@ namespace SerenityStar.Models.VolatileKnowledge
     /// Represents a request to upload volatile knowledge.
     /// Can contain either file content or text content, but not both.
     /// </summary>
-    public class UploadVolatileKnowledgeReq
+    public sealed class UploadVolatileKnowledgeReq
     {
         /// <summary>
         /// Gets or sets the text content for volatile knowledge.

@@ -184,7 +184,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         Conversation conversation = _client.Agents.Assistants.CreateConversation(
             _fixture.AssistantAgent,
-            options: new AgentExecutionOptions
+            options: new AgentExecutionReq
             {
                 UserIdentifier = "test-user-123",
                 Channel = "test-channel"
@@ -218,7 +218,7 @@ public class ConversationIntegrationTests : IClassFixture<TestFixture>
     public async Task GetConversationInfo_WithOptions_ShouldSucceed()
     {
         // Arrange
-        var options = new AgentExecutionOptions
+        var options = new AgentExecutionReq
         {
             UserIdentifier = "test-user",
             Channel = "web"

@@ -3,7 +3,7 @@ namespace SerenityStar.Models
     /// <summary>
     /// Options for Serenity Star.
     /// </summary>
-    public class SerenityStarOptions
+    public sealed class SerenityStarOptions
     {
         /// <summary>
         /// Gets or sets the API key.

@@ -23,7 +23,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithSimpleMessage_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Hello, how are you?"
         };
@@ -42,7 +42,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithMessageHistory_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "What was my first question?",
             Messages =
@@ -65,7 +65,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithUserIdentifier_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Tell me something interesting",
             UserIdentifier = "test-user-123"
@@ -85,7 +85,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithInputParameters_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "What is machine learning?",
             InputParameters = new Dictionary<string, object>
@@ -108,7 +108,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithAgentVersion_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Hello",
             AgentVersion = 1
@@ -127,7 +127,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithComplexConversation_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Based on our conversation, what would you recommend?",
             Messages =
@@ -153,7 +153,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_WithSimpleMessage_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Tell me a short story"
         };
@@ -176,7 +176,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_WithMessageHistory_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Continue the story",
             Messages =
@@ -203,7 +203,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_ShouldHaveCompleteStreamSequence()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "What is cloud computing?"
         };
@@ -238,7 +238,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         // Act
         foreach (string question in questions)
         {
-            ChatCompletionOptions options = new()
+            ChatCompletionReq options = new()
             {
                 Message = question
             };
@@ -264,7 +264,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithAllParameters_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Explain quantum mechanics in simple terms",
             Messages =
@@ -295,7 +295,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_WithInputParameters_ShouldSucceed()
     {
         // Arrange
-        ChatCompletionOptions options = new()
+        ChatCompletionReq options = new()
         {
             Message = "Write a poem about nature",
             InputParameters = new Dictionary<string, object>

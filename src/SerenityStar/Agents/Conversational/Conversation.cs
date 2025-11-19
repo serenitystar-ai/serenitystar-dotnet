@@ -18,11 +18,11 @@ namespace SerenityStar.Agents.Conversational
     /// <summary>
     /// Represents a conversation with an assistant agent.
     /// </summary>
-    public class Conversation
+    public sealed class Conversation
     {
         private readonly HttpClient _httpClient;
         private readonly string _agentCode;
-        private readonly AgentExecutionOptions? _options;
+        private readonly AgentExecutionReq? _options;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly JsonSerializerOptions _snakeCaseJsonOptions;
         private string? _chatId;
@@ -37,7 +37,7 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         public ConversationInfoResult? Info { get; private set; }
 
-        internal Conversation(HttpClient httpClient, string agentCode, AgentExecutionOptions? options = null)
+        internal Conversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
         {
             _httpClient = httpClient;
             _agentCode = agentCode;
@@ -71,7 +71,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="agentCode">The assistant agent code.</param>
         /// <param name="options">Optional execution options.</param>
         /// <returns>A new conversation instance.</returns>sarasa
-        public static Conversation CreateConversation(HttpClient httpClient, string agentCode, AgentExecutionOptions? options = null)
+        public static Conversation CreateConversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
         {
             return new Conversation(httpClient, agentCode, options);
         }
@@ -325,7 +325,7 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         /// <param name="options">The feedback options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public async Task SubmitFeedbackAsync(SubmitFeedbackOptions options, CancellationToken cancellationToken = default)
+        public async Task SubmitFeedbackAsync(SubmitFeedbackReq options, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(ConversationId))
                 throw new InvalidOperationException("Conversation not initialized");
@@ -351,7 +351,7 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         /// <param name="options">The remove feedback options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public async Task RemoveFeedbackAsync(RemoveFeedbackOptions options, CancellationToken cancellationToken = default)
+        public async Task RemoveFeedbackAsync(RemoveFeedbackReq options, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(ConversationId))
                 throw new InvalidOperationException("Conversation not initialized");
@@ -374,7 +374,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The connector status.</returns>
         public async Task<ConnectorStatusResult> GetConnectorStatusAsync(
-            GetConnectorStatusOptions options,
+            GetConnectorStatusReq options,
             CancellationToken cancellationToken = default)
         {
             string url = $"/api/v2/agent/{_agentCode}/connector/{options.ConnectorId}/status?agentInstanceId={options.AgentInstanceId}";

@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Conversation
     /// <summary>
     /// Represents the result of getting conversation info.
     /// </summary>
-    public class ConversationInfoResult
+    public sealed class ConversationInfoResult
     {
         /// <summary>
         /// Conversation information.
@@ -25,7 +25,7 @@ namespace SerenityStar.Models.Conversation
         /// <summary>
         /// Represents conversation details.
         /// </summary>
-        public class DetailsRes
+        public sealed class DetailsRes
         {
             /// <summary>
             /// The initial message for the conversation.
@@ -41,7 +41,7 @@ namespace SerenityStar.Models.Conversation
         /// <summary>
         /// Represents agent information.
         /// </summary>
-        public class AgentRes
+        public sealed class AgentRes
         {
             /// <summary>
             /// The version of the agent.

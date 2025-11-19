@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Represents a pending action that requires user input or confirmation.
     /// </summary>
-    public class PendingAction
+    public sealed class PendingAction
     {
         /// <summary>
         /// The unique identifier for this pending action.

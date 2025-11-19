@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Connector
     /// <summary>
     /// Options for getting connector status.
     /// </summary>
-    public class GetConnectorStatusOptions
+    public sealed class GetConnectorStatusReq
     {
         /// <summary>
         /// Gets or sets the agent instance ID.

@@ -5,7 +5,7 @@ namespace SerenityStar.Models.ChatCompletion
     /// <summary>
     /// Options for chat completion execution.
     /// </summary>
-    public class ChatCompletionOptions
+    public sealed class ChatCompletionReq
     {
         /// <summary>
         /// The current message to send.

@@ -19,7 +19,7 @@ namespace SerenityStar.Client
     ///     .Build();
     /// </code>
     /// </remarks>
-    public class SerenityClientBuilder
+    public sealed class SerenityClientBuilder
     {
         private string? _apiKey;
         private string? _baseUrl;

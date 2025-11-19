@@ -22,7 +22,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithWord_ShouldSucceed()
     {
         // Arrange
-        AgentExecutionOptions options = new()
+        AgentExecutionReq options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -60,7 +60,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         // Act
         foreach (string word in words)
         {
-            AgentExecutionOptions options = new()
+            AgentExecutionReq options = new()
             {
                 InputParameters = new Dictionary<string, object>
                 {
@@ -88,7 +88,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithVersion_ShouldSucceed()
     {
         // Arrange
-        AgentExecutionOptions options = new()
+        AgentExecutionReq options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -111,7 +111,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithActionResults_ShouldReturnValidData()
     {
         // Arrange
-        AgentExecutionOptions options = new()
+        AgentExecutionReq options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -138,7 +138,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_WithWord_ShouldSucceed()
     {
         // Arrange
-        AgentExecutionOptions options = new()
+        AgentExecutionReq options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -164,7 +164,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_ShouldHaveCompleteStreamSequence()
     {
         // Arrange
-        AgentExecutionOptions options = new()
+        AgentExecutionReq options = new()
         {
             InputParameters = new Dictionary<string, object>
             {
@@ -204,7 +204,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             .WithApiKey(apiKey)
             .Build();
 
-        AgentExecutionOptions options = new()
+        AgentExecutionReq options = new()
         {
             InputParameters = new Dictionary<string, object>
             {

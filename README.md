@@ -171,7 +171,7 @@ Console.WriteLine($"Image ID: {agentInfo.Agent.ImageId}"); // Agent's profile im
 // Get information about an assistant agent conversation (advanced example with options)
 ConversationInfoResult agentInfoAdvanced = await client.Agents.Assistants.GetInfoByCodeAsync(
     "chef-assistant",
-    new AgentExecutionOptions
+    new AgentExecutionReq
     {
         AgentVersion = 2, // Target specific version of the agent
         InputParameters = new Dictionary<string, object>
@@ -304,7 +304,7 @@ You can customize the streaming behaviour with execution options:
 // Create conversation with options
 Conversation conversation = client.Agents.Assistants.CreateConversation(
     "chef-assistant",
-    options: new AgentExecutionOptions
+    options: new AgentExecutionReq
     {
         InputParameters = new Dictionary<string, object>
         {
@@ -344,14 +344,14 @@ Conversation conversation = client.Agents.Assistants.CreateConversation("chef-as
 AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
 
 // Submit positive feedback (thumbs up)
-await conversation.SubmitFeedbackAsync(new SubmitFeedbackOptions
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
 {
     AgentMessageId = response.AgentMessageId!.Value,
     Feedback = true
 });
 
 // Or submit negative feedback (thumbs down)
-await conversation.SubmitFeedbackAsync(new SubmitFeedbackOptions
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
 {
     AgentMessageId = response.AgentMessageId!.Value,
     Feedback = false
@@ -373,14 +373,14 @@ Conversation conversation = client.Agents.Assistants.CreateConversation("chef-as
 AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
 
 // Submit feedback first
-await conversation.SubmitFeedbackAsync(new SubmitFeedbackOptions
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
 {
     AgentMessageId = response.AgentMessageId!.Value,
     Feedback = true
 });
 
 // Remove the feedback if the user changes their mind
-await conversation.RemoveFeedbackAsync(new RemoveFeedbackOptions
+await conversation.RemoveFeedbackAsync(new RemoveFeedbackReq
 {
     AgentMessageId = response.AgentMessageId!.Value
 });
@@ -405,7 +405,7 @@ AgentResult response = await conversation.SendMessageAsync("I need a summary of 
 // Here the user should complete the authentication process.
 
 // Check connector status for this conversation (you can use a loop to check every 5 seconds)
-ConnectorStatusResponse status = await conversation.GetConnectorStatusAsync(new GetConnectorStatusOptions
+ConnectorStatusRes status = await conversation.GetConnectorStatusAsync(new GetConnectorStatusReq
 {
     AgentInstanceId = Guid.Parse(conversation.ConversationId!),
     // Get the connector id using response.PendingActions[index].ConnectorId
@@ -447,7 +447,7 @@ Console.WriteLine(response.Content);
 // Execute activity (advanced example)
 AgentResult responseAdvanced = await client.Agents.Activities.ExecuteAsync(
     "translator-activity",
-    new AgentExecutionOptions
+    new AgentExecutionReq
     {
         InputParameters = new Dictionary<string, object>
         {
@@ -479,7 +479,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create an activity for streaming
-var options = new AgentExecutionOptions
+var options = new AgentExecutionReq
 {
     InputParameters = new Dictionary<string, object>
     {
@@ -536,7 +536,7 @@ using SerenityStar.Models.Execute;
 
 AgentResult response = await client.Agents.Proxies.ExecuteAsync(
     "proxy-agent",
-    new ProxyExecutionOptions
+    new ProxyExecutionReq
     {
         Model = "gpt-4o-mini-2024-07-18",
         Messages = new List<ProxyExecutionMessage>
@@ -575,7 +575,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create a proxy for streaming
-var options = new ProxyExecutionOptions
+ProxyExecutionReq options = new()
 {
     Model = "gpt-4o-mini-2024-07-18",
     Messages = new List<ChatMessage>
@@ -627,14 +627,14 @@ await foreach (StreamingAgentMessage message in proxy.StreamAsync())
 
 ### Proxy Execution Options
 
-The following options can be passed when executing a proxy agent via `ProxyExecutionOptions`:
+The following options can be passed when executing a proxy agent via `ProxyExecutionReq`:
 
 ```csharp
 using SerenityStar.Models.AIProxy;
 
 AgentResult response = await client.Agents.Proxies.ExecuteAsync(
     "proxy-agent",
-    new ProxyExecutionOptions
+    new ProxyExecutionReq
     {
         // Specify the model to use
         Model = "gpt-4-turbo",
@@ -685,7 +685,7 @@ using SerenityStar.Models.Execute;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Execute chat completion (basic example)
-AgentResult response = await client.Agents.ChatCompletions.ExecuteAsync("AgentCreator", new ChatCompletionOptions
+AgentResult response = await client.Agents.ChatCompletions.ExecuteAsync("AgentCreator", new ChatCompletionReq
 {
     Message = "Hello!!!"
 });
@@ -694,7 +694,7 @@ Console.WriteLine(response.Content); // AI-generated response
 Console.WriteLine($"Completion Usage: {response.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 
 // Execute chat completion (advanced example)
-AgentResult responseAdvanced = await client.Agents.ChatCompletions.ExecuteAsync("Health-Coach", new ChatCompletionOptions
+AgentResult responseAdvanced = await client.Agents.ChatCompletions.ExecuteAsync("Health-Coach", new ChatCompletionReq
 {
     UserIdentifier = "user-123",
     AgentVersion = 2,
@@ -728,7 +728,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create a chat completion for streaming
-var options = new ChatCompletionOptions
+var options = new ChatCompletionReq
 {
     Message = "Explain quantum computing in simple terms",
     UserIdentifier = "user-123"

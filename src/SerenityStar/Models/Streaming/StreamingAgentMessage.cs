@@ -18,7 +18,7 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents the start of a streaming session.
     /// </summary>
-    public class StreamingAgentMessageStart : StreamingAgentMessage
+    public sealed class StreamingAgentMessageStart : StreamingAgentMessage
     {
         /// <summary>
         /// The UTC time when the stream started.
@@ -38,7 +38,7 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents the start of a task execution.
     /// </summary>
-    public class StreamingAgentMessageTaskStart : StreamingAgentMessage
+    public sealed class StreamingAgentMessageTaskStart : StreamingAgentMessage
     {
         /// <summary>
         /// The key identifying the task.
@@ -62,7 +62,7 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents content being streamed.
     /// </summary>
-    public class StreamingAgentMessageContent : StreamingAgentMessage
+    public sealed class StreamingAgentMessageContent : StreamingAgentMessage
     {
         /// <summary>
         /// The text content.
@@ -81,7 +81,7 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents the end of a task execution.
     /// </summary>
-    public class StreamingAgentMessageTaskEnd : StreamingAgentMessage
+    public sealed class StreamingAgentMessageTaskEnd : StreamingAgentMessage
     {
         /// <summary>
         /// The key identifying the task.
@@ -110,7 +110,7 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents the completion of a streaming session.
     /// </summary>
-    public class StreamingAgentMessageStop : StreamingAgentMessage
+    public sealed class StreamingAgentMessageStop : StreamingAgentMessage
     {
         /// <summary>
         /// The complete content.
@@ -169,7 +169,7 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents an error during streaming.
     /// </summary>
-    public class StreamingAgentMessageError : StreamingAgentMessage
+    public sealed class StreamingAgentMessageError : StreamingAgentMessage
     {
         /// <summary>
         /// The error message.

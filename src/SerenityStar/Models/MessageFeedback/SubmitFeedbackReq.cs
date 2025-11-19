@@ -5,7 +5,7 @@ namespace SerenityStar.Models.MessageFeedback
     /// <summary>
     /// Options for submitting feedback on a message.
     /// </summary>
-    public class SubmitFeedbackOptions
+    public sealed class SubmitFeedbackReq
     {
         /// <summary>
         /// The ID of the agent message to provide feedback for.

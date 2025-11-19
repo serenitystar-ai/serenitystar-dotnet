@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Conversation
     /// <summary>
     /// Represents SerenityChat channel configuration.
     /// </summary>
-    public class SerenityChatResult
+    public sealed class SerenityChatResult
     {
         /// <summary>
         /// Indicates if the chat widget is expanded.
@@ -106,7 +106,7 @@ namespace SerenityStar.Models.Conversation
         /// <summary>
         /// Represents engagement message configuration.
         /// </summary>
-        public class EngagementMessageRes
+        public sealed class EngagementMessageRes
         {
             /// <summary>
             /// Indicates if the engagement message is enabled.
@@ -130,7 +130,7 @@ namespace SerenityStar.Models.Conversation
         /// <summary>
         /// Represents localization settings.
         /// </summary>
-        public class LocaleRes
+        public sealed class LocaleRes
         {
             /// <summary>
             /// Error message for file upload failure.
@@ -244,7 +244,7 @@ namespace SerenityStar.Models.Conversation
         /// <summary>
         /// Represents theme configuration.
         /// </summary>
-        public class ThemeRes
+        public sealed class ThemeRes
         {
             /// <summary>
             /// Header theme configuration.
@@ -297,7 +297,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents header theme configuration.
             /// </summary>
-            public class HeaderThemeRes
+            public sealed class HeaderThemeRes
             {
                 /// <summary>
                 /// Background color.
@@ -326,7 +326,7 @@ namespace SerenityStar.Models.Conversation
                 /// <summary>
                 /// Represents minimize button theme configuration.
                 /// </summary>
-                public class MinimizeBtnThemeRes
+                public sealed class MinimizeBtnThemeRes
                 {
                     /// <summary>
                     /// Icon stroke color.
@@ -338,7 +338,7 @@ namespace SerenityStar.Models.Conversation
                 /// <summary>
                 /// Represents reset chat button theme configuration.
                 /// </summary>
-                public class ResetChatBtnThemeRes
+                public sealed class ResetChatBtnThemeRes
                 {
                     /// <summary>
                     /// Background color.
@@ -363,7 +363,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents floating action button theme configuration.
             /// </summary>
-            public class FabButtonThemeRes
+            public sealed class FabButtonThemeRes
             {
                 /// <summary>
                 /// Background color.
@@ -393,7 +393,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents send button theme configuration.
             /// </summary>
-            public class SendButtonThemeRes
+            public sealed class SendButtonThemeRes
             {
                 /// <summary>
                 /// Background color.
@@ -411,7 +411,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents engagement message theme configuration.
             /// </summary>
-            public class EngagementMessageThemeRes
+            public sealed class EngagementMessageThemeRes
             {
                 /// <summary>
                 /// Background color.
@@ -429,7 +429,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents conversation starters theme configuration.
             /// </summary>
-            public class ConversationStartersThemeRes
+            public sealed class ConversationStartersThemeRes
             {
                 /// <summary>
                 /// Background color.
@@ -465,7 +465,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents scroll to bottom indicator theme configuration.
             /// </summary>
-            public class ScrollToBottomIndicatorThemeRes
+            public sealed class ScrollToBottomIndicatorThemeRes
             {
                 /// <summary>
                 /// Background color.
@@ -483,7 +483,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents upload file button theme configuration.
             /// </summary>
-            public class UploadFileBtnThemeRes
+            public sealed class UploadFileBtnThemeRes
             {
                 /// <summary>
                 /// Icon stroke color.
@@ -495,7 +495,7 @@ namespace SerenityStar.Models.Conversation
             /// <summary>
             /// Represents message bubble theme configuration.
             /// </summary>
-            public class MessageBubbleThemeRes
+            public sealed class MessageBubbleThemeRes
             {
                 /// <summary>
                 /// User message theme configuration.
@@ -512,7 +512,7 @@ namespace SerenityStar.Models.Conversation
                 /// <summary>
                 /// Represents user message theme configuration.
                 /// </summary>
-                public class UserThemeRes
+                public sealed class UserThemeRes
                 {
                     /// <summary>
                     /// Background color.
@@ -530,7 +530,7 @@ namespace SerenityStar.Models.Conversation
                 /// <summary>
                 /// Represents assistant message theme configuration.
                 /// </summary>
-                public class AssistantThemeRes
+                public sealed class AssistantThemeRes
                 {
                     /// <summary>
                     /// Background color.
@@ -553,7 +553,7 @@ namespace SerenityStar.Models.Conversation
                     /// <summary>
                     /// Represents connections theme configuration.
                     /// </summary>
-                    public class ConnectionsThemeRes
+                    public sealed class ConnectionsThemeRes
                     {
                         /// <summary>
                         /// Connection card theme configuration.
@@ -564,7 +564,7 @@ namespace SerenityStar.Models.Conversation
                         /// <summary>
                         /// Represents connection card theme configuration.
                         /// </summary>
-                        public class ConnectionCardThemeRes
+                        public sealed class ConnectionCardThemeRes
                         {
                             /// <summary>
                             /// Background color.
@@ -587,7 +587,7 @@ namespace SerenityStar.Models.Conversation
                             /// <summary>
                             /// Represents connect button theme configuration.
                             /// </summary>
-                            public class ConnectButtonThemeRes
+                            public sealed class ConnectButtonThemeRes
                             {
                                 /// <summary>
                                 /// Background color.

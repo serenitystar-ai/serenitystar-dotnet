@@ -17,14 +17,14 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Represents a Proxy agent.
     /// </summary>
-    public class Proxy
+    public sealed class Proxy
     {
         private readonly HttpClient _httpClient;
         private readonly string _agentCode;
-        private readonly ProxyExecutionOptions _proxyOptions;
+        private readonly ProxyExecutionReq _proxyOptions;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        internal Proxy(HttpClient httpClient, string agentCode, ProxyExecutionOptions options)
+        internal Proxy(HttpClient httpClient, string agentCode, ProxyExecutionReq options)
         {
             _httpClient = httpClient;
             _agentCode = agentCode;
@@ -200,7 +200,7 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Provides methods for interacting with Proxy agents.
     /// </summary>
-    public class ProxiesScope
+    public sealed class ProxiesScope
     {
         private readonly HttpClient _httpClient;
 
@@ -218,7 +218,7 @@ namespace SerenityStar.Agents.System
         /// <returns>A task that represents the asynchronous operation.</returns>
         public Task<AgentResult> ExecuteAsync(
             string agentCode,
-            ProxyExecutionOptions options,
+            ProxyExecutionReq options,
             CancellationToken cancellationToken = default)
         {
             Proxy proxy = new Proxy(_httpClient, agentCode, options);
@@ -231,7 +231,7 @@ namespace SerenityStar.Agents.System
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Proxy execution options.</param>
         /// <returns>A proxy instance for streaming.</returns>
-        public Proxy Create(string agentCode, ProxyExecutionOptions options)
+        public Proxy Create(string agentCode, ProxyExecutionReq options)
         {
             return new Proxy(_httpClient, agentCode, options);
         }

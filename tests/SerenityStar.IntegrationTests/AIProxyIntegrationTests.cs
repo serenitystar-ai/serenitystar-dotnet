@@ -23,7 +23,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithBasicMessage_ShouldSucceed()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -48,7 +48,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithMultipleMessages_ShouldSucceed()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -73,7 +73,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithTemperatureParameter_ShouldSucceed()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -98,7 +98,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithMultipleParameters_ShouldSucceed()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -127,7 +127,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithoutMessages_ShouldFail()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -144,7 +144,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_WithBasicMessage_ShouldSucceed()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -173,7 +173,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamAsync_ShouldHaveCompleteStreamSequence()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",
@@ -214,7 +214,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
         // Act
         foreach (string model in models)
         {
-            ProxyExecutionOptions options = new()
+            ProxyExecutionReq options = new()
             {
                 Model = model,
                 Vendor = "OpenAI",
@@ -246,7 +246,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithPenaltyParameters_ShouldSucceed()
     {
         // Arrange
-        ProxyExecutionOptions options = new()
+        ProxyExecutionReq options = new()
         {
             Model = "gpt-4o-mini",
             Vendor = "OpenAI",

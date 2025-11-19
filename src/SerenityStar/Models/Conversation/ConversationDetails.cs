@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Conversation
     /// <summary>
     /// Represents a full conversation with messages.
     /// </summary>
-    public class ConversationDetails
+    public sealed class ConversationDetails
     {
         /// <summary>
         /// The conversation ID.

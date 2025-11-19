@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Conversation
     /// <summary>
     /// Represents a conversation message.
     /// </summary>
-    public class ConversationMessage
+    public sealed class ConversationMessage
     {
         /// <summary>
         /// The sender of the message ("user" or "bot").

@@ -9,9 +9,9 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Represents an Activity agent.
     /// </summary>
-    public class Activity : SystemAgentBase
+    public sealed class Activity : SystemAgentBase
     {
-        internal Activity(HttpClient httpClient, string agentCode, AgentExecutionOptions? options)
+        internal Activity(HttpClient httpClient, string agentCode, AgentExecutionReq? options)
             : base(httpClient, agentCode, options)
         {
         }
@@ -22,7 +22,7 @@ namespace SerenityStar.Agents.System
             List<object> parameters = CreateBaseParameters(stream);
 
             // Add input parameters if provided
-            AgentExecutionOptions? executionOptions = Options as AgentExecutionOptions;
+            AgentExecutionReq? executionOptions = Options as AgentExecutionReq;
             if (executionOptions?.InputParameters != null)
             {
                 foreach (KeyValuePair<string, object> param in executionOptions.InputParameters)
@@ -38,7 +38,7 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Provides methods for interacting with Activity agents.
     /// </summary>
-    public class ActivitiesScope
+    public sealed class ActivitiesScope
     {
         private readonly HttpClient _httpClient;
 
@@ -56,7 +56,7 @@ namespace SerenityStar.Agents.System
         /// <returns>A task that represents the asynchronous operation.</returns>
         public Task<AgentResult> ExecuteAsync(
             string agentCode,
-            AgentExecutionOptions? options = null,
+            AgentExecutionReq? options = null,
             CancellationToken cancellationToken = default)
         {
             Activity activity = new Activity(_httpClient, agentCode, options);
@@ -69,7 +69,7 @@ namespace SerenityStar.Agents.System
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Optional execution options.</param>
         /// <returns>An activity instance for streaming.</returns>
-        public Activity Create(string agentCode, AgentExecutionOptions? options = null)
+        public Activity Create(string agentCode, AgentExecutionReq? options = null)
             => new Activity(_httpClient, agentCode, options);
     }
 }

@@ -5,7 +5,7 @@ namespace SerenityStar.Models.MessageFeedback
     /// <summary>
     /// Options for removing feedback from a message.
     /// </summary>
-    public class RemoveFeedbackOptions
+    public sealed class RemoveFeedbackReq
     {
         /// <summary>
         /// The ID of the agent message to remove feedback from.

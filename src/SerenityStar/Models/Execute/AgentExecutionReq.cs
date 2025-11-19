@@ -5,7 +5,7 @@ namespace SerenityStar.Models.Execute
     /// <summary>
     /// Options for executing an agent.
     /// </summary>
-    public class AgentExecutionOptions
+    public sealed class AgentExecutionReq
     {
         /// <summary>
         /// Input parameters for the agent execution.

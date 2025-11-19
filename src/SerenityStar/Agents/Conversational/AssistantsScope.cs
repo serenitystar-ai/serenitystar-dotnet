@@ -10,7 +10,7 @@ namespace SerenityStar.Agents.Conversational
     /// <summary>
     /// Provides methods for interacting with Assistant agents.
     /// </summary>
-    public class AssistantsScope
+    public sealed class AssistantsScope
     {
         private readonly HttpClient _httpClient;
 
@@ -30,7 +30,7 @@ namespace SerenityStar.Agents.Conversational
         public Conversation CreateConversation(
             string agentCode,
             string? conversationId = null,
-            AgentExecutionOptions? options = null)
+            AgentExecutionReq? options = null)
         {
             Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, options);
             if (!string.IsNullOrEmpty(conversationId))
@@ -48,7 +48,7 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>Agent information.</returns>
         public async Task<ConversationInfoResult> GetInfoByCodeAsync(
             string agentCode,
-            AgentExecutionOptions? options = null,
+            AgentExecutionReq? options = null,
             CancellationToken cancellationToken = default)
         {
             Conversation conversation = new Conversation(_httpClient, agentCode, options);

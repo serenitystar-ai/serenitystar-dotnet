@@ -3,7 +3,7 @@ namespace SerenityStar.Models.AIProxy
     /// <summary>
     /// Represents a message in a proxy execution.
     /// </summary>
-    public class ProxyExecutionMessage
+    public sealed class ProxyExecutionMessage
     {
         /// <summary>
         /// The role of the message sender (e.g., "system", "user", "assistant").

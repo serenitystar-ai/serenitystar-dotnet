@@ -8,7 +8,7 @@ using System.Net.Http;
 namespace SerenityStar.Client
 {
     /// <inheritdoc />
-    public class SerenityClient : ISerenityClient
+    public sealed class SerenityClient : ISerenityClient
     {
         private readonly HttpClient _httpClient;
 
