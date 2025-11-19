@@ -31,9 +31,7 @@ public class TestFixture : IDisposable
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";
 
         if (HasValidApiKey)
-        {
             services.AddSerenityStar(apiKey);
-        }
         else
         {
             // Add a placeholder service that will throw a meaningful exception when used

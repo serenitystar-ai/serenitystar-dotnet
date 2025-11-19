@@ -4,8 +4,10 @@ using Serenity.AIHub.SDK.NET.Core.Models.VolatileKnowledge;
 using Serenity.AIHub.SDK.NET.Core.Models;
 using Xunit;
 using Serenity.AIHub.SDK.NET.Core.Models.Execute;
+using SerenityStar.IntegrationTests;
+using SerenityStar.Models.VolatileKnowledge;
 
-namespace Serenity.AIHub.SDK.NET.IntegrationTests;
+namespace SerenityStar.IntegrationTests;
 
 public class VolatileKnowledgeTests : IClassFixture<TestFixture>
 {
@@ -271,4 +273,8 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         Assert.NotEqual(Guid.Empty, result.Id);
         Assert.NotNull(result.Status);
     }
+}
+
+internal interface ISerenityAIHubClient
+{
 }
