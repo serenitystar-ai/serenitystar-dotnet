@@ -20,6 +20,9 @@
 
 Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions.
 
+[![License: MIT](https://img.shields.io/github/license/microsoft/semantic-kernel)](https://github.com/microsoft/semantic-kernel/blob/main/LICENSE)
+![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)
+
 ## Table of Contents
 
 - [Installation](#-installation)
