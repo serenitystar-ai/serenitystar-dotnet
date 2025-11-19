@@ -1,7 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
 using SerenityStar.Agents;
 using SerenityStar.Models.VolatileKnowledge;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SerenityStar.Client
 {
@@ -16,23 +17,26 @@ namespace SerenityStar.Client
         AgentsScope Agents { get; }
 
         /// <summary>
-        /// Uploads a file as volatile knowledge
+        /// Uploads a file or content as volatile knowledge
         /// </summary>
-        /// <param name="request">The upload request containing file stream and filename</param>
+        /// <param name="request">The upload request containing file stream or content</param>
+        /// <param name="processEmbeddings">Optional parameter to indicate whether to process embeddings. Default is true.</param>
+        /// <param name="noExpiration">Optional parameter to indicate whether the knowledge should not expire. Default is false.</param>
+        /// <param name="expirationDays">Optional parameter to specify the number of days until expiration.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity</returns>
         Task<VolatileKnowledge> UploadVolatileKnowledgeAsync(
             UploadVolatileKnowledgeReq request,
+            bool processEmbeddings = true,
+            bool noExpiration = false,
+            int? expirationDays = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Gets the status of a volatile knowledge by ID
-        /// </summary>
-        /// <param name="knowledgeId">The ID of the volatile knowledge</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The volatile knowledge entity with current status</returns>
         Task<VolatileKnowledge> GetVolatileKnowledgeStatusAsync(
-            string knowledgeId,
+            Guid knowledgeId,
             CancellationToken cancellationToken = default);
     }
 }

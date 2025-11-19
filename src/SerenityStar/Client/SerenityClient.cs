@@ -110,19 +110,47 @@ namespace SerenityStar.Client
         /// <inheritdoc />
         public async Task<VolatileKnowledge> UploadVolatileKnowledgeAsync( // sarasa esto vuela de acá y revisar la lectura de la response (copiar del hub)
             UploadVolatileKnowledgeReq request,
+            bool processEmbeddings = true,
+            bool noExpiration = false,
+            int? expirationDays = null,
             CancellationToken cancellationToken = default)
         {
+            request.Validate();
+
             using MultipartFormDataContent content = new();
-            StreamContent fileContent = new(request.FileStream);
 
-            // Set the content type based on file extension
-            string contentType = GetContentType(request.FileName);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+            // Add content if provided
+            if (!string.IsNullOrEmpty(request.Content))
+                content.Add(new StringContent(request.Content), "Content");
 
-            content.Add(fileContent, "file", request.FileName);
+            // Add file if provided
+            if (request.FileStream is not null)
+            {
+                StreamContent fileContent = new(request.FileStream);
+                string contentType = GetContentType(request.FileName);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+                content.Add(fileContent, "File", request.FileName);
+            }
+
+            // Add callback URL if provided
+            if (!string.IsNullOrEmpty(request.CallbackUrl))
+                content.Add(new StringContent(request.CallbackUrl), "CallbackUrl");
+
+            // Build query parameters
+            List<string> queryParams = new List<string>
+        {
+            $"processEmbeddings={processEmbeddings}",
+            $"noExpiration={noExpiration}"
+        };
+
+            if (expirationDays.HasValue)
+                queryParams.Add($"expirationDays={expirationDays.Value}");
+
+            string queryString = string.Join("&", queryParams);
+            string endpoint = $"volatileknowledge?{queryString}";
 
             HttpResponseMessage response = await _httpClient.PostAsync(
-                "volatileknowledge",
+                endpoint,
                 content,
                 cancellationToken);
 
@@ -138,27 +166,9 @@ namespace SerenityStar.Client
             return result ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
         }
 
-        private static string GetContentType(string fileName)
-        {
-            string extension = Path.GetExtension(fileName).ToLowerInvariant();
-            return extension switch
-            {
-                ".pdf" => "application/pdf",
-                ".doc" => "application/msword",
-                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                ".txt" => "text/plain",
-                ".csv" => "text/csv",
-                ".xls" => "application/vnd.ms-excel",
-                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                ".ppt" => "application/vnd.ms-powerpoint",
-                ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                _ => "application/octet-stream"
-            };
-        }
-
         /// <inheritdoc />
         public async Task<VolatileKnowledge> GetVolatileKnowledgeStatusAsync( // sarasa esto vuela de acá y revisar la lectura de la response (copiar del hub)
-            string knowledgeId,
+            Guid knowledgeId,
             CancellationToken cancellationToken = default)
         {
             HttpResponseMessage response = await _httpClient.GetAsync(
@@ -176,5 +186,25 @@ namespace SerenityStar.Client
 
             return result ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
         }
+
+        #region Private Methods
+        private static string GetContentType(string fileName)
+        {
+            string extension = Path.GetExtension(fileName).ToLowerInvariant();
+            return extension switch
+            {
+                ".pdf" => "application/pdf",
+                ".doc" => "application/msword",
+                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".txt" => "text/plain",
+                ".csv" => "text/csv",
+                ".md" => "text/markdown",
+                ".jpg" => "image/jpg",
+                ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                _ => throw new NotSupportedException($"File extension '{extension}' is not supported for upload."),
+            };
+        }
+        #endregion
     }
 }

@@ -1,8 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
-using SerenityStar.Models.VolatileKnowledge;
+using SerenityStar.Client;
 using SerenityStar.Models;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.VolatileKnowledge;
+using Xunit;
 
 namespace SerenityStar.IntegrationTests;
 
@@ -12,13 +13,13 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     private const string TestJpgFileName = "test-jpg-file.jpg";
 
     private readonly TestFixture _fixture;
-    private readonly ISerenityAIHubClient _client;
+    private readonly ISerenityClient _client;
     private readonly string _testFilePath;
 
     public VolatileKnowledgeTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityAIHubClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
         string baseDirectory = AppContext.BaseDirectory;
         string projectRoot = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", ".."));
         _testFilePath = Path.Combine(projectRoot, TestFileName);
@@ -270,8 +271,4 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         Assert.NotEqual(Guid.Empty, result.Id);
         Assert.NotNull(result.Status);
     }
-}
-
-internal interface ISerenityAIHubClient
-{
 }
