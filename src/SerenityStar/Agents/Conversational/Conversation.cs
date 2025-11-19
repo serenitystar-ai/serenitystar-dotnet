@@ -1,3 +1,8 @@
+using SerenityStar.Models.Connector;
+using SerenityStar.Models.Conversation;
+using SerenityStar.Models.Execute;
+using SerenityStar.Models.MessageFeedback;
+using SerenityStar.Models.Streaming;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,11 +12,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using SerenityStar.Models.Connector;
-using SerenityStar.Models.Conversation;
-using SerenityStar.Models.Execute;
-using SerenityStar.Models.MessageFeedback;
-using SerenityStar.Models.Streaming;
 
 namespace SerenityStar.Agents.Conversational
 {
@@ -72,9 +72,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="options">Optional execution options.</param>
         /// <returns>A new conversation instance.</returns>sarasa
         public static Conversation CreateConversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
-        {
-            return new Conversation(httpClient, agentCode, options);
-        }
+            => new Conversation(httpClient, agentCode, options);
 
         internal async Task InitializeInfoAsync(CancellationToken cancellationToken = default)
         {
@@ -124,19 +122,16 @@ namespace SerenityStar.Agents.Conversational
             // Add chatId only if we have it from a previous message
             if (!string.IsNullOrEmpty(_chatId))
                 parameters.Insert(0, new { Key = "chatId", Value = _chatId });
-            else
-            {
-                // First message - add optional parameters
-                if (_options?.InputParameters != null)
-                    foreach (KeyValuePair<string, object> param in _options.InputParameters)
-                        parameters.Add(new { param.Key, param.Value });
 
-                if (_options?.UserIdentifier != null)
-                    parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
+            if (_options?.InputParameters != null)
+                foreach (KeyValuePair<string, object> param in _options.InputParameters)
+                    parameters.Add(new { param.Key, param.Value });
 
-                if (_options?.Channel != null)
-                    parameters.Add(new { Key = "channel", Value = _options.Channel });
-            }
+            if (_options?.UserIdentifier != null)
+                parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
+
+            if (_options?.Channel != null)
+                parameters.Add(new { Key = "channel", Value = _options.Channel });
 
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, parameters, _jsonOptions, cancellationToken);
 
@@ -179,28 +174,17 @@ namespace SerenityStar.Agents.Conversational
 
             // Add chatId only if we have it from a previous message
             if (!string.IsNullOrEmpty(_chatId))
-            {
                 parameters.Insert(0, new { Key = "chatId", Value = _chatId });
-            }
-            else
-            {
-                // First message - add optional parameters
-                if (_options?.InputParameters != null)
-                {
-                    foreach (KeyValuePair<string, object> param in _options.InputParameters)
-                    {
-                        parameters.Add(new { param.Key, param.Value });
-                    }
-                }
-                if (_options?.UserIdentifier != null)
-                {
-                    parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
-                }
-                if (_options?.Channel != null)
-                {
-                    parameters.Add(new { Key = "channel", Value = _options.Channel });
-                }
-            }
+
+            if (_options?.InputParameters != null)
+                foreach (KeyValuePair<string, object> param in _options.InputParameters)
+                    parameters.Add(new { param.Key, param.Value });
+
+            if (_options?.UserIdentifier != null)
+                parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
+
+            if (_options?.Channel != null)
+                parameters.Add(new { Key = "channel", Value = _options.Channel });
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
