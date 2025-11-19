@@ -204,11 +204,11 @@ public class SerenityAIHubClient : ISerenityAIHubClient
             ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             ".txt" => "text/plain",
             ".csv" => "text/csv",
-            ".xls" => "application/vnd.ms-excel",
-            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".ppt" => "application/vnd.ms-powerpoint",
-            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            _ => "application/octet-stream"
+            ".md" => "text/markdown",
+            ".jpg" => "image/jpg",
+            ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            _ => throw new NotSupportedException($"File extension '{extension}' is not supported for upload."),
         };
     }
 

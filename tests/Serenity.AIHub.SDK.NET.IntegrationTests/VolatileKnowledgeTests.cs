@@ -10,6 +10,7 @@ namespace Serenity.AIHub.SDK.NET.IntegrationTests;
 public class VolatileKnowledgeTests : IClassFixture<TestFixture>
 {
     private const string TestFileName = "test-document.txt";
+    private const string TestJpgFileName = "test-jpg-file.jpg";
 
     private readonly TestFixture _fixture;
     private readonly ISerenityAIHubClient _client;
@@ -245,5 +246,29 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         // Assert
         Assert.NotNull(result);
         Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task UploadVolatileKnowledge_WithJpgFile_ShouldReturnKnowledgeWithId()
+    {
+        // Arrange
+        string testJpgPath = Path.Combine(Path.GetDirectoryName(_testFilePath), TestJpgFileName);
+        if (!File.Exists(testJpgPath))
+            throw new FileNotFoundException($"Test JPG file not found at {testJpgPath}");
+
+        using FileStream fileStream = File.OpenRead(testJpgPath);
+        UploadVolatileKnowledgeReq request = new()
+        {
+            FileStream = fileStream,
+            FileName = TestJpgFileName
+        };
+
+        // Act
+        VolatileKnowledge result = await _client.UploadVolatileKnowledgeAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
+        Assert.NotNull(result.Status);
     }
 }
