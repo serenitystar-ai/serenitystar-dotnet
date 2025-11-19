@@ -47,8 +47,6 @@ public class TestFixture : IDisposable
     public void Dispose()
     {
         if (ServiceProvider is IDisposable disposable)
-        {
             disposable.Dispose();
-        }
     }
 }
