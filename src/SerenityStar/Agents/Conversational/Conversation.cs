@@ -172,7 +172,7 @@ namespace SerenityStar.Agents.Conversational
                 {
                     foreach (KeyValuePair<string, object> param in _options.InputParameters)
                     {
-                        parameters.Add(new { Key = param.Key, Value = param.Value });
+                        parameters.Add(new { param.Key, param.Value });
                     }
                 }
                 if (_options?.UserIdentifier != null)
