@@ -16,13 +16,8 @@ namespace SerenityStar.Models
         public int TimeoutSeconds { get; set; } = 30;
 
         /// <summary>
-        /// Gets or sets the assistant agent name.
+        /// Gets or sets the base URL for the API.
         /// </summary>
-        public string? AssistantAgent { get; set; }
-
-        /// <summary>
-        /// Gets or sets the activity agent name.
-        /// </summary>
-        public string? ActivityAgent { get; set; }
+        public string? BaseUrl { get; set; }
     }
 }

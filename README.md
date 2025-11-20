@@ -94,6 +94,13 @@ Console.WriteLine(response.Content);
 using SerenityStar.Extensions;
 services.AddSerenityStar("your-api-key");
 
+// With custom base URL and timeout
+services.AddSerenityStar(
+    apiKey: "your-api-key",
+    timeoutSeconds: 60,
+    baseUrl: "https://custom-api.serenitystar.ai"
+);
+
 // In your service/controller
 public class YourService
 {
