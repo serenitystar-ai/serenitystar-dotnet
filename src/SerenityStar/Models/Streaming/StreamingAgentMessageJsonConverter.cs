@@ -33,7 +33,7 @@ namespace SerenityStar.Models.Streaming
                 "task_end" => JsonSerializer.Deserialize<StreamingAgentMessageTaskEnd>(jsonObject, options),
                 "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(jsonObject, options),
                 "error" => JsonSerializer.Deserialize<StreamingAgentMessageError>(jsonObject, options),
-                _ => CreateUnsupportedMessage(jsonObject, type)
+                _ => CreateUnsupportedMessage(type)
             } ?? throw new JsonException($"Failed to deserialize streaming message of type '{type}'");
 
             return message;
@@ -44,13 +44,11 @@ namespace SerenityStar.Models.Streaming
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }
 
-        private static StreamingAgentMessage CreateUnsupportedMessage(JsonElement jsonObject, string type)
+        private static StreamingAgentMessage CreateUnsupportedMessage(string type)
         {
-            // Return a generic message for unsupported types
-            // Could create a specific UnsupportedStreamingMessage class if needed
+            // Return a generic error message for unsupported types
             return new StreamingAgentMessageError
             {
-                Type = type,
                 Error = $"Unsupported message type: {type}"
             };
         }

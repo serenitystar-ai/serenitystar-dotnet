@@ -9,6 +9,9 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     public sealed class StreamingAgentMessageStop : StreamingAgentMessage
     {
+        /// <inheritdoc />
+        public override string Type => "stop";
+
         /// <summary>
         /// The complete content.
         /// </summary>
@@ -53,13 +56,5 @@ namespace SerenityStar.Models.Streaming
         /// The complete agent result with all execution details.
         /// </summary>
         public AgentResult? Result { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StreamingAgentMessageStop"/> class.
-        /// </summary>
-        public StreamingAgentMessageStop()
-        {
-            Type = "stop";
-        }
     }
 }

@@ -7,6 +7,9 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     public sealed class StreamingAgentMessageStart : StreamingAgentMessage
     {
+        /// <inheritdoc />
+        public override string Type => "start";
+
         /// <summary>
         /// The UTC time when the stream started.
         /// </summary>
@@ -17,7 +20,6 @@ namespace SerenityStar.Models.Streaming
         /// </summary>
         public StreamingAgentMessageStart()
         {
-            Type = "start";
             StartTimeUtc = DateTime.UtcNow;
         }
     }

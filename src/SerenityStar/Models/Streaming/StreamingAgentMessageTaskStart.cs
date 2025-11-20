@@ -5,6 +5,9 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     public sealed class StreamingAgentMessageTaskStart : StreamingAgentMessage
     {
+        /// <inheritdoc />
+        public override string Type => "task_start";
+
         /// <summary>
         /// The key identifying the task.
         /// </summary>
@@ -14,13 +17,5 @@ namespace SerenityStar.Models.Streaming
         /// The input to the task.
         /// </summary>
         public string Input { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StreamingAgentMessageTaskStart"/> class.
-        /// </summary>
-        public StreamingAgentMessageTaskStart()
-        {
-            Type = "task_start";
-        }
     }
 }

@@ -5,6 +5,9 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     public sealed class StreamingAgentMessageError : StreamingAgentMessage
     {
+        /// <inheritdoc />
+        public override string Type => "error";
+
         /// <summary>
         /// The error message.
         /// </summary>
@@ -14,13 +17,5 @@ namespace SerenityStar.Models.Streaming
         /// The HTTP status code, if applicable.
         /// </summary>
         public int? StatusCode { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StreamingAgentMessageError"/> class.
-        /// </summary>
-        public StreamingAgentMessageError()
-        {
-            Type = "error";
-        }
     }
 }

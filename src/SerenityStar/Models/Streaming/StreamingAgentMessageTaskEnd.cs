@@ -7,6 +7,9 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     public sealed class StreamingAgentMessageTaskEnd : StreamingAgentMessage
     {
+        /// <inheritdoc />
+        public override string Type => "task_end";
+
         /// <summary>
         /// The key identifying the task.
         /// </summary>
@@ -21,13 +24,5 @@ namespace SerenityStar.Models.Streaming
         /// The duration of the task in milliseconds.
         /// </summary>
         public long DurationMs { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StreamingAgentMessageTaskEnd"/> class.
-        /// </summary>
-        public StreamingAgentMessageTaskEnd()
-        {
-            Type = "task_end";
-        }
     }
 }

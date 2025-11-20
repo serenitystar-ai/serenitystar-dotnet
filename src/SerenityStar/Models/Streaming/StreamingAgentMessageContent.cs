@@ -5,17 +5,12 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     public sealed class StreamingAgentMessageContent : StreamingAgentMessage
     {
+        /// <inheritdoc />
+        public override string Type => "content";
+
         /// <summary>
         /// The text content.
         /// </summary>
         public string Text { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StreamingAgentMessageContent"/> class.
-        /// </summary>
-        public StreamingAgentMessageContent()
-        {
-            Type = "content";
-        }
     }
 }

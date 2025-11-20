@@ -8,6 +8,6 @@ namespace SerenityStar.Models.Streaming
         /// <summary>
         /// The type of the streaming message.
         /// </summary>
-        public string Type { get; set; } = string.Empty;
+        public abstract string Type { get; }
     }
 }
