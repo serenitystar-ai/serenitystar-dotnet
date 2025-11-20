@@ -1,4 +1,5 @@
 using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Constants;
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.Execute;
 using System.Collections.Generic;
@@ -17,7 +18,6 @@ namespace SerenityStar.Agents.System
     public sealed class Proxy : SystemAgentBase
     {
         private readonly ProxyExecutionReq _proxyOptions;
-        private readonly JsonSerializerOptions _jsonOptions;
 
         /// <summary>
         /// Provides methods for managing volatile knowledge within this proxy.
@@ -29,12 +29,6 @@ namespace SerenityStar.Agents.System
             : base(httpClient, agentCode, options)
         {
             _proxyOptions = options;
-            _jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 

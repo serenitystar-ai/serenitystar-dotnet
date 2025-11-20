@@ -1,4 +1,5 @@
 using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Constants;
 using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
@@ -25,8 +26,6 @@ namespace SerenityStar.Agents.Conversational
         private readonly HttpClient _httpClient;
         private readonly string _agentCode;
         private readonly AgentExecutionReq? _options;
-        private readonly JsonSerializerOptions _jsonOptions;
-        private readonly JsonSerializerOptions _snakeCaseJsonOptions;
         private string? _chatId;
 
         /// <summary>
@@ -50,16 +49,6 @@ namespace SerenityStar.Agents.Conversational
             _httpClient = httpClient;
             _agentCode = agentCode;
             _options = options;
-            _jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-            _snakeCaseJsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-            };
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
@@ -98,7 +87,7 @@ namespace SerenityStar.Agents.Conversational
             if (_options?.Channel != null)
                 requestBody["channel"] = _options.Channel;
 
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions, cancellationToken);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -106,7 +95,7 @@ namespace SerenityStar.Agents.Conversational
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            Info = await response.Content.ReadFromJsonAsync<ConversationInfoResult>(_jsonOptions, cancellationToken)
+            Info = await response.Content.ReadFromJsonAsync<ConversationInfoResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize conversation info");
         }
 
@@ -146,7 +135,7 @@ namespace SerenityStar.Agents.Conversational
             if (VolatileKnowledge.KnowledgeIds.Any())
                 parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
 
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, parameters, _jsonOptions, cancellationToken);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, parameters, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -154,7 +143,7 @@ namespace SerenityStar.Agents.Conversational
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
+            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize response");
 
             // Store instanceId as chatId for subsequent messages
@@ -208,7 +197,7 @@ namespace SerenityStar.Agents.Conversational
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
-                Content = JsonContent.Create(parameters, options: _jsonOptions)
+                Content = JsonContent.Create(parameters, options: JsonSerializerOptionsCache.s_camelCase)
             };
 
             HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -290,7 +279,7 @@ namespace SerenityStar.Agents.Conversational
                         Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
                         DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
                     },
-                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _snakeCaseJsonOptions),
+                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, JsonSerializerOptionsCache.s_snakeCaseLower),
                     "error" => new StreamingAgentMessageError
                     {
                         Error = root.GetProperty("error").GetString() ?? string.Empty,
@@ -328,7 +317,7 @@ namespace SerenityStar.Agents.Conversational
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<ConversationDetails>(_jsonOptions, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<ConversationDetails>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize conversation details");
         }
 
@@ -349,7 +338,7 @@ namespace SerenityStar.Agents.Conversational
                 ["feedback"] = options.Feedback
             };
 
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions, cancellationToken);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -401,7 +390,7 @@ namespace SerenityStar.Agents.Conversational
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<Models.Connector.ConnectorStatusRes>(_jsonOptions, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<Models.Connector.ConnectorStatusRes>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize connector status");
         }
     }

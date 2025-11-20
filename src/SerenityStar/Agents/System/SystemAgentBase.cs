@@ -1,3 +1,4 @@
+using SerenityStar.Constants;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using System;
@@ -23,7 +24,6 @@ namespace SerenityStar.Agents.System
         /// Execution options for the agent.
         /// </summary>
         protected readonly object? Options;
-        private readonly JsonSerializerOptions _jsonOptions;
 
         /// <summary>
         /// Initializes a new instance of the SystemAgentBase class.
@@ -33,11 +33,6 @@ namespace SerenityStar.Agents.System
             _httpClient = httpClient;
             _agentCode = agentCode;
             Options = options;
-            _jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
         }
 
         /// <summary>
@@ -74,7 +69,7 @@ namespace SerenityStar.Agents.System
 
             object body = CreateExecuteBody(false);
 
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, body, _jsonOptions, cancellationToken);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, body, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -82,7 +77,7 @@ namespace SerenityStar.Agents.System
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
+            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize response");
 
             OnExecutionComplete();
@@ -102,7 +97,7 @@ namespace SerenityStar.Agents.System
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
-                Content = JsonContent.Create(body, options: _jsonOptions)
+                Content = JsonContent.Create(body, options: JsonSerializerOptionsCache.s_camelCase)
             };
 
             HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -172,7 +167,7 @@ namespace SerenityStar.Agents.System
                         Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
                         DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
                     },
-                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _jsonOptions),
+                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, JsonSerializerOptionsCache.s_camelCase),
                     "error" => new StreamingAgentMessageError
                     {
                         Error = root.GetProperty("error").GetString() ?? string.Empty,

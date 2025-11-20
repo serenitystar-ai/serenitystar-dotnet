@@ -1,4 +1,5 @@
 using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Constants;
 using SerenityStar.Models.ChatCompletion;
 using SerenityStar.Models.Execute;
 using System.Collections.Generic;
@@ -17,7 +18,6 @@ namespace SerenityStar.Agents.System
     public sealed class ChatCompletion : SystemAgentBase
     {
         private readonly ChatCompletionReq _chatOptions;
-        private readonly JsonSerializerOptions _jsonOptions;
 
         /// <summary>
         /// Provides methods for managing volatile knowledge within this chat completion.
@@ -29,11 +29,6 @@ namespace SerenityStar.Agents.System
             : base(httpClient, agentCode, options)
         {
             _chatOptions = options;
-            _jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
@@ -47,7 +42,7 @@ namespace SerenityStar.Agents.System
 
             // Add messages if provided
             if (_chatOptions.Messages != null && _chatOptions.Messages.Count > 0)
-                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_chatOptions.Messages, _jsonOptions) });
+                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_chatOptions.Messages, JsonSerializerOptionsCache.s_camelCaseIgnoreNull) });
 
             // Add input parameters if provided
             if (_chatOptions.InputParameters != null)
