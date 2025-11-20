@@ -46,7 +46,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act
-        VolatileKnowledge result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
+        VolatileKnowledgeRes result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -64,7 +64,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act
-        VolatileKnowledge result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
+        VolatileKnowledgeRes result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -85,7 +85,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act
-        VolatileKnowledge result = await _client.Agents.VolatileKnowledge.UploadAsync(
+        VolatileKnowledgeRes result = await _client.Agents.VolatileKnowledge.UploadAsync(
             request,
             expirationDays: 7);
 
@@ -113,7 +113,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act
-        VolatileKnowledge result = await _client.Agents.VolatileKnowledge.UploadAsync(
+        VolatileKnowledgeRes result = await _client.Agents.VolatileKnowledge.UploadAsync(
             request,
             noExpiration: true);
 
@@ -136,7 +136,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act
-        VolatileKnowledge result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
+        VolatileKnowledgeRes result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -155,11 +155,11 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
             FileName = TestFileName
         };
 
-        VolatileKnowledge uploadedKnowledge = await _client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+        VolatileKnowledgeRes uploadedKnowledge = await _client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
         Guid knowledgeId = uploadedKnowledge.Id;
 
         // Act
-        VolatileKnowledge statusResult = await _client.Agents.VolatileKnowledge.GetStatusAsync(knowledgeId);
+        VolatileKnowledgeRes statusResult = await _client.Agents.VolatileKnowledge.GetStatusAsync(knowledgeId);
 
         // Assert
         Assert.NotNull(statusResult);
@@ -179,11 +179,11 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
             FileName = TestFileName
         };
 
-        VolatileKnowledge uploadedKnowledge = await _client.Agents.VolatileKnowledge.UploadAsync(request);
+        VolatileKnowledgeRes uploadedKnowledge = await _client.Agents.VolatileKnowledge.UploadAsync(request);
         Guid knowledgeId = uploadedKnowledge.Id;
 
         // Act & Assert
-        VolatileKnowledge status = uploadedKnowledge;
+        VolatileKnowledgeRes status = uploadedKnowledge;
         int maxAttempts = 30;
         int attempts = 0;
 
@@ -210,11 +210,11 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
             FileName = TestFileName
         };
 
-        VolatileKnowledge uploadedKnowledge = await _client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+        VolatileKnowledgeRes uploadedKnowledge = await _client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
         Guid knowledgeId = uploadedKnowledge.Id;
 
         // Wait for processing
-        VolatileKnowledge status = uploadedKnowledge;
+        VolatileKnowledgeRes status = uploadedKnowledge;
         int maxAttempts = 30;
         int attempts = 0;
 
@@ -258,7 +258,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act
-        VolatileKnowledge result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
+        VolatileKnowledgeRes result = await _client.Agents.VolatileKnowledge.UploadAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -283,7 +283,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
                 FileStream = fileStream1,
                 FileName = TestFileName
             };
-            VolatileKnowledge result1 = await _client.Agents.VolatileKnowledge.UploadAsync(request1);
+            VolatileKnowledgeRes result1 = await _client.Agents.VolatileKnowledge.UploadAsync(request1);
             knowledgeId1 = result1.Id;
         }
 
@@ -296,7 +296,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
                 FileStream = fileStream2,
                 FileName = TestFileName
             };
-            VolatileKnowledge result2 = await _client.Agents.VolatileKnowledge.UploadAsync(request2);
+            VolatileKnowledgeRes result2 = await _client.Agents.VolatileKnowledge.UploadAsync(request2);
             knowledgeId2 = result2.Id;
         }
 

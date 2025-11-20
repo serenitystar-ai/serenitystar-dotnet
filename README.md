@@ -807,7 +807,7 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     FileName = "document.pdf"
 };
 
-VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
@@ -819,7 +819,7 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     Content = "This is important information that needs to be processed."
 };
 
-VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
@@ -834,7 +834,7 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     CallbackUrl = "https://your-app.com/knowledge-callback"
 };
 
-VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(
+VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(
     uploadRequest,
     processEmbeddings: true,      // Enable embedding processing (Use `false` for Vision)
     noExpiration: false,           // Document will expire
@@ -848,7 +848,7 @@ if (knowledge.ExpirationDate.HasValue)
 ### Check Volatile Knowledge Status
 
 ```csharp
-VolatileKnowledge status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+VolatileKnowledgeRes status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 Console.WriteLine($"Status: {status.Status}");
 
 // Wait until the knowledge is ready
@@ -875,10 +875,10 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     FileName = "document.pdf"
 };
 
-VolatileKnowledge knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
 
 // Wait until ready
-VolatileKnowledge status = knowledge;
+VolatileKnowledgeRes status = knowledge;
 while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
 {
     await Task.Delay(1000);

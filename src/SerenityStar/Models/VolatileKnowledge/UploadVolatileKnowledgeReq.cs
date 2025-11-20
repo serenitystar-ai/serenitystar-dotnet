@@ -24,7 +24,7 @@ namespace SerenityStar.Models.VolatileKnowledge
         /// Gets or sets the file stream to upload.
         /// Either Content or FileStream must be provided, but not both.
         /// </summary>
-        public Stream FileStream { get; set; } = new MemoryStream();
+        public Stream? FileStream { get; set; }
 
         /// <summary>
         /// Gets or sets the file name.

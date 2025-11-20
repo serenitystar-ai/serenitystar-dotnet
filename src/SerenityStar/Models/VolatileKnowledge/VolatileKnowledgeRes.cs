@@ -7,7 +7,7 @@ namespace SerenityStar.Models.VolatileKnowledge
     /// <summary>
     /// Represents volatile knowledge entity with processing status and expiration tracking.
     /// </summary>
-    public sealed class VolatileKnowledge
+    public sealed class VolatileKnowledgeRes
     {
         /// <summary>
         /// Gets or sets the unique identifier of the volatile knowledge.

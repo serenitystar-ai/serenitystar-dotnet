@@ -31,7 +31,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="expirationDays">Optional parameter to specify the number of days until expiration.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity</returns>
-        public async Task<SerenityStar.Models.VolatileKnowledge.VolatileKnowledge> UploadAsync(
+        public async Task<VolatileKnowledgeRes> UploadAsync(
             UploadVolatileKnowledgeReq request,
             bool processEmbeddings = true,
             bool noExpiration = false,
@@ -83,7 +83,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
                     throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
                 }
 
-                SerenityStar.Models.VolatileKnowledge.VolatileKnowledge? volatileKnowledge = await response.Content.ReadFromJsonAsync<SerenityStar.Models.VolatileKnowledge.VolatileKnowledge>(cancellationToken: cancellationToken);
+                VolatileKnowledgeRes? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledgeRes>(cancellationToken: cancellationToken);
 
                 return volatileKnowledge ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
             }
@@ -95,7 +95,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="knowledgeId">The knowledge ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The volatile knowledge entity with current status.</returns>
-        public async Task<SerenityStar.Models.VolatileKnowledge.VolatileKnowledge> GetStatusAsync(
+        public async Task<VolatileKnowledgeRes> GetStatusAsync(
             Guid knowledgeId,
             CancellationToken cancellationToken = default)
         {
@@ -109,7 +109,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            SerenityStar.Models.VolatileKnowledge.VolatileKnowledge? volatileKnowledge = await response.Content.ReadFromJsonAsync<SerenityStar.Models.VolatileKnowledge.VolatileKnowledge>(cancellationToken: cancellationToken);
+            VolatileKnowledgeRes? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledgeRes>(cancellationToken: cancellationToken);
 
             return volatileKnowledge ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
         }
