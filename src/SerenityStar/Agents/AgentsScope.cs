@@ -1,3 +1,4 @@
+using SerenityStar.Agents.Connector;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using SerenityStar.Agents.VolatileKnowledge;

@@ -391,8 +391,10 @@ await conversation.RemoveFeedbackAsync(new RemoveFeedbackReq
 Check the connection status of an agent's connector.
 
 ```csharp
+using SerenityStar.Agents.Connector;
 using SerenityStar.Client;
 using SerenityStar.Models.Connector;
+using SerenityStar.Models.Execute;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
@@ -402,23 +404,38 @@ Conversation conversation = client.Agents.Assistants.CreateConversation("chef-as
 // Send a message that might require a connector
 AgentResult response = await conversation.SendMessageAsync("I need a summary of my latest meeting notes stored in google drive");
 
-// Here the user should complete the authentication process.
-
-// Check connector status for this conversation (you can use a loop to check every 5 seconds)
-ConnectorStatusRes status = await conversation.GetConnectorStatusAsync(new GetConnectorStatusReq
+// Check if there are pending actions (e.g., authentication required)
+if (response.PendingActions.Count > 0)
 {
-    AgentInstanceId = Guid.Parse(conversation.ConversationId!),
-    // Get the connector id using response.PendingActions[index].ConnectorId
-    ConnectorId = Guid.Parse("connector-uuid")
-});
+    foreach (PendingAction action in response.PendingActions)
+    {
+        if (action is ConnectionPendingAction connectionAction)
+        {
+            Console.WriteLine($"Authentication required for {connectionAction.ConnectorName}");
+            Console.WriteLine($"Please visit: {connectionAction.Url}");
 
-Console.WriteLine($"Is Connected: {status.IsConnected}"); // true or false
+            // Here the user should complete the authentication process.
 
-// You can use this to determine if a connector needs authentication
-if (!status.IsConnected)
-{
-    Console.WriteLine("Connector is not connected. Please authenticate.");
-    // After user authenticates the connector...
+            // Check connector status for this conversation (you can use a loop to check every 5 seconds)
+            ConnectorStatusResult status = await ConnectorScope.GetConnectorStatusAsync(
+                client.HttpClient,
+                "chef-assistant",
+                new GetConnectorStatusReq
+                {
+                    AgentInstanceId = Guid.Parse(conversation.ConversationId!),
+                    ConnectorId = connectionAction.ConnectorId
+                });
+
+            Console.WriteLine($"Is Connected: {status.IsConnected}"); // true or false
+
+            // You can use this to determine if a connector needs authentication
+            if (!status.IsConnected)
+            {
+                Console.WriteLine("Connector is not connected. Please authenticate.");
+                // Wait and check again...
+            }
+        }
+    }
 }
 
 // Once connected, send the message again

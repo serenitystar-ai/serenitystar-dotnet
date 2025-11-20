@@ -1,4 +1,3 @@
-using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.MessageFeedback;
@@ -70,7 +69,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="httpClient">The HTTP client to use for API calls.</param>
         /// <param name="agentCode">The assistant agent code.</param>
         /// <param name="options">Optional execution options.</param>
-        /// <returns>A new conversation instance.</returns>sarasa
+        /// <returns>A new conversation instance.</returns>
         public static Conversation CreateConversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
             => new Conversation(httpClient, agentCode, options);
 
@@ -349,30 +348,6 @@ namespace SerenityStar.Agents.Conversational
                 string errorContent = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
-        }
-
-        /// <summary>
-        /// Gets the connector status.
-        /// </summary>
-        /// <param name="options">The connector status options.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>The connector status.</returns>
-        public async Task<ConnectorStatusResult> GetConnectorStatusAsync(
-            GetConnectorStatusReq options,
-            CancellationToken cancellationToken = default)
-        {
-            string url = $"/api/v2/agent/{_agentCode}/connector/{options.ConnectorId}/status?agentInstanceId={options.AgentInstanceId}";
-
-            HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            return await response.Content.ReadFromJsonAsync<ConnectorStatusResult>(_jsonOptions, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize connector status");
         }
     }
 }

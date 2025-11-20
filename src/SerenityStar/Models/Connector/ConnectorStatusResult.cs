@@ -1,9 +1,9 @@
-namespace SerenityStar.Models.Conversation
+namespace SerenityStar.Models.Connector
 {
     /// <summary>
     /// Result of connector status check.
     /// </summary>
-    public class ConnectorStatusResult
+    public sealed class ConnectorStatusResult
     {
         /// <summary>
         /// Indicates if the connector is connected.
