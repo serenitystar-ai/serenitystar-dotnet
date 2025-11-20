@@ -70,7 +70,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
                     queryParams.Add($"expirationDays={expirationDays.Value}");
 
                 string queryString = string.Join("&", queryParams);
-                string endpoint = $"volatileknowledge?{queryString}";
+                string endpoint = $"/api/v2/volatileknowledge?{queryString}";
 
                 HttpResponseMessage response = await _httpClient.PostAsync(
                     endpoint,
@@ -100,7 +100,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
             CancellationToken cancellationToken = default)
         {
             HttpResponseMessage response = await _httpClient.GetAsync(
-                $"volatileknowledge/{knowledgeId}",
+                $"/api/v2/volatileknowledge/{knowledgeId}",
                 cancellationToken);
 
             if (!response.IsSuccessStatusCode)

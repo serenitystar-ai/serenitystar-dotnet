@@ -8,6 +8,6 @@ namespace SerenityStar.Constants
         /// <summary>
         /// The base URL for the Serenity AI Hub API.
         /// </summary>
-        internal const string BaseUrl = "https://api.serenitystar.ai/api/v2";
+        internal const string BaseUrl = "https://api.serenitystar.ai";
     }
 }
