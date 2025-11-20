@@ -20,7 +20,7 @@
 
       BREAKING CHANGES:
       - Renamed SerenityAIHubClient to SerenityClient
-      - Remove Execute from SerenityClient (Use specific agent instead)
+      - Complete API redesign to provide scoped methods based on agent types and other core entities (e.g., client.Agents.Activities.ExecuteAsync("agent-name"), conversation.SendMessageAsync("message"))
 
       NEW FEATURES:
       - Builder Pattern for Client Creation:

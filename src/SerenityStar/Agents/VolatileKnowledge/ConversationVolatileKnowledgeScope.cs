@@ -1,3 +1,4 @@
+using SerenityStar.Constants;
 using SerenityStar.Models.VolatileKnowledge;
 using System;
 using System.Collections.Generic;
@@ -92,7 +93,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
                     throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
                 }
 
-                VolatileKnowledgeRes? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledgeRes>(cancellationToken: cancellationToken);
+                VolatileKnowledgeRes? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledgeRes>(JsonSerializerOptionsCache.s_camelCase, cancellationToken: cancellationToken);
 
                 if (volatileKnowledge is null)
                     throw new InvalidOperationException("Failed to deserialize volatile knowledge response");

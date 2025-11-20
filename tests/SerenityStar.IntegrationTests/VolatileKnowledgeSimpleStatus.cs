@@ -1,4 +1,4 @@
-namespace SerenityStar.Models.VolatileKnowledge
+namespace SerenityStar.IntegrationTests
 {
     /// <summary>
     /// Defines simple status values for volatile knowledge processing.

@@ -835,13 +835,13 @@ Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.St
 VolatileKnowledgeRes response = await conversation.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 
 // Wait until the knowledge is ready
-while (response.Status != VolatileKnowledgeSimpleStatus.Success && response.Status != VolatileKnowledgeSimpleStatus.Error)
+while (response.Status != "success" && response.Status != "error")
 {
     await Task.Delay(1000);
     response = await conversation.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 }
 
-if (response.Status == VolatileKnowledgeSimpleStatus.Error)
+if (response.Status == "error")
     Console.WriteLine($"Processing failed: {response.Error}");
 else
 {
@@ -912,13 +912,13 @@ VolatileKnowledgeRes knowledge = await activity.VolatileKnowledge.UploadAsync(up
 
 // Wait for processing
 VolatileKnowledgeRes response = await activity.VolatileKnowledge.GetStatusAsync(knowledge.Id);
-while (response.Status != VolatileKnowledgeSimpleStatus.Success && response.Status != VolatileKnowledgeSimpleStatus.Error)
+while (response.Status != "success" && response.Status != "error")
 {
     await Task.Delay(1000);
     response = await activity.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 }
 
-if (response.Status == VolatileKnowledgeSimpleStatus.Success)
+if (response.Status == "success")
 {
     // Execute the activity - volatile knowledge is automatically included
     AgentResult result = await activity.ExecuteAsync();
@@ -944,7 +944,7 @@ using (FileStream file1 = File.OpenRead("doc1.pdf"))
     });
 
     // Wait for processing
-    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge1.Id)).Status == VolatileKnowledgeSimpleStatus.Analyzing)
+    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge1.Id)).Status == "analyzing")
         await Task.Delay(1000);
 }
 
@@ -958,7 +958,7 @@ using (FileStream file2 = File.OpenRead("doc2.pdf"))
     });
 
     // Wait for processing
-    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge2.Id)).Status == VolatileKnowledgeSimpleStatus.Analyzing)
+    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge2.Id)).Status == "analyzing")
         await Task.Delay(1000);
 }
 
