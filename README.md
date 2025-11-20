@@ -209,7 +209,7 @@ using SerenityStar.Models.Conversation;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Get conversation by id (basic example)
-ConversationDetails conversation = await client.Agents.Assistants.GetConversationByIdAsync(
+ConversationRes conversation = await client.Agents.Assistants.GetConversationByIdAsync(
     "chef-assistant",
     "conversation-id-here"
 );
@@ -223,7 +223,7 @@ foreach (ConversationMessage message in conversation.Messages)
     Console.WriteLine($"{message.Role}: {message.Content}");
 
 // Get conversation by id with executor task logs
-ConversationResult conversationWithLogs = await client.Agents.Assistants.GetConversationByIdAsync(
+ConversationRes conversationWithLogs = await client.Agents.Assistants.GetConversationByIdAsync(
     "chef-assistant",
     "conversation-id-here",
     new GetConversationOptions

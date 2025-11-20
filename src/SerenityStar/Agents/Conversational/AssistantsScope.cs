@@ -64,7 +64,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="showExecutorTaskLogs">Whether to include executor task logs.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The conversation details.</returns>
-        public async Task<ConversationDetails> GetConversationByIdAsync(
+        public async Task<ConversationRes> GetConversationByIdAsync(
             string agentCode,
             string conversationId,
             bool showExecutorTaskLogs = false,

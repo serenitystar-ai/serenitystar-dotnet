@@ -301,7 +301,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="showExecutorTaskLogs">Whether to include executor task logs.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The conversation details.</returns>
-        public async Task<ConversationDetails> GetConversationByIdAsync(
+        public async Task<ConversationRes> GetConversationByIdAsync(
             string conversationId,
             bool showExecutorTaskLogs = false,
             CancellationToken cancellationToken = default)
@@ -317,7 +317,7 @@ namespace SerenityStar.Agents.Conversational
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<ConversationDetails>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<ConversationRes>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize conversation details");
         }
 
