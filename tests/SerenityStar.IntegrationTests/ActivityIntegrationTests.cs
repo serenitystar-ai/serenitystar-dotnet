@@ -131,7 +131,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             Assert.IsType<Dictionary<string, object>>(result.ActionResults);
 
         if (result.ExecutorTaskLogs != null)
-            Assert.IsType<List<ExecutorTaskResult>>(result.ExecutorTaskLogs);
+            Assert.IsType<List<AgentResult.Task>>(result.ExecutorTaskLogs);
     }
 
     [Fact]

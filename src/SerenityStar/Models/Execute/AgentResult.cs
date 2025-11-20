@@ -29,12 +29,12 @@ namespace SerenityStar.Models.Execute
         /// <summary>
         /// Representation of the token counts processed for a completions request.
         /// </summary>
-        public AgentResultTokenUsage? CompletionUsage { get; set; }
+        public TokenUsage? CompletionUsage { get; set; }
 
         /// <summary>
         /// The cost information for this agent execution in the tenant's currency.
         /// </summary>
-        public AgentResultCost? Cost { get; set; }
+        public CostInfo? Cost { get; set; }
 
         /// <summary>
         /// The results of the actions performed by the Agent, if any.
@@ -60,7 +60,7 @@ namespace SerenityStar.Models.Execute
         /// <summary>
         /// The tasks executed to complete the request and their duration in milliseconds.
         /// </summary>
-        public List<ExecutorTaskResult>? ExecutorTaskLogs { get; set; }
+        public List<Task>? ExecutorTaskLogs { get; set; }
 
         /// <summary>
         /// The id of the user message.
@@ -119,58 +119,58 @@ namespace SerenityStar.Models.Execute
                 return null;
             }
         }
-    }
-
-    /// <summary>
-    /// Represents token usage statistics for an agent execution.
-    /// </summary>
-    public sealed class AgentResultTokenUsage
-    {
-        /// <summary>
-        /// Number of tokens in the prompt.
-        /// </summary>
-        public int PromptTokens { get; set; }
 
         /// <summary>
-        /// Number of tokens in the completion.
+        /// Represents token usage statistics for an agent execution.
         /// </summary>
-        public int CompletionTokens { get; set; }
+        public sealed class TokenUsage
+        {
+            /// <summary>
+            /// Number of tokens in the prompt.
+            /// </summary>
+            public int PromptTokens { get; set; }
+
+            /// <summary>
+            /// Number of tokens in the completion.
+            /// </summary>
+            public int CompletionTokens { get; set; }
+
+            /// <summary>
+            /// Total number of tokens used.
+            /// </summary>
+            public int TotalTokens { get; set; }
+        }
 
         /// <summary>
-        /// Total number of tokens used.
+        /// Represents cost information for an agent execution.
         /// </summary>
-        public int TotalTokens { get; set; }
-    }
+        public sealed class CostInfo
+        {
+            /// <summary>
+            /// The total cost of the execution.
+            /// </summary>
+            public decimal Total { get; set; }
 
-    /// <summary>
-    /// Represents cost information for an agent execution.
-    /// </summary>
-    public sealed class AgentResultCost
-    {
-        /// <summary>
-        /// The total cost of the execution.
-        /// </summary>
-        public decimal Total { get; set; }
-
-        /// <summary>
-        /// The currency code (e.g., USD, EUR).
-        /// </summary>
-        public string Currency { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Represents the result of an executor task.
-    /// </summary>
-    public sealed class ExecutorTaskResult
-    {
-        /// <summary>
-        /// The name of the task.
-        /// </summary>
-        public string TaskName { get; set; } = string.Empty;
+            /// <summary>
+            /// The currency code (e.g., USD, EUR).
+            /// </summary>
+            public string Currency { get; set; } = string.Empty;
+        }
 
         /// <summary>
-        /// The duration of the task in milliseconds.
+        /// Represents the result of an executor task.
         /// </summary>
-        public long DurationMs { get; set; }
+        public sealed class Task
+        {
+            /// <summary>
+            /// The name of the task.
+            /// </summary>
+            public string TaskName { get; set; } = string.Empty;
+
+            /// <summary>
+            /// The duration of the task in milliseconds.
+            /// </summary>
+            public long DurationMs { get; set; }
+        }
     }
 }

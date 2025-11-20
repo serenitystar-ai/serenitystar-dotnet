@@ -427,7 +427,7 @@ if (response.PendingActions.Count > 0)
 {
     foreach (PendingAction action in response.PendingActions)
     {
-        if (action is ConnectionPendingAction connectionAction)
+        if (action is PendingAction.Connection connectionAction)
         {
             Console.WriteLine($"Authentication required for {connectionAction.ConnectorName}");
             Console.WriteLine($"Please visit: {connectionAction.Url}");

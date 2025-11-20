@@ -22,7 +22,7 @@ namespace SerenityStar.Models.Streaming
         /// <summary>
         /// Token usage information.
         /// </summary>
-        public AgentResultTokenUsage? CompletionUsage { get; set; }
+        public AgentResult.TokenUsage? CompletionUsage { get; set; }
 
         /// <summary>
         /// Time to first token in milliseconds.
@@ -32,7 +32,7 @@ namespace SerenityStar.Models.Streaming
         /// <summary>
         /// Executor task logs.
         /// </summary>
-        public List<ExecutorTaskResult>? ExecutorTaskLogs { get; set; }
+        public List<AgentResult.Task>? ExecutorTaskLogs { get; set; }
 
         /// <summary>
         /// Action results from the agent.
