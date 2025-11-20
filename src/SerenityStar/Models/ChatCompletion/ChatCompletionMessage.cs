@@ -5,7 +5,7 @@ namespace SerenityStar.Models.ChatCompletion
     /// <summary>
     /// Represents a message in a chat completion conversation.
     /// </summary>
-    public sealed class ChatMessage
+    public sealed class ChatCompletionMessage
     {
         /// <summary>
         /// The role of the message sender (e.g., "system", "user", "assistant").

@@ -15,7 +15,7 @@ namespace SerenityStar.Models.ChatCompletion
         /// <summary>
         /// Previous messages in the conversation.
         /// </summary>
-        public List<ChatMessage>? Messages { get; set; }
+        public List<ChatCompletionMessage>? Messages { get; set; }
 
         /// <summary>
         /// User identifier for tracking and personalization.

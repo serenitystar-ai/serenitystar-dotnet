@@ -595,7 +595,7 @@ SerenityClient client = SerenityClient.Create("your-api-key");
 ProxyExecutionReq options = new()
 {
     Model = "gpt-4o-mini-2024-07-18",
-    Messages = new List<ChatMessage>
+    Messages = new List<ChatCompletionMessage>
     {
         new() { Role = "user", Content = "Write a short poem about programming" }
     },
@@ -718,9 +718,9 @@ AgentResult responseAdvanced = await client.Agents.ChatCompletions.ExecuteAsync(
     Channel = "web",
     VolatileKnowledgeIds = new List<string> { "knowledge-1", "knowledge-2" },
     Message = "Hi! How can I eat healthier?",
-    Messages = new List<ChatMessage>
+    Messages = new List<ChatCompletionMessage>
     {
-        new ChatMessage
+        new ChatCompletionMessage
         {
             Role = "assistant",
             Content = "Hi there! How can I assist you?"
