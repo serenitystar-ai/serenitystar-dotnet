@@ -35,7 +35,7 @@
         * Use volatile knowledge IDs in agent executions for context-aware responses
 
       - Enhanced Connector Support: Better integration with external services
-        * ConnectorScope.GetConnectorStatusAsync(httpClient, agentCode, options) - Check connection status for external services
+        * conversation.GetConnectorStatusAsync(connectorId) - Check connection status for external services
         * Support for ConnectionPendingAction with connector details (ConnectorId, Url, ConnectorName, ConnectorImgUrl)
         * Improved handling of pending actions requiring user authentication
         * Support for connector authentication workflows in conversations

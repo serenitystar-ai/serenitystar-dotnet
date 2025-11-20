@@ -1,3 +1,4 @@
+using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.MessageFeedback;
@@ -348,6 +349,32 @@ namespace SerenityStar.Agents.Conversational
                 string errorContent = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
+        }
+
+        /// <summary>
+        /// Gets the connector status for this conversation.
+        /// </summary>
+        /// <param name="connectorId">The connector ID.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The connector status.</returns>
+        public async Task<ConnectorStatusRes> GetConnectorStatusAsync(
+            Guid connectorId,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(ConversationId))
+                throw new InvalidOperationException("Conversation not initialized");
+
+            string url = $"/api/v2/connection/agentInstance/{ConversationId}/connector/{connectorId}/status";
+            HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            return await response.Content.ReadFromJsonAsync<Models.Connector.ConnectorStatusRes>(_jsonOptions, cancellationToken)
+                   ?? throw new InvalidOperationException("Failed to deserialize connector status");
         }
     }
 }

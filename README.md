@@ -391,7 +391,6 @@ await conversation.RemoveFeedbackAsync(new RemoveFeedbackReq
 Check the connection status of an agent's connector.
 
 ```csharp
-using SerenityStar.Agents.Connector;
 using SerenityStar.Client;
 using SerenityStar.Models.Connector;
 using SerenityStar.Models.Execute;
@@ -417,14 +416,7 @@ if (response.PendingActions.Count > 0)
             // Here the user should complete the authentication process.
 
             // Check connector status for this conversation (you can use a loop to check every 5 seconds)
-            ConnectorStatusRes status = await ConnectorScope.GetConnectorStatusAsync(
-                client.HttpClient,
-                "chef-assistant",
-                new GetConnectorStatusReq
-                {
-                    AgentInstanceId = Guid.Parse(conversation.ConversationId!),
-                    ConnectorId = connectionAction.ConnectorId
-                });
+            ConnectorStatusRes status = await conversation.GetConnectorStatusAsync(connectionAction.ConnectorId);
 
             Console.WriteLine($"Is Connected: {status.IsConnected}"); // true or false
 
