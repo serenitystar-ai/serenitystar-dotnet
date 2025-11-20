@@ -57,11 +57,6 @@ namespace SerenityStar.Models.Conversation
             /// Indicates if the agent supports realtime.
             /// </summary>
             public bool IsRealtime { get; set; }
-
-            /// <summary>
-            /// The agent's profile image ID.
-            /// </summary>
-            public string? ImageId { get; set; }
         }
     }
 }
