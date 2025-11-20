@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace SerenityStar.Models.Connector
 {
     /// <summary>
@@ -10,7 +8,6 @@ namespace SerenityStar.Models.Connector
         /// <summary>
         /// Gets or sets a value indicating whether the connector is connected.
         /// </summary>
-        [JsonPropertyName("isConnected")]
         public bool IsConnected { get; set; }
     }
 }

@@ -390,7 +390,7 @@ namespace SerenityStar.Agents.Conversational
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<Models.Connector.ConnectorStatusRes>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<ConnectorStatusRes>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize connector status");
         }
     }
