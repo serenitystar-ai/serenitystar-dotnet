@@ -1,3 +1,4 @@
+using SerenityStar.Models.Streaming;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -37,6 +38,16 @@ namespace SerenityStar.Constants
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        /// <summary>
+        /// Options with SnakeCaseLower naming policy for streaming messages with custom converter.
+        /// </summary>
+        public static readonly JsonSerializerOptions s_streamingSnakeCaseLower = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            Converters = { new StreamingAgentMessageJsonConverter() }
         };
     }
 }

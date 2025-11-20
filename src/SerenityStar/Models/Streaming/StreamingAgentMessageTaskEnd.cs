@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace SerenityStar.Models.Streaming
 {
     /// <summary>
@@ -11,9 +13,9 @@ namespace SerenityStar.Models.Streaming
         public string Key { get; set; } = string.Empty;
 
         /// <summary>
-        /// The result of the task execution.
+        /// The result of the task execution as a JsonElement.
         /// </summary>
-        public object? Result { get; set; }
+        public JsonElement? Result { get; set; }
 
         /// <summary>
         /// The duration of the task in milliseconds.

@@ -224,7 +224,7 @@ namespace SerenityStar.Agents.Conversational
                     if (data == "[DONE]")
                         break;
 
-                    StreamingAgentMessage? msg = ParseStreamingMessage(data);
+                    StreamingAgentMessage? msg = JsonSerializer.Deserialize<StreamingAgentMessage>(data, JsonSerializerOptionsCache.s_streamingSnakeCaseLower);
                     if (msg != null)
                     {
                         if (!messageStarted)
@@ -247,50 +247,6 @@ namespace SerenityStar.Agents.Conversational
                         yield return msg;
                     }
                 }
-            }
-        }
-
-        private StreamingAgentMessage? ParseStreamingMessage(string json)
-        {
-            try
-            {
-                using JsonDocument doc = JsonDocument.Parse(json);
-                JsonElement root = doc.RootElement;
-
-                if (!root.TryGetProperty("type", out JsonElement typeElement))
-                    return null;
-
-                string type = typeElement.GetString() ?? string.Empty;
-
-                return type switch
-                {
-                    "task_start" => new StreamingAgentMessageTaskStart
-                    {
-                        Key = root.GetProperty("key").GetString() ?? string.Empty,
-                        Input = root.GetProperty("input").GetString() ?? string.Empty
-                    },
-                    "content" => new StreamingAgentMessageContent
-                    {
-                        Text = root.GetProperty("text").GetString() ?? string.Empty
-                    },
-                    "task_end" => new StreamingAgentMessageTaskEnd
-                    {
-                        Key = root.GetProperty("key").GetString() ?? string.Empty,
-                        Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
-                        DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
-                    },
-                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, JsonSerializerOptionsCache.s_snakeCaseLower),
-                    "error" => new StreamingAgentMessageError
-                    {
-                        Error = root.GetProperty("error").GetString() ?? string.Empty,
-                        StatusCode = root.TryGetProperty("statusCode", out JsonElement statusElem) ? statusElem.GetInt32() : null
-                    },
-                    _ => null
-                };
-            }
-            catch
-            {
-                return null;
             }
         }
 
