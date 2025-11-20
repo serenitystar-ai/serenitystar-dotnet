@@ -284,8 +284,8 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
             Console.WriteLine($"Task started: {taskStart.Key}");
             break;
 
-        case StreamingAgentMessageTaskEnd taskEnd:
-            Console.WriteLine($"Task completed: {taskEnd.Key} (Duration: {taskEnd.DurationMs}ms)");
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"Task completed: {taskStop.Key} (Duration: {taskStop.DurationMs}ms)");
             break;
 
         case StreamingAgentMessageStop stop:
@@ -547,8 +547,8 @@ await foreach (StreamingAgentMessage message in activity.StreamAsync())
             Console.WriteLine($"Task: {taskStart.Key}");
             break;
 
-        case StreamingAgentMessageTaskEnd taskEnd:
-            Console.WriteLine($"Task completed in {taskEnd.DurationMs}ms");
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"Task completed in {taskStop.DurationMs}ms");
             break;
 
         case StreamingAgentMessageStop stop:
@@ -652,8 +652,8 @@ await foreach (StreamingAgentMessage message in proxy.StreamAsync())
             Console.WriteLine($"\nStarting: {taskStart.Key}");
             break;
 
-        case StreamingAgentMessageTaskEnd taskEnd:
-            Console.WriteLine($"Completed in {taskEnd.DurationMs}ms");
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"Completed in {taskStop.DurationMs}ms");
             break;
 
         case StreamingAgentMessageStop stop:
@@ -812,8 +812,8 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
             Console.WriteLine($"\n[Processing: {taskStart.Key}]");
             break;
 
-        case StreamingAgentMessageTaskEnd taskEnd:
-            Console.WriteLine($"[Task completed in {taskEnd.DurationMs}ms]");
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"[Task completed in {taskStop.DurationMs}ms]");
             break;
 
         case StreamingAgentMessageStop stop:

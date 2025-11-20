@@ -5,10 +5,10 @@ namespace SerenityStar.Models.Streaming
     /// <summary>
     /// Represents the end of a task execution.
     /// </summary>
-    public sealed class StreamingAgentMessageTaskEnd : StreamingAgentMessage
+    public sealed class StreamingAgentMessageTaskStop : StreamingAgentMessage
     {
         /// <inheritdoc />
-        public override string Type => "task_end";
+        public override string Type => "task_stop";
 
         /// <summary>
         /// The key identifying the task.

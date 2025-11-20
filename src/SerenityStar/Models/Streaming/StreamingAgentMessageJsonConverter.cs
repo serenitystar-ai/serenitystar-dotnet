@@ -30,7 +30,7 @@ namespace SerenityStar.Models.Streaming
             {
                 "task_start" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStart>(jsonObject, options),
                 "content" => JsonSerializer.Deserialize<StreamingAgentMessageContent>(jsonObject, options),
-                "task_end" => JsonSerializer.Deserialize<StreamingAgentMessageTaskEnd>(jsonObject, options),
+                "task_stop" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStop>(jsonObject, options),
                 "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(jsonObject, options),
                 "error" => JsonSerializer.Deserialize<StreamingAgentMessageError>(jsonObject, options),
                 _ => CreateUnsupportedMessage(type)
