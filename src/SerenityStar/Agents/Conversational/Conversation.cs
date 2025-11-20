@@ -211,8 +211,6 @@ namespace SerenityStar.Agents.Conversational
             using (Stream stream = await response.Content.ReadAsStreamAsync())
             using (StreamReader reader = new StreamReader(stream))
             {
-                yield return new StreamingAgentMessageStart();
-
                 bool messageStarted = false;
                 while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
                 {

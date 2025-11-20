@@ -28,6 +28,7 @@ namespace SerenityStar.Models.Streaming
 
             StreamingAgentMessage message = type switch
             {
+                "start" => JsonSerializer.Deserialize<StreamingAgentMessageStart>(jsonObject, options),
                 "task_start" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStart>(jsonObject, options),
                 "content" => JsonSerializer.Deserialize<StreamingAgentMessageContent>(jsonObject, options),
                 "task_stop" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStop>(jsonObject, options),
