@@ -29,7 +29,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Usage](#-usage)
 - [Assistants / Copilots](#assistants--copilots)
 - [Activities](#activities)
-- [Proxies](#proxies)
+- [AI Proxy](#ai-proxy)
 - [Chat Completions](#chat-completions)
 - [Documentation](#-documentation)
 
@@ -542,9 +542,9 @@ await foreach (StreamingAgentMessage message in activity.StreamAsync())
 }
 ```
 
-## Proxies
+## AI Proxy
 
-Proxies provide direct access to AI models with consistent interfaces across different providers. They're ideal when you need fine-grained control over model parameters.
+AI Proxy provides direct access to AI models with consistent interfaces across different providers. They're ideal when you need fine-grained control over model parameters.
 
 ### Execute a proxy agent
 
@@ -552,7 +552,7 @@ Proxies provide direct access to AI models with consistent interfaces across dif
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.Execute;
 
-AgentResult response = await client.Agents.Proxies.ExecuteAsync(
+AgentResult response = await client.Agents.AIProxy.ExecuteAsync(
     "proxy-agent",
     new ProxyExecutionReq
     {
@@ -582,7 +582,7 @@ Console.WriteLine(response.ExecutorTaskLogs);
 
 ### Stream responses with SSE
 
-Proxies support streaming responses, perfect for real-time AI model interactions. You can process tokens as they arrive.
+AI Proxy supports streaming responses, perfect for real-time AI model interactions. You can process tokens as they arrive.
 
 ```csharp
 using SerenityStar.Client;
@@ -604,7 +604,7 @@ ProxyExecutionReq options = new()
     MaxTokens = 200
 };
 
-Proxy proxy = client.Agents.Proxies.Create("openai-proxy", options);
+Proxy proxy = client.Agents.AIProxy.Create("openai-proxy", options);
 
 // Stream the response
 Console.WriteLine("Poem: ");
@@ -650,7 +650,7 @@ The following options can be passed when executing a proxy agent via `ProxyExecu
 ```csharp
 using SerenityStar.Models.AIProxy;
 
-AgentResult response = await client.Agents.Proxies.ExecuteAsync(
+AgentResult response = await client.Agents.AIProxy.ExecuteAsync(
     "proxy-agent",
     new ProxyExecutionReq
     {

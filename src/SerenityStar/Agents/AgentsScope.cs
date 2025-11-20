@@ -20,9 +20,9 @@ namespace SerenityStar.Agents
         public ChatCompletionsScope ChatCompletions { get; }
 
         /// <summary>
-        /// Interact with Proxy agents.
+        /// Interact with AI Proxy agents.
         /// </summary>
-        public ProxiesScope Proxies { get; }
+        public AIProxiesScope AIProxy { get; }
 
         /// <summary>
         /// Interact with Assistant agents.
@@ -34,7 +34,7 @@ namespace SerenityStar.Agents
             // Agents
             Activities = new ActivitiesScope(httpClient);
             ChatCompletions = new ChatCompletionsScope(httpClient);
-            Proxies = new ProxiesScope(httpClient);
+            AIProxy = new AIProxiesScope(httpClient);
             Assistants = new AssistantsScope(httpClient);
         }
     }

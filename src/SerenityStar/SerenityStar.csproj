@@ -43,7 +43,7 @@
       - Unified Streaming Experience: Consistent streaming across all agent types
         * Activities: activity.StreamAsync()
         * Chat Completions: chatCompletion.StreamAsync()
-        * Proxies: proxy.StreamAsync()
+        * AI Proxy: proxy.StreamAsync()
         * Assistants: conversation.StreamMessageAsync()
         * Receive real-time updates with start, content, task logs, and stop events
 

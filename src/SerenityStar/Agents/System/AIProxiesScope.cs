@@ -102,13 +102,13 @@ namespace SerenityStar.Agents.System
     }
 
     /// <summary>
-    /// Provides methods for interacting with Proxy agents.
+    /// Provides methods for interacting with AI Proxy agents.
     /// </summary>
-    public sealed class ProxiesScope
+    public sealed class AIProxiesScope
     {
         private readonly HttpClient _httpClient;
 
-        internal ProxiesScope(HttpClient httpClient)
+        internal AIProxiesScope(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }

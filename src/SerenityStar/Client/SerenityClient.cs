@@ -14,7 +14,7 @@ namespace SerenityStar.Client
 
         /// <summary>
         /// Interact with the different agents available in Serenity Star.
-        /// You can choose between assistants, activities, proxies, and chat completions.
+        /// You can choose between assistants, activities, AI proxy, and chat completions.
         /// </summary>
         public AgentsScope Agents { get; }
 
