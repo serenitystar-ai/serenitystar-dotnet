@@ -59,6 +59,13 @@ namespace SerenityStar.Agents.System
         protected abstract object CreateExecuteBody(bool stream);
 
         /// <summary>
+        /// Called after execution completes. Override in derived classes for cleanup.
+        /// </summary>
+        protected virtual void OnExecutionComplete()
+        {
+        }
+
+        /// <summary>
         /// Executes the agent.
         /// </summary>
         public async Task<AgentResult> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -75,8 +82,12 @@ namespace SerenityStar.Agents.System
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
+            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize response");
+
+            OnExecutionComplete();
+
+            return result;
         }
 
         /// <summary>
@@ -107,6 +118,7 @@ namespace SerenityStar.Agents.System
             {
                 yield return new StreamingAgentMessageStart();
 
+                bool executionStarted = false;
                 while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
                 {
                     string? line = await reader.ReadLineAsync();
@@ -119,7 +131,14 @@ namespace SerenityStar.Agents.System
 
                     StreamingAgentMessage? msg = ParseStreamingMessage(data);
                     if (msg != null)
+                    {
+                        if (!executionStarted)
+                        {
+                            executionStarted = true;
+                            OnExecutionComplete();
+                        }
                         yield return msg;
+                    }
                 }
             }
         }

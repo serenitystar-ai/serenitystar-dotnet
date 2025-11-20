@@ -1,3 +1,4 @@
+using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
@@ -6,6 +7,7 @@ using SerenityStar.Models.Streaming;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
@@ -37,6 +39,12 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         public ConversationInfoResult? Info { get; private set; }
 
+        /// <summary>
+        /// Provides methods for managing volatile knowledge within this conversation.
+        /// Uploaded knowledge is automatically associated with this conversation.
+        /// </summary>
+        public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
+
         internal Conversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
         {
             _httpClient = httpClient;
@@ -52,6 +60,7 @@ namespace SerenityStar.Agents.Conversational
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
             };
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
         /// <summary>
@@ -133,6 +142,10 @@ namespace SerenityStar.Agents.Conversational
             if (_options?.Channel != null)
                 parameters.Add(new { Key = "channel", Value = _options.Channel });
 
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, parameters, _jsonOptions, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -147,6 +160,9 @@ namespace SerenityStar.Agents.Conversational
             // Store instanceId as chatId for subsequent messages
             if (string.IsNullOrEmpty(_chatId) && result.InstanceId != Guid.Empty)
                 _chatId = result.InstanceId.ToString();
+
+            // Clear volatile knowledge IDs after sending message
+            VolatileKnowledge.ClearKnowledgeIds();
 
             return result;
         }
@@ -186,6 +202,10 @@ namespace SerenityStar.Agents.Conversational
             if (_options?.Channel != null)
                 parameters.Add(new { Key = "channel", Value = _options.Channel });
 
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(parameters, options: _jsonOptions)
@@ -204,6 +224,7 @@ namespace SerenityStar.Agents.Conversational
             {
                 yield return new StreamingAgentMessageStart();
 
+                bool messageStarted = false;
                 while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
                 {
                     string? line = await reader.ReadLineAsync();
@@ -217,6 +238,13 @@ namespace SerenityStar.Agents.Conversational
                     StreamingAgentMessage? msg = ParseStreamingMessage(data);
                     if (msg != null)
                     {
+                        if (!messageStarted)
+                        {
+                            messageStarted = true;
+                            // Clear volatile knowledge IDs when streaming starts
+                            VolatileKnowledge.ClearKnowledgeIds();
+                        }
+
                         // Store conversationId from the stop message
                         if (msg is StreamingAgentMessageStop stop && string.IsNullOrEmpty(_chatId))
                         {

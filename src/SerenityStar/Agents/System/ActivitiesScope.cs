@@ -1,5 +1,8 @@
+using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Models.Execute;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,9 +14,16 @@ namespace SerenityStar.Agents.System
     /// </summary>
     public sealed class Activity : SystemAgentBase
     {
+        /// <summary>
+        /// Provides methods for managing volatile knowledge within this activity.
+        /// Uploaded knowledge is automatically associated with this activity.
+        /// </summary>
+        public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
+
         internal Activity(HttpClient httpClient, string agentCode, AgentExecutionReq? options)
             : base(httpClient, agentCode, options)
         {
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
         /// <inheritdoc/>
@@ -27,7 +37,18 @@ namespace SerenityStar.Agents.System
                 foreach (KeyValuePair<string, object> param in executionOptions.InputParameters)
                     parameters.Add(new { param.Key, param.Value });
 
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+
             return parameters;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExecutionComplete()
+        {
+            // Clear volatile knowledge IDs after execution
+            VolatileKnowledge.ClearKnowledgeIds();
         }
     }
 

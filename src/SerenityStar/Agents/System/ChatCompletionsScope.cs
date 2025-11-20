@@ -1,6 +1,8 @@
+using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Models.ChatCompletion;
 using SerenityStar.Models.Execute;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,6 +19,12 @@ namespace SerenityStar.Agents.System
         private readonly ChatCompletionReq _chatOptions;
         private readonly JsonSerializerOptions _jsonOptions;
 
+        /// <summary>
+        /// Provides methods for managing volatile knowledge within this chat completion.
+        /// Uploaded knowledge is automatically associated with this chat completion.
+        /// </summary>
+        public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
+
         internal ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionReq options)
             : base(httpClient, agentCode, options)
         {
@@ -26,6 +34,7 @@ namespace SerenityStar.Agents.System
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
         /// <inheritdoc/>
@@ -45,7 +54,18 @@ namespace SerenityStar.Agents.System
                 foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
                     parameters.Add(new { param.Key, param.Value });
 
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+
             return parameters;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExecutionComplete()
+        {
+            // Clear volatile knowledge IDs after execution
+            VolatileKnowledge.ClearKnowledgeIds();
         }
     }
 

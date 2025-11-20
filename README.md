@@ -787,37 +787,73 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
 
 ## Volatile Knowledge
 
-Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time based on your configuration.
+Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time based on your configuration. The volatile knowledge is scoped to the conversation or activity it's uploaded to and is automatically included in the next message.
 
-### Upload Volatile Knowledge
+### Upload and Use Volatile Knowledge in a Conversation
 
 ```csharp
-using FileStream fileStream = File.OpenRead("path/to/document.pdf");
+using SerenityStar.Client;
+using SerenityStar.Agents.Conversational;
+using SerenityStar.Models.VolatileKnowledge;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Step 1: Create a conversation
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Step 2: Upload volatile knowledge to the conversation
+using FileStream fileStream = File.OpenRead("document.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
     FileStream = fileStream,
     FileName = "document.pdf"
 };
 
-VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
+
+// Step 3: Check status until ready
+VolatileKnowledgeRes response = await conversation.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+
+// Wait until the knowledge is ready
+while (response.Status != VolatileKnowledgeSimpleStatus.Success && response.Status != VolatileKnowledgeSimpleStatus.Error)
+{
+    await Task.Delay(1000);
+    response = await conversation.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+}
+
+if (response.Status == VolatileKnowledgeSimpleStatus.Error)
+    Console.WriteLine($"Processing failed: {response.Error}");
+else
+{
+    // Step 4: Send a message - the volatile knowledge is automatically included
+    AgentResult result = await conversation.SendMessageAsync("What does the document say about cooking techniques?");
+    Console.WriteLine(result.Content);
+
+    // The volatile knowledge is automatically cleared after sending the message
+    // Subsequent messages won't include it unless you upload new knowledge
+}
 ```
 
 ### Upload Volatile Knowledge with Text Content
 
 ```csharp
+Conversation conversation = client.Agents.Assistants.CreateConversation("research-assistant");
+
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
-    Content = "This is important information that needs to be processed."
+    Content = "https://serenitystar.ai"
 };
 
-VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
 ### Upload with Custom Parameters
 
 ```csharp
+Conversation conversation = client.Agents.Assistants.CreateConversation("data-analyst");
+
 using FileStream fileStream = File.OpenRead("document.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
@@ -826,61 +862,92 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     CallbackUrl = "https://your-app.com/knowledge-callback"
 };
 
-VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadAsync(
     uploadRequest,
-    processEmbeddings: true,      // Enable embedding processing (Use `false` for Vision)
-    noExpiration: false,           // Document will expire
-    expirationDays: 7);            // Expire in 7 days
+    processEmbeddings: true,         // Process embeddings for semantic search
+    noExpiration: false,             // Allow expiration
+    expirationDays: 7);              // Expire in 7 days
 
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}");
 if (knowledge.ExpirationDate.HasValue)
     Console.WriteLine($"Expires on: {knowledge.ExpirationDate.Value}");
 ```
 
-### Check Volatile Knowledge Status
+### Use Volatile Knowledge with Activities
 
 ```csharp
-VolatileKnowledgeRes status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
-Console.WriteLine($"Status: {status.Status}");
+using SerenityStar.Agents.System;
 
-// Wait until the knowledge is ready
-while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
-{
-    await Task.Delay(1000);
-    status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
-}
+// Create an activity
+Activity activity = client.Agents.Activities.Create("document-analyzer");
 
-if (status.Status == VolatileKnowledgeSimpleStatus.Error)
-    Console.WriteLine($"Processing failed: {status.Error}");
-```
-
-### Use Volatile Knowledge in Agent Execution
-
-Once the volatile knowledge is ready, you can use it in agent executions by passing the knowledge IDs:
-
-```csharp
-// Upload and wait for processing
-using FileStream fileStream = File.OpenRead("document.pdf");
+// Upload volatile knowledge to the activity
+using FileStream fileStream = File.OpenRead("report.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
     FileStream = fileStream,
-    FileName = "document.pdf"
+    FileName = "report.pdf"
 };
 
-VolatileKnowledgeRes knowledge = await client.Agents.VolatileKnowledge.UploadAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await activity.VolatileKnowledge.UploadAsync(uploadRequest);
 
-// Wait until ready
-VolatileKnowledgeRes status = knowledge;
-while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
+// Wait for processing
+VolatileKnowledgeRes response = await activity.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+while (response.Status != VolatileKnowledgeSimpleStatus.Success && response.Status != VolatileKnowledgeSimpleStatus.Error)
 {
     await Task.Delay(1000);
-    status = await client.Agents.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+    response = await activity.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 }
 
-// Execute agent with volatile knowledge
-Conversation conversation = client.Agents.Assistants.CreateConversation("assistantagent");
-AgentResult result = await conversation.SendMessageAsync("Based on the uploaded document, what does it say about pricing?");
-Console.WriteLine($"Agent response: {result.Content}");
+if (response.Status == VolatileKnowledgeSimpleStatus.Success)
+{
+    // Execute the activity - volatile knowledge is automatically included
+    AgentResult result = await activity.ExecuteAsync();
+    Console.WriteLine(result.Content);
+    // Volatile knowledge is cleared after execution
+}
+```
+
+### Multiple Knowledge Documents
+
+You can upload multiple documents to the same conversation or activity. All uploaded documents will be included in the next message and then automatically cleared.
+
+```csharp
+Conversation conversation = client.Agents.Assistants.CreateConversation("multi-doc-assistant");
+
+// Upload first document
+using (FileStream file1 = File.OpenRead("doc1.pdf"))
+{
+    VolatileKnowledgeRes knowledge1 = await conversation.VolatileKnowledge.UploadAsync(new()
+    {
+        FileStream = file1,
+        FileName = "doc1.pdf"
+    });
+
+    // Wait for processing
+    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge1.Id)).Status == VolatileKnowledgeSimpleStatus.Analyzing)
+        await Task.Delay(1000);
+}
+
+// Upload second document
+using (FileStream file2 = File.OpenRead("doc2.pdf"))
+{
+    VolatileKnowledgeRes knowledge2 = await conversation.VolatileKnowledge.UploadAsync(new()
+    {
+        FileStream = file2,
+        FileName = "doc2.pdf"
+    });
+
+    // Wait for processing
+    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge2.Id)).Status == VolatileKnowledgeSimpleStatus.Analyzing)
+        await Task.Delay(1000);
+}
+
+// Both documents are included in this message
+AgentResult result = await conversation.SendMessageAsync("What can you say me about doc1 and doc2?");
+Console.WriteLine(result.Content);
+
+// Both documents are cleared after the message is sent
 ```
 
 ## 🤝 Contributing

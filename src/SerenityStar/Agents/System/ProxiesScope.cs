@@ -1,12 +1,9 @@
+using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.Execute;
-using SerenityStar.Models.Streaming;
-using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -17,17 +14,20 @@ namespace SerenityStar.Agents.System
     /// <summary>
     /// Represents a Proxy agent.
     /// </summary>
-    public sealed class Proxy
+    public sealed class Proxy : SystemAgentBase
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _agentCode;
         private readonly ProxyExecutionReq _proxyOptions;
         private readonly JsonSerializerOptions _jsonOptions;
 
+        /// <summary>
+        /// Provides methods for managing volatile knowledge within this proxy.
+        /// Uploaded knowledge is automatically associated with this proxy.
+        /// </summary>
+        public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
+
         internal Proxy(HttpClient httpClient, string agentCode, ProxyExecutionReq options)
+            : base(httpClient, agentCode, options)
         {
-            _httpClient = httpClient;
-            _agentCode = agentCode;
             _proxyOptions = options;
             _jsonOptions = new JsonSerializerOptions
             {
@@ -35,12 +35,11 @@ namespace SerenityStar.Agents.System
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
-        /// <summary>
-        /// Creates the execute body as a direct JSON object (not parameters).
-        /// </summary>
-        private object CreateExecuteBody(bool stream)
+        /// <inheritdoc/>
+        protected override object CreateExecuteBody(bool stream)
         {
             Dictionary<string, object> body = new Dictionary<string, object>();
 
@@ -84,116 +83,21 @@ namespace SerenityStar.Agents.System
             if (_proxyOptions.UseVision.HasValue)
                 body["useVision"] = _proxyOptions.UseVision.Value;
 
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                body["volatileKnowledgeIds"] = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList();
+
             if (stream)
                 body["stream"] = true;
 
             return body;
         }
 
-        /// <summary>
-        /// Executes the proxy agent.
-        /// </summary>
-        public async Task<AgentResult> ExecuteAsync(CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        protected override void OnExecutionComplete()
         {
-            string url = $"/api/v2/agent/{_agentCode}/execute";
-            object body = CreateExecuteBody(false);
-
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, body, _jsonOptions, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            return await response.Content.ReadFromJsonAsync<AgentResult>(_jsonOptions, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize response");
-        }
-
-        /// <summary>
-        /// Streams execution results from the proxy agent.
-        /// </summary>
-        public async IAsyncEnumerable<StreamingAgentMessage> StreamAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            string url = $"/api/v2/agent/{_agentCode}/execute";
-            object body = CreateExecuteBody(true);
-
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Content = JsonContent.Create(body, options: _jsonOptions)
-            };
-
-            HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            using Stream stream = await response.Content.ReadAsStreamAsync();
-            using StreamReader reader = new(stream);
-            yield return new StreamingAgentMessageStart();
-
-            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
-            {
-                string? line = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
-                    continue;
-
-                string data = line.Substring(6).Trim();
-                if (data == "[DONE]")
-                    break;
-
-                StreamingAgentMessage? msg = ParseStreamingMessage(data);
-                if (msg != null)
-                    yield return msg;
-            }
-        }
-
-        private StreamingAgentMessage? ParseStreamingMessage(string json)
-        {
-            try
-            {
-                using JsonDocument doc = JsonDocument.Parse(json);
-                JsonElement root = doc.RootElement;
-
-                if (!root.TryGetProperty("type", out JsonElement typeElement))
-                    return null;
-
-                string type = typeElement.GetString() ?? string.Empty;
-
-                return type switch
-                {
-                    "task_start" => new StreamingAgentMessageTaskStart
-                    {
-                        Key = root.GetProperty("key").GetString() ?? string.Empty,
-                        Input = root.GetProperty("input").GetString() ?? string.Empty
-                    },
-                    "content" => new StreamingAgentMessageContent
-                    {
-                        Text = root.GetProperty("text").GetString() ?? string.Empty
-                    },
-                    "task_end" => new StreamingAgentMessageTaskEnd
-                    {
-                        Key = root.GetProperty("key").GetString() ?? string.Empty,
-                        Result = root.TryGetProperty("result", out JsonElement resultElem) ? resultElem.Clone() : null,
-                        DurationMs = root.TryGetProperty("duration", out JsonElement durationElem) ? durationElem.GetInt64() : 0
-                    },
-                    "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(json, _jsonOptions),
-                    "error" => new StreamingAgentMessageError
-                    {
-                        Error = root.GetProperty("error").GetString() ?? string.Empty,
-                        StatusCode = root.TryGetProperty("statusCode", out JsonElement statusElem) ? statusElem.GetInt32() : null
-                    },
-                    _ => null
-                };
-            }
-            catch
-            {
-                return null;
-            }
+            // Clear volatile knowledge IDs after execution
+            VolatileKnowledge.ClearKnowledgeIds();
         }
     }
 

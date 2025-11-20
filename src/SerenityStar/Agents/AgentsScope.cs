@@ -1,6 +1,5 @@
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
-using SerenityStar.Agents.VolatileKnowledge;
 using System.Net.Http;
 
 namespace SerenityStar.Agents
@@ -30,11 +29,6 @@ namespace SerenityStar.Agents
         /// </summary>
         public AssistantsScope Assistants { get; }
 
-        /// <summary>
-        /// Manage volatile knowledge.
-        /// </summary>
-        public VolatileKnowledgeScope VolatileKnowledge { get; }
-
         internal AgentsScope(HttpClient httpClient)
         {
             // Agents
@@ -42,8 +36,6 @@ namespace SerenityStar.Agents
             ChatCompletions = new ChatCompletionsScope(httpClient);
             Proxies = new ProxiesScope(httpClient);
             Assistants = new AssistantsScope(httpClient);
-
-            VolatileKnowledge = new VolatileKnowledgeScope(httpClient);
         }
     }
 }
