@@ -50,7 +50,7 @@ namespace SerenityStar.Models.Execute
         /// <summary>
         /// The list of guardrail rule violations detected during the agent execution.
         /// </summary>
-        public List<object>? Violations { get; set; }
+        public List<GuardrailRuleViolation>? Violations { get; set; }
 
         /// <summary>
         /// The time taken to generate the first token.
@@ -81,7 +81,7 @@ namespace SerenityStar.Models.Execute
         /// <summary>
         /// Collection of sensitive data items that were detected and obfuscated during this request.
         /// </summary>
-        public List<object> SensitiveData { get; set; } = new List<object>();
+        public List<SensitiveDataItem> SensitiveData { get; set; } = new List<SensitiveDataItem>();
 
         /// <summary>
         /// Additional metadata from the execution.
@@ -181,6 +181,103 @@ namespace SerenityStar.Models.Execute
             /// Indicates whether the task completed successfully.
             /// </summary>
             public bool Success { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a guardrail rule violation detected during agent execution.
+        /// </summary>
+        public sealed class GuardrailRuleViolation
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GuardrailRuleViolation"/> class.
+            /// </summary>
+            public GuardrailRuleViolation()
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GuardrailRuleViolation"/> class with rule and score.
+            /// </summary>
+            public GuardrailRuleViolation(string rule, double? score)
+            {
+                Rule = rule;
+                ScoreInput = score;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GuardrailRuleViolation"/> class with full details.
+            /// </summary>
+            public GuardrailRuleViolation(string rule, bool isInputScore, double? score, string? ruleDisplayName = null)
+            {
+                Rule = rule;
+                RuleName = rule;
+                RuleDisplayName = ruleDisplayName ?? rule;
+                ScoreInput = isInputScore ? score : null;
+                ScoreOutput = !isInputScore ? score : null;
+            }
+
+            /// <summary>
+            /// The guardrail rule that was violated.
+            /// </summary>
+            public string Rule { get; set; } = string.Empty;
+
+            /// <summary>
+            /// The name of the rule.
+            /// </summary>
+            public string? RuleName { get; set; }
+
+            /// <summary>
+            /// The score for input violations, if applicable.
+            /// </summary>
+            public double? ScoreInput { get; set; }
+
+            /// <summary>
+            /// The score for output violations, if applicable.
+            /// </summary>
+            public double? ScoreOutput { get; set; }
+
+            /// <summary>
+            /// The display name of the rule.
+            /// </summary>
+            public string? RuleDisplayName { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a single sensitive data item that was obfuscated.
+        /// </summary>
+        public sealed class SensitiveDataItem
+        {
+            /// <summary>
+            /// The original content before obfuscation.
+            /// </summary>
+            public string OriginalContent { get; set; } = string.Empty;
+
+            /// <summary>
+            /// The obfuscated content (e.g., "PERSON-1", "EMAIL_ADDRESS-1").
+            /// </summary>
+            public string ObfuscatedContent { get; set; } = string.Empty;
+
+            /// <summary>
+            /// The confidence score of the detection (0.0 to 1.0).
+            /// </summary>
+            public double Score { get; set; }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SensitiveDataItem"/> class.
+            /// </summary>
+            public SensitiveDataItem()
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SensitiveDataItem"/> class with specified values.
+            /// </summary>
+            public SensitiveDataItem(string originalContent, string obfuscatedContent, double score)
+            {
+                OriginalContent = originalContent;
+                ObfuscatedContent = obfuscatedContent;
+                Score = score;
+            }
         }
     }
 }
