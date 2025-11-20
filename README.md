@@ -417,7 +417,7 @@ if (response.PendingActions.Count > 0)
             // Here the user should complete the authentication process.
 
             // Check connector status for this conversation (you can use a loop to check every 5 seconds)
-            ConnectorStatusResult status = await ConnectorScope.GetConnectorStatusAsync(
+            ConnectorStatusRes status = await ConnectorScope.GetConnectorStatusAsync(
                 client.HttpClient,
                 "chef-assistant",
                 new GetConnectorStatusReq

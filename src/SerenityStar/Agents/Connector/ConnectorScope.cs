@@ -21,7 +21,7 @@ namespace SerenityStar.Agents.Connector
         /// <param name="options">The connector status options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The connector status.</returns>
-        public static async Task<ConnectorStatusResult> GetConnectorStatusAsync(
+        public static async Task<ConnectorStatusRes> GetConnectorStatusAsync(
             HttpClient httpClient,
             string agentCode,
             GetConnectorStatusReq options,
@@ -43,7 +43,7 @@ namespace SerenityStar.Agents.Connector
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<ConnectorStatusResult>(jsonOptions, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<ConnectorStatusRes>(jsonOptions, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize connector status");
         }
     }
