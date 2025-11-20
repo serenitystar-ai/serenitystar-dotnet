@@ -8,12 +8,12 @@ using Xunit;
 
 namespace SerenityStar.IntegrationTests;
 
-public class ConversationIntegrationTests : IClassFixture<TestFixture>
+public class AssistantIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
     private readonly ISerenityClient _client;
 
-    public ConversationIntegrationTests(TestFixture fixture)
+    public AssistantIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
         _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();

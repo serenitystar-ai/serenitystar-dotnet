@@ -10,6 +10,7 @@ public class TestFixture : IDisposable
     public IConfiguration Configuration { get; }
     public bool HasValidApiKey { get; }
     public string AssistantAgent { get; }
+    public string CopilotAgent { get; }
     public string ActivityAgent { get; }
     public string ProxyAgent { get; }
     public string ChatCompletionAgent { get; }
@@ -27,6 +28,7 @@ public class TestFixture : IDisposable
 
         string? apiKey = Configuration["SerenityStar:ApiKey"];
         AssistantAgent = Configuration["SerenityStar:AssistantAgent"] ?? "assistantagent";
+        CopilotAgent = Configuration["SerenityStar:CopilotAgent"] ?? "copilotagent";
         ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
         ProxyAgent = Configuration["SerenityStar:ProxyAgent"] ?? "proxyagent";
         ChatCompletionAgent = Configuration["SerenityStar:ChatCompletionAgent"] ?? "chatcompletionagent";

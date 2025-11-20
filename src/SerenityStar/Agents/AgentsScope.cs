@@ -29,6 +29,11 @@ namespace SerenityStar.Agents
         /// </summary>
         public AssistantsScope Assistants { get; }
 
+        /// <summary>
+        /// Interact with Copilot agents.
+        /// </summary>
+        public CopilotScope Copilots { get; }
+
         internal AgentsScope(HttpClient httpClient)
         {
             // Agents
@@ -36,6 +41,7 @@ namespace SerenityStar.Agents
             ChatCompletions = new ChatCompletionsScope(httpClient);
             AIProxy = new AIProxiesScope(httpClient);
             Assistants = new AssistantsScope(httpClient);
+            Copilots = new CopilotScope(httpClient);
         }
     }
 }

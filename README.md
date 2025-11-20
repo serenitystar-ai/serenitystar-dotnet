@@ -121,15 +121,18 @@ public class YourService
 
 ## Assistants / Copilots
 
-Assistants are conversational agents that maintain context across multiple messages. They're perfect for building chatbots, virtual assistants, and interactive applications.
+Assistants and Copilots are conversational agents that maintain context across multiple messages. They're perfect for building chatbots, virtual assistants, and interactive applications. Both provide the same functionality - choose the terminology that best fits your use case.
 
 ### Create a conversation and send messages
 
 ```csharp
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-// Create conversation instance (no API call yet)
+// Using Assistants
 Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Or using Copilots (same functionality)
+Conversation copilotConversation = client.Agents.Copilots.CreateConversation("chef-assistant");
 
 // First message - creates the conversation in Serenity Star automatically
 AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
@@ -143,11 +146,17 @@ Console.WriteLine(response2.Content);
 
 ### Resume an existing conversation
 
-Use this when you don’t already have a Conversation instance in memory, for example, when you load a stored conversation ID from your database.
+Use this when you don't already have a Conversation instance in memory, for example, when you load a stored conversation ID from your database.
 
 ```csharp
-// Resume a conversation using an existing conversation ID
+// Resume a conversation using an existing conversation ID with Assistants
 Conversation existingConversation = client.Agents.Assistants.CreateConversation(
+    "chef-assistant",
+    conversationId: "existing-conversation-id"
+);
+
+// Or with Copilots
+Conversation existingCopilot = client.Agents.Copilots.CreateConversation(
     "chef-assistant",
     conversationId: "existing-conversation-id"
 );
@@ -158,14 +167,15 @@ Console.WriteLine(response.Content);
 
 ### Get conversation information
 
-You can retrieve detailed information about an assistant agent, including its configuration, capabilities, and metadata. This is useful for understanding what parameters the agent accepts and how it's configured.
+You can retrieve detailed information about an assistant/copilot agent, including its configuration, capabilities, and metadata. This is useful for understanding what parameters the agent accepts and how it's configured.
 
 ```csharp
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 
-// Get basic agent information by code
+// Get basic agent information by code (works with both Assistants and Copilots)
 ConversationInfoResult agentInfo = await client.Agents.Assistants.GetInfoByCodeAsync("chef-assistant");
+// Or: ConversationInfoResult agentInfo = await client.Agents.Copilots.GetInfoByCodeAsync("chef-assistant");
 
 Console.WriteLine($"Initial Message: {agentInfo.Conversation.InitialMessage}"); // "Hello! I'm your personal chef assistant..."
 Console.WriteLine($"Starters: {string.Join(", ", agentInfo.Conversation.Starters)}"); // ["What's for dinner tonight?", "Help me plan a meal", ...]
