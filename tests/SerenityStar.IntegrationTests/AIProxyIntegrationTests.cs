@@ -34,8 +34,10 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
+        Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options);
+        AgentResult result = await proxy.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -60,8 +62,10 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
+        Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options);
+        AgentResult result = await proxy.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -85,8 +89,10 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
+        Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options);
+        AgentResult result = await proxy.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -113,8 +119,10 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
+        Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options);
+        AgentResult result = await proxy.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -135,9 +143,11 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             Messages = [] // Empty messages
         };
 
+        Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options));
+            proxy.ExecuteAsync());
     }
 
     [Fact]
@@ -225,7 +235,8 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
                 ]
             };
 
-            AgentResult result = await _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options);
+            Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+            AgentResult result = await proxy.ExecuteAsync();
 
             Assert.NotNull(result);
             Assert.NotNull(result.Content);
@@ -259,8 +270,10 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
+        Proxy proxy = _client.Agents.AIProxy.Create(_fixture.ProxyAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.AIProxy.ExecuteAsync(_fixture.ProxyAgent, options);
+        AgentResult result = await proxy.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);

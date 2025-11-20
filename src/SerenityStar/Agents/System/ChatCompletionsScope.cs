@@ -25,7 +25,13 @@ namespace SerenityStar.Agents.System
         /// </summary>
         public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
 
-        internal ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionReq options)
+        /// <summary>
+        /// Initializes a new instance of the ChatCompletion class.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Chat completion options.</param>
+        public ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionReq options)
             : base(httpClient, agentCode, options)
         {
             _chatOptions = options;
@@ -77,30 +83,12 @@ namespace SerenityStar.Agents.System
         }
 
         /// <summary>
-        /// Executes a chat completion agent.
+        /// Creates a chat completion agent instance.
         /// </summary>
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Chat completion options.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        public Task<AgentResult> ExecuteAsync(
-            string agentCode,
-            ChatCompletionReq options,
-            CancellationToken cancellationToken = default)
-        {
-            ChatCompletion chatCompletion = new ChatCompletion(_httpClient, agentCode, options);
-            return chatCompletion.ExecuteAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Creates a chat completion agent for streaming.
-        /// </summary>
-        /// <param name="agentCode">The agent code.</param>
-        /// <param name="options">Chat completion options.</param>
-        /// <returns>A chat completion instance for streaming.</returns>
+        /// <returns>A chat completion instance.</returns>
         public ChatCompletion Create(string agentCode, ChatCompletionReq options)
-        {
-            return new ChatCompletion(_httpClient, agentCode, options);
-        }
+            => new ChatCompletion(_httpClient, agentCode, options);
     }
 }

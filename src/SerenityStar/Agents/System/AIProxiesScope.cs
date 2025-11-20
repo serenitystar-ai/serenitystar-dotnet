@@ -25,7 +25,13 @@ namespace SerenityStar.Agents.System
         /// </summary>
         public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
 
-        internal Proxy(HttpClient httpClient, string agentCode, ProxyExecutionReq options)
+        /// <summary>
+        /// Initializes a new instance of the Proxy class.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Proxy execution options.</param>
+        public Proxy(HttpClient httpClient, string agentCode, ProxyExecutionReq options)
             : base(httpClient, agentCode, options)
         {
             _proxyOptions = options;
@@ -108,30 +114,12 @@ namespace SerenityStar.Agents.System
         }
 
         /// <summary>
-        /// Executes a proxy agent.
+        /// Creates a proxy agent instance.
         /// </summary>
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Proxy execution options.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        public Task<AgentResult> ExecuteAsync(
-            string agentCode,
-            ProxyExecutionReq options,
-            CancellationToken cancellationToken = default)
-        {
-            Proxy proxy = new Proxy(_httpClient, agentCode, options);
-            return proxy.ExecuteAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Creates a proxy agent for streaming.
-        /// </summary>
-        /// <param name="agentCode">The agent code.</param>
-        /// <param name="options">Proxy execution options.</param>
-        /// <returns>A proxy instance for streaming.</returns>
+        /// <returns>A proxy instance.</returns>
         public Proxy Create(string agentCode, ProxyExecutionReq options)
-        {
-            return new Proxy(_httpClient, agentCode, options);
-        }
+            => new Proxy(_httpClient, agentCode, options);
     }
 }

@@ -30,8 +30,10 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
+        AgentResult result = await activity.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -44,10 +46,11 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithoutWord_ShouldFail()
     {
         // Arrange - No input parameters
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent);
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent));
+            activity.ExecuteAsync());
     }
 
     [Fact]
@@ -68,7 +71,8 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
                 }
             };
 
-            AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
+            Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+            AgentResult result = await activity.ExecuteAsync();
 
             Assert.NotNull(result);
             Assert.NotNull(result.Content);
@@ -97,8 +101,10 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             AgentVersion = 25
         };
 
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
+        AgentResult result = await activity.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -119,8 +125,10 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
+        AgentResult result = await activity.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -212,8 +220,10 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
+        Activity activity = serenityClient.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
         // Act
-        AgentResult result = await serenityClient.Agents.Activities.ExecuteAsync(_fixture.ActivityAgent, options);
+        AgentResult result = await activity.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);

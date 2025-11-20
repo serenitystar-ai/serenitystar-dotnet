@@ -28,8 +28,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             Message = "Hello, how are you?"
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -52,8 +54,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -71,8 +75,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             UserIdentifier = "test-user-123"
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -95,8 +101,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -114,8 +122,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             AgentVersion = 1
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -140,8 +150,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             UserIdentifier = "learner-001"
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -243,7 +255,8 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
                 Message = question
             };
 
-            AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+            ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+            AgentResult result = await chatCompletion.ExecuteAsync();
 
             Assert.NotNull(result);
             Assert.NotNull(result.Content);
@@ -281,8 +294,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             AgentVersion = 1
         };
 
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
         // Act
-        AgentResult result = await _client.Agents.ChatCompletions.ExecuteAsync(_fixture.ChatCompletionAgent, options);
+        AgentResult result = await chatCompletion.ExecuteAsync();
 
         // Assert
         Assert.NotNull(result);

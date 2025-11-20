@@ -1,6 +1,5 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Models.Execute;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -20,7 +19,13 @@ namespace SerenityStar.Agents.System
         /// </summary>
         public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
 
-        internal Activity(HttpClient httpClient, string agentCode, AgentExecutionReq? options)
+        /// <summary>
+        /// Initializes a new instance of the Activity class.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Optional execution options.</param>
+        public Activity(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
             : base(httpClient, agentCode, options)
         {
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
@@ -65,27 +70,11 @@ namespace SerenityStar.Agents.System
         }
 
         /// <summary>
-        /// Executes an activity agent.
+        /// Creates an activity agent instance.
         /// </summary>
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Optional execution options.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        public Task<AgentResult> ExecuteAsync(
-            string agentCode,
-            AgentExecutionReq? options = null,
-            CancellationToken cancellationToken = default)
-        {
-            Activity activity = new Activity(_httpClient, agentCode, options);
-            return activity.ExecuteAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Creates an activity agent for streaming.
-        /// </summary>
-        /// <param name="agentCode">The agent code.</param>
-        /// <param name="options">Optional execution options.</param>
-        /// <returns>An activity instance for streaming.</returns>
+        /// <returns>An activity instance.</returns>
         public Activity Create(string agentCode, AgentExecutionReq? options = null)
             => new Activity(_httpClient, agentCode, options);
     }

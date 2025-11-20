@@ -45,11 +45,13 @@ dotnet add package SubgenAI.SerenityStar.SDK
 
 ```csharp
 using SerenityStar.Client;
+using SerenityStar.Agents.System;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-// Execute an activity agent
-AgentResult response = await client.Agents.Activities.ExecuteAsync("marketing-campaign");
+// Create and execute an activity agent
+Activity activity = client.Agents.Activities.Create("marketing-campaign");
+AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
 
@@ -57,6 +59,7 @@ Console.WriteLine(response.Content);
 
 ```csharp
 using SerenityStar.Client;
+using SerenityStar.Agents.System;
 
 SerenityClient client = new SerenityClientBuilder()
     .WithApiKey("your-api-key")
@@ -64,8 +67,9 @@ SerenityClient client = new SerenityClientBuilder()
     .WithTimeout(30)                             // Optional
     .Build();
 
-// Execute an activity agent
-AgentResult response = await client.Agents.Activities.ExecuteAsync("marketing-campaign");
+// Create and execute an activity agent
+Activity activity = client.Agents.Activities.Create("marketing-campaign");
+AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
 
@@ -73,6 +77,7 @@ Console.WriteLine(response.Content);
 
 ```csharp
 using SerenityStar.Client;
+using SerenityStar.Agents.System;
 
 var customHttpClient = new HttpClient();
 // Configure your custom HttpClient as needed
@@ -82,8 +87,9 @@ SerenityClient client = new SerenityClientBuilder()
     .WithHttpClient(customHttpClient)
     .Build();
 
-// Execute an activity agent
-AgentResult response = await client.Agents.Activities.ExecuteAsync("marketing-campaign");
+// Create and execute an activity agent
+Activity activity = client.Agents.Activities.Create("marketing-campaign");
+AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
 
@@ -102,6 +108,8 @@ services.AddSerenityStar(
 );
 
 // In your service/controller
+using SerenityStar.Agents.System;
+
 public class YourService
 {
     private readonly ISerenityClient _client;
@@ -113,7 +121,8 @@ public class YourService
 
     public async Task DoSomething()
     {
-        AgentResult response = await _client.Agents.Activities.ExecuteAsync("marketing-campaign");
+        Activity activity = _client.Agents.Activities.Create("marketing-campaign");
+        AgentResult response = await activity.ExecuteAsync();
         Console.WriteLine(response.Content);
     }
 }
@@ -464,16 +473,18 @@ Activities are single-execution agents designed for one-time tasks like translat
 ```csharp
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-// Execute activity (basic example)
-AgentResult response = await client.Agents.Activities.ExecuteAsync("translator-activity");
+// Create and execute activity (basic example)
+Activity activity = client.Agents.Activities.Create("translator-activity");
+AgentResult response = await activity.ExecuteAsync();
 
 Console.WriteLine(response.Content);
 
-// Execute activity (advanced example)
-AgentResult responseAdvanced = await client.Agents.Activities.ExecuteAsync(
+// Create and execute activity (advanced example)
+Activity activityAdvanced = client.Agents.Activities.Create(
     "translator-activity",
     new AgentExecutionReq
     {
@@ -485,6 +496,8 @@ AgentResult responseAdvanced = await client.Agents.Activities.ExecuteAsync(
     }
 );
 
+AgentResult responseAdvanced = await activityAdvanced.ExecuteAsync();
+
 Console.WriteLine(responseAdvanced.Content); // Привет, мир!
 Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 
@@ -492,8 +505,6 @@ if (responseAdvanced.ExecutorTaskLogs != null)
     foreach (AgentResult.Task log in responseAdvanced.ExecutorTaskLogs)
         Console.WriteLine($"Task: {log.Description}, Duration: {log.Duration}ms, Success: {log.Success}");
 ```
-
-
 ### Stream message with SSE
 
 Activities support streaming responses using Server-Sent Events (SSE). This allows you to process results as they're generated.
@@ -506,17 +517,18 @@ using SerenityStar.Agents.System;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-// Create an activity for streaming
-var options = new AgentExecutionReq
-{
-    InputParameters = new Dictionary<string, object>
+// Create an activity with options
+Activity activity = client.Agents.Activities.Create(
+    "translator-activity",
+    new AgentExecutionReq
     {
-        ["textToTranslate"] = "hello world",
-        ["targetLanguage"] = "spanish"
+        InputParameters = new Dictionary<string, object>
+        {
+            ["textToTranslate"] = "hello world",
+            ["targetLanguage"] = "spanish"
+        }
     }
-};
-
-Activity activity = client.Agents.Activities.Create("translator-activity", options);
+);
 
 // Stream the response
 await foreach (StreamingAgentMessage message in activity.StreamAsync())
@@ -559,10 +571,15 @@ AI Proxy provides direct access to AI models with consistent interfaces across d
 ### Execute a proxy agent
 
 ```csharp
+using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
 
-AgentResult response = await client.Agents.AIProxy.ExecuteAsync(
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create and execute a proxy agent
+Proxy proxy = client.Agents.AIProxy.Create(
     "proxy-agent",
     new ProxyExecutionReq
     {
@@ -584,6 +601,8 @@ AgentResult response = await client.Agents.AIProxy.ExecuteAsync(
         MaxTokens = 500
     }
 );
+
+AgentResult response = await proxy.ExecuteAsync();
 
 Console.WriteLine(response.Content);
 Console.WriteLine(response.CompletionUsage);
@@ -658,9 +677,13 @@ await foreach (StreamingAgentMessage message in proxy.StreamAsync())
 The following options can be passed when executing a proxy agent via `ProxyExecutionReq`:
 
 ```csharp
+using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Agents.System;
 
-AgentResult response = await client.Agents.AIProxy.ExecuteAsync(
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+Proxy proxy = client.Agents.AIProxy.Create(
     "proxy-agent",
     new ProxyExecutionReq
     {
@@ -697,6 +720,8 @@ AgentResult response = await client.Agents.AIProxy.ExecuteAsync(
         UseVision = false            // Enable/disable vision features
     }
 );
+
+AgentResult response = await proxy.ExecuteAsync();
 ```
 
 ## Chat Completions
@@ -709,20 +734,23 @@ Chat Completions provide a simplified interface for single-turn or multi-turn co
 using SerenityStar.Client;
 using SerenityStar.Models.ChatCompletion;
 using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-// Execute chat completion (basic example)
-AgentResult response = await client.Agents.ChatCompletions.ExecuteAsync("AgentCreator", new ChatCompletionReq
+// Create and execute chat completion (basic example)
+ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create("AgentCreator", new ChatCompletionReq
 {
     Message = "Hello!!!"
 });
 
+AgentResult response = await chatCompletion.ExecuteAsync();
+
 Console.WriteLine(response.Content); // AI-generated response
 Console.WriteLine($"Completion Usage: {response.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 
-// Execute chat completion (advanced example)
-AgentResult responseAdvanced = await client.Agents.ChatCompletions.ExecuteAsync("Health-Coach", new ChatCompletionReq
+// Create and execute chat completion (advanced example)
+ChatCompletion chatCompletionAdvanced = client.Agents.ChatCompletions.Create("Health-Coach", new ChatCompletionReq
 {
     UserIdentifier = "user-123",
     AgentVersion = 2,
@@ -738,6 +766,8 @@ AgentResult responseAdvanced = await client.Agents.ChatCompletions.ExecuteAsync(
         }
     }
 });
+
+AgentResult responseAdvanced = await chatCompletionAdvanced.ExecuteAsync();
 
 Console.WriteLine(responseAdvanced.Content); // AI-generated response
 Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
@@ -756,13 +786,14 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create a chat completion for streaming
-var options = new ChatCompletionReq
-{
-    Message = "Explain quantum computing in simple terms",
-    UserIdentifier = "user-123"
-};
-
-ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create("assistant-chat", options);
+ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create(
+    "assistant-chat",
+    new ChatCompletionReq
+    {
+        Message = "Explain quantum computing in simple terms",
+        UserIdentifier = "user-123"
+    }
+);
 
 // Stream the response
 Console.WriteLine("Answer: ");
