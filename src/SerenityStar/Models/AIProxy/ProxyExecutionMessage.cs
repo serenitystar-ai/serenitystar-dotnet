@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SerenityStar.Models.AIProxy
 {
     /// <summary>
@@ -14,5 +16,10 @@ namespace SerenityStar.Models.AIProxy
         /// The content of the message.
         /// </summary>
         public string Content { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The IDs of volatile knowledge items associated with this message.
+        /// </summary>
+        public List<string> VolatileKnowledgeIds { get; set; } = new();
     }
 }
