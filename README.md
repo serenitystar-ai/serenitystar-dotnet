@@ -143,6 +143,8 @@ Console.WriteLine(response2.Content);
 
 ### Resume an existing conversation
 
+Use this when you don’t already have a Conversation instance in memory, for example, when you load a stored conversation ID from your database.
+
 ```csharp
 // Resume a conversation using an existing conversation ID
 Conversation existingConversation = client.Agents.Assistants.CreateConversation(
