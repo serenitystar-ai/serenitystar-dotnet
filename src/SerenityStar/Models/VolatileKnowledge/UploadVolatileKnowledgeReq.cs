@@ -7,7 +7,7 @@ namespace SerenityStar.Models.VolatileKnowledge
     /// Represents a request to upload volatile knowledge.
     /// Can contain either file content or text content, but not both.
     /// </summary>
-    public sealed class UploadVolatileKnowledgeReq
+    public sealed class UploadVolatileKnowledgeReq : IDisposable
     {
         /// <summary>
         /// Gets or sets the text content for volatile knowledge.
@@ -48,6 +48,14 @@ namespace SerenityStar.Models.VolatileKnowledge
 
             if (hasFile && string.IsNullOrEmpty(FileName))
                 throw new ArgumentException("FileName is required when FileStream is provided.");
+        }
+
+        /// <summary>
+        /// Disposes the FileStream if it exists.
+        /// </summary>
+        public void Dispose()
+        {
+            FileStream?.Dispose();
         }
     }
 }
