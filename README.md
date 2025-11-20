@@ -489,8 +489,8 @@ Console.WriteLine(responseAdvanced.Content); // Привет, мир!
 Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 
 if (responseAdvanced.ExecutorTaskLogs != null)
-    foreach (ExecutorTaskLog log in responseAdvanced.ExecutorTaskLogs)
-        Console.WriteLine($"Task: {log.Description}, Duration: {log.Duration}ms");
+    foreach (AgentResult.Task log in responseAdvanced.ExecutorTaskLogs)
+        Console.WriteLine($"Task: {log.Description}, Duration: {log.Duration}ms, Success: {log.Success}");
 ```
 
 

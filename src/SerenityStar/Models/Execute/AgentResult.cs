@@ -163,14 +163,24 @@ namespace SerenityStar.Models.Execute
         public sealed class Task
         {
             /// <summary>
-            /// The name of the task.
+            /// The unique key identifier of the task.
             /// </summary>
-            public string TaskName { get; set; } = string.Empty;
+            public string Key { get; set; } = string.Empty;
+
+            /// <summary>
+            /// The description or display name of the task.
+            /// </summary>
+            public string Description { get; set; } = string.Empty;
 
             /// <summary>
             /// The duration of the task in milliseconds.
             /// </summary>
-            public long DurationMs { get; set; }
+            public long Duration { get; set; }
+
+            /// <summary>
+            /// Indicates whether the task completed successfully.
+            /// </summary>
+            public bool Success { get; set; }
         }
     }
 }
