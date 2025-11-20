@@ -1,8 +1,8 @@
+using SerenityStar.Models.Execute;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using SerenityStar.Models.Execute;
 
 namespace SerenityStar.Agents.System
 {
@@ -24,12 +24,8 @@ namespace SerenityStar.Agents.System
             // Add input parameters if provided
             AgentExecutionReq? executionOptions = Options as AgentExecutionReq;
             if (executionOptions?.InputParameters != null)
-            {
                 foreach (KeyValuePair<string, object> param in executionOptions.InputParameters)
-                {
-                    parameters.Add(new { Key = param.Key, Value = param.Value });
-                }
-            }
+                    parameters.Add(new { param.Key, param.Value });
 
             return parameters;
         }

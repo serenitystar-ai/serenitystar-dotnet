@@ -1,3 +1,6 @@
+using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.Execute;
+using SerenityStar.Models.Streaming;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,9 +11,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using SerenityStar.Models.AIProxy;
-using SerenityStar.Models.Execute;
-using SerenityStar.Models.Streaming;
 
 namespace SerenityStar.Agents.System
 {
@@ -42,7 +42,7 @@ namespace SerenityStar.Agents.System
         /// </summary>
         private object CreateExecuteBody(bool stream)
         {
-            var body = new Dictionary<string, object>();
+            Dictionary<string, object> body = new Dictionary<string, object>();
 
             // Add model (required)
             body["model"] = _proxyOptions.Model;

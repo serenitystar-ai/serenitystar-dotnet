@@ -1,11 +1,11 @@
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Models.Execute;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using SerenityStar.Models.ChatCompletion;
-using SerenityStar.Models.Execute;
 
 namespace SerenityStar.Agents.System
 {
@@ -43,7 +43,7 @@ namespace SerenityStar.Agents.System
             // Add input parameters if provided
             if (_chatOptions.InputParameters != null)
                 foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
-                    parameters.Add(new { Key = param.Key, Value = param.Value });
+                    parameters.Add(new { param.Key, param.Value });
 
             return parameters;
         }
