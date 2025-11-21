@@ -50,7 +50,7 @@ namespace SerenityStar.Models.Streaming
             // Return a generic error message for unsupported types
             return new StreamingAgentMessageError
             {
-                Error = $"Unsupported message type: {type}"
+                Message = $"Unsupported message type: {type}"
             };
         }
     }

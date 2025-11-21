@@ -1,4 +1,4 @@
-using System.Text.Json;
+using System;
 
 namespace SerenityStar.Models.Streaming
 {
@@ -11,18 +11,33 @@ namespace SerenityStar.Models.Streaming
         public override string Type => "task_stop";
 
         /// <summary>
+        /// The name of the task.
+        /// </summary>
+        public string Task { get; set; } = string.Empty;
+
+        /// <summary>
         /// The key identifying the task.
         /// </summary>
-        public string Key { get; set; } = string.Empty;
+        public string TaskKey { get; set; } = string.Empty;
 
         /// <summary>
-        /// The result of the task execution as a JsonElement.
+        /// The UTC time when the task started.
         /// </summary>
-        public JsonElement? Result { get; set; }
+        public DateTime StartTimeUtc { get; set; }
 
         /// <summary>
-        /// The duration of the task in milliseconds.
+        /// The UTC time when the task ended.
         /// </summary>
-        public long DurationMs { get; set; }
+        public DateTime EndTimeUtc { get; set; }
+
+        /// <summary>
+        /// The duration of the task execution.
+        /// </summary>
+        public TimeSpan Duration { get; set; }
+
+        /// <summary>
+        /// The output of the task execution.
+        /// </summary>
+        public object? Output { get; set; }
     }
 }

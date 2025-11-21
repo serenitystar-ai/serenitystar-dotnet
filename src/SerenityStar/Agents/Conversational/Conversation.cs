@@ -235,12 +235,9 @@ namespace SerenityStar.Agents.Conversational
                         // Store conversationId from the stop message
                         if (msg is StreamingAgentMessageStop stop && string.IsNullOrEmpty(_chatId))
                         {
-                            // Try to get instanceId from the result object
+                            // Get instanceId from the result object
                             if (stop.Result?.InstanceId != Guid.Empty && stop.Result?.InstanceId != null)
                                 _chatId = stop.Result.InstanceId.ToString();
-                            // Fallback to direct InstanceId property if available
-                            else if (stop.InstanceId.HasValue && stop.InstanceId.Value != Guid.Empty)
-                                _chatId = stop.InstanceId.Value.ToString();
                         }
                         yield return msg;
                     }

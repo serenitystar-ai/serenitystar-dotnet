@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
-using SerenityStar.Models.Conversation;
 using SerenityStar.Agents.Conversational;
 using Xunit;
 using SerenityStar.Models.MessageFeedback;

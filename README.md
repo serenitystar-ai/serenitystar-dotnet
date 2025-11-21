@@ -281,24 +281,24 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
             break;
 
         case StreamingAgentMessageTaskStart taskStart:
-            Console.WriteLine($"Task started: {taskStart.Key}");
+            Console.WriteLine($"Task started: {taskStart.TaskKey}");
             break;
 
         case StreamingAgentMessageTaskStop taskStop:
-            Console.WriteLine($"Task completed: {taskStop.Key} (Duration: {taskStop.DurationMs}ms)");
+            Console.WriteLine($"Task completed: {taskStop.TaskKey} (Duration: {taskStop.Duration.TotalMilliseconds}ms)");
             break;
 
         case StreamingAgentMessageStop stop:
             Console.WriteLine("\nStream completed");
-            Console.WriteLine($"Conversation ID: {stop.InstanceId}");
-            if (stop.CompletionUsage != null)
+            Console.WriteLine($"Conversation ID: {stop.Result?.InstanceId}");
+            if (stop.Result?.CompletionUsage != null)
             {
-                Console.WriteLine($"Tokens used - Input: {stop.CompletionUsage.PromptTokens}, Output: {stop.CompletionUsage.CompletionTokens}");
+                Console.WriteLine($"Tokens used - Input: {stop.Result.CompletionUsage.PromptTokens}, Output: {stop.Result.CompletionUsage.CompletionTokens}");
             }
             break;
 
         case StreamingAgentMessageError error:
-            Console.WriteLine($"Error: {error.Error}");
+            Console.WriteLine($"Error: {error.Message}");
             break;
     }
 }
@@ -544,21 +544,21 @@ await foreach (StreamingAgentMessage message in activity.StreamAsync())
             break;
 
         case StreamingAgentMessageTaskStart taskStart:
-            Console.WriteLine($"Task: {taskStart.Key}");
+            Console.WriteLine($"Task: {taskStart.TaskKey}");
             break;
 
         case StreamingAgentMessageTaskStop taskStop:
-            Console.WriteLine($"Task completed in {taskStop.DurationMs}ms");
+            Console.WriteLine($"Task completed in {taskStop.Duration.TotalMilliseconds}ms");
             break;
 
         case StreamingAgentMessageStop stop:
             Console.WriteLine($"\nTranslation complete!");
-            if (stop.CompletionUsage != null)
-                Console.WriteLine($"Tokens used: {stop.CompletionUsage.TotalTokens}");
+            if (stop.Result?.CompletionUsage != null)
+                Console.WriteLine($"Tokens used: {stop.Result.CompletionUsage.TotalTokens}");
             break;
 
         case StreamingAgentMessageError error:
-            Console.WriteLine($"Error: {error.Error}");
+            Console.WriteLine($"Error: {error.Message}");
             break;
     }
 }
@@ -653,20 +653,20 @@ await foreach (StreamingAgentMessage message in proxy.StreamAsync())
             break;
 
         case StreamingAgentMessageTaskStop taskStop:
-            Console.WriteLine($"Completed in {taskStop.DurationMs}ms");
+            Console.WriteLine($"Completed in {taskStop.Duration.TotalMilliseconds}ms");
             break;
 
         case StreamingAgentMessageStop stop:
             Console.WriteLine("\n\nGeneration complete!");
-            if (stop.CompletionUsage != null)
+            if (stop.Result?.CompletionUsage != null)
             {
-                Console.WriteLine($"Input tokens: {stop.CompletionUsage.PromptTokens}");
-                Console.WriteLine($"Output tokens: {stop.CompletionUsage.CompletionTokens}");
+                Console.WriteLine($"Input tokens: {stop.Result.CompletionUsage.PromptTokens}");
+                Console.WriteLine($"Output tokens: {stop.Result.CompletionUsage.CompletionTokens}");
             }
             break;
 
         case StreamingAgentMessageError error:
-            Console.WriteLine($"Error: {error.Error}");
+            Console.WriteLine($"Error: {error.Message}");
             break;
     }
 }
@@ -809,27 +809,27 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
             break;
 
         case StreamingAgentMessageTaskStart taskStart:
-            Console.WriteLine($"\n[Processing: {taskStart.Key}]");
+            Console.WriteLine($"\n[Processing: {taskStart.TaskKey}]");
             break;
 
         case StreamingAgentMessageTaskStop taskStop:
-            Console.WriteLine($"[Task completed in {taskStop.DurationMs}ms]");
+            Console.WriteLine($"[Task completed in {taskStop.Duration.TotalMilliseconds}ms]");
             break;
 
         case StreamingAgentMessageStop stop:
             Console.WriteLine("\n\n[Response complete]");
-            if (stop.CompletionUsage != null)
+            if (stop.Result?.CompletionUsage != null)
             {
-                Console.WriteLine($"Tokens - Input: {stop.CompletionUsage.PromptTokens}, Output: {stop.CompletionUsage.CompletionTokens}");
+                Console.WriteLine($"Tokens - Input: {stop.Result.CompletionUsage.PromptTokens}, Output: {stop.Result.CompletionUsage.CompletionTokens}");
             }
-            if (stop.TimeToFirstToken.HasValue)
+            if (stop.Result?.TimeToFirstToken.HasValue == true)
             {
-                Console.WriteLine($"Time to first token: {stop.TimeToFirstToken}ms");
+                Console.WriteLine($"Time to first token: {stop.Result.TimeToFirstToken}ms");
             }
             break;
 
         case StreamingAgentMessageError error:
-            Console.WriteLine($"[Error: {error.Error}]");
+            Console.WriteLine($"[Error: {error.Message}]");
             break;
     }
 }
