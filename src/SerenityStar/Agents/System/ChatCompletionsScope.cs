@@ -1,0 +1,94 @@
+using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Constants;
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Models.Execute;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace SerenityStar.Agents.System
+{
+    /// <summary>
+    /// Represents a ChatCompletion agent.
+    /// </summary>
+    public sealed class ChatCompletion : SystemAgentBase
+    {
+        private readonly ChatCompletionReq _chatOptions;
+
+        /// <summary>
+        /// Provides methods for managing volatile knowledge within this chat completion.
+        /// Uploaded knowledge is automatically associated with this chat completion.
+        /// </summary>
+        public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the ChatCompletion class.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Chat completion options.</param>
+        public ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionReq options)
+            : base(httpClient, agentCode, options)
+        {
+            _chatOptions = options;
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
+        }
+
+        /// <inheritdoc/>
+        protected override object CreateExecuteBody(bool stream)
+        {
+            List<object> parameters = CreateBaseParameters(stream);
+
+            // Add message
+            parameters.Add(new { Key = "message", Value = _chatOptions.Message });
+
+            // Add messages if provided
+            if (_chatOptions.Messages != null && _chatOptions.Messages.Count > 0)
+                parameters.Add(new { Key = "messages", Value = JsonSerializer.Serialize(_chatOptions.Messages, JsonSerializerOptionsCache.s_camelCaseIgnoreNull) });
+
+            // Add input parameters if provided
+            if (_chatOptions.InputParameters != null)
+                foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
+                    parameters.Add(new { param.Key, param.Value });
+
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+
+            return parameters;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExecutionComplete()
+        {
+            // Clear volatile knowledge IDs after execution
+            VolatileKnowledge.ClearKnowledgeIds();
+        }
+    }
+
+    /// <summary>
+    /// Provides methods for interacting with ChatCompletion agents.
+    /// </summary>
+    public sealed class ChatCompletionsScope
+    {
+        private readonly HttpClient _httpClient;
+
+        internal ChatCompletionsScope(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        /// <summary>
+        /// Creates a chat completion agent instance.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="options">Chat completion options.</param>
+        /// <returns>A chat completion instance.</returns>
+        public ChatCompletion Create(string agentCode, ChatCompletionReq options)
+            => new ChatCompletion(_httpClient, agentCode, options);
+    }
+}
