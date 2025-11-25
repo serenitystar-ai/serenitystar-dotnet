@@ -11,7 +11,7 @@ namespace SerenityStar.Constants
     /// Read why this class is needed here: "CA1869: Cache and reuse 'JsonSerializerOptions' instances"
     /// https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1869
     /// </remarks>
-    public class JsonSerializerOptionsCache
+    internal static class JsonSerializerOptionsCache
     {
         /// <summary>
         /// Options with CamelCase naming policy and case-insensitive property matching.

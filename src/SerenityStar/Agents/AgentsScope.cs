@@ -22,7 +22,7 @@ namespace SerenityStar.Agents
         /// <summary>
         /// Interact with AI Proxy agents.
         /// </summary>
-        public AIProxiesScope AIProxy { get; }
+        public AIProxiesScope AIProxies { get; }
 
         /// <summary>
         /// Interact with Assistant agents.
@@ -39,7 +39,7 @@ namespace SerenityStar.Agents
             // Agents
             Activities = new ActivitiesScope(httpClient);
             ChatCompletions = new ChatCompletionsScope(httpClient);
-            AIProxy = new AIProxiesScope(httpClient);
+            AIProxies = new AIProxiesScope(httpClient);
             Assistants = new AssistantsScope(httpClient);
             Copilots = new CopilotScope(httpClient);
         }
