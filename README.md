@@ -1,11 +1,13 @@
+![Serenity .NET SDK](.github/resources/sdk-banner.png)
+
 <p align="center">
   <a href="https://serenitystar.ai/">
-    <h1 align="center">Serenity AIHub SDK for .NET</h1>
+    <h1 align="center">Serenity Star SDK for .NET</h1>
   </a>
 </p>
 
 <p align="center">
-  <a aria-label="try Serenity AIHub" href="https://hub.serenitystar.ai/Identity/Account/Register"><b>Try Serenity AIHub</b></a>
+  <a aria-label="try Serenity Star" href="https://hub.serenitystar.ai/Identity/Account/Register"><b>Try Serenity Star</b></a>
 &ensp;•&ensp;
   <a aria-label="Serenity documentation" href="https://docs.serenitystar.ai">Read the Documentation</a>
 &ensp;•&ensp;
@@ -16,110 +18,892 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity AIHub API. This SDK provides a convenient way to interact with Serenity AIHub services from your .NET applications, allowing you to create conversations, send messages, and execute commands through a clean and intuitive interface.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions.
+
+[![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
+![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)
+
+## Table of Contents
+
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Assistants / Copilots](#assistants--copilots)
+- [Activities](#activities)
+- [AI Proxy](#ai-proxy)
+- [Chat Completions](#chat-completions)
+- [Documentation](#-documentation)
 
 ## 🚀 Installation
 
-Install the Serenity AIHub SDK via NuGet:
-
 ```bash
-dotnet add package Serenity.AIHub.SDK.NET.Core
-```
-
-If you want to use dependency injection:
-
-```bash
-dotnet add package Serenity.AIHub.SDK.NET.Extensions
+dotnet add package SubgenAI.SerenityStar.SDK
 ```
 
 ## 🔧 Usage
 
-### Direct Instantiation
-
-Create and use the client directly by providing your API key:
+### Direct Instantiation with Factory Method
 
 ```csharp
-using Serenity.AIHub.SDK.NET.Core.Client;
+using SerenityStar.Client;
+using SerenityStar.Agents.System;
 
-var client = SerenityAIHubClient.Create("your-api-key");
-var conversation = await client.CreateConversation("assistantagent", null);
-var response = await client.SendMessage("assistantagent", conversation.ChatId, "Hello!");
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create and execute an activity agent
+Activity activity = client.Agents.Activities.Create("marketing-campaign");
+AgentResult response = await activity.ExecuteAsync();
+Console.WriteLine(response.Content);
+```
+
+### Direct Instantiation with Builder Pattern
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Agents.System;
+
+SerenityClient client = new SerenityClientBuilder()
+    .WithApiKey("your-api-key")
+    .WithBaseUrl("https://api.serenitystar.ai") // Optional
+    .WithTimeout(30)                             // Optional
+    .Build();
+
+// Create and execute an activity agent
+Activity activity = client.Agents.Activities.Create("marketing-campaign");
+AgentResult response = await activity.ExecuteAsync();
+Console.WriteLine(response.Content);
+```
+
+### Using a Custom HttpClient with Builder
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Agents.System;
+
+var customHttpClient = new HttpClient();
+// Configure your custom HttpClient as needed
+
+SerenityClient client = new SerenityClientBuilder()
+    .WithApiKey("your-api-key")
+    .WithHttpClient(customHttpClient)
+    .Build();
+
+// Create and execute an activity agent
+Activity activity = client.Agents.Activities.Create("marketing-campaign");
+AgentResult response = await activity.ExecuteAsync();
+Console.WriteLine(response.Content);
 ```
 
 ### Using Dependency Injection
 
-Register the client in your service collection:
-
 ```csharp
 // In your startup/program.cs
-using Serenity.AIHub.SDK.NET.Extensions;
-services.AddSerenityAIHub("your-api-key");
-```
+using SerenityStar.Extensions;
+services.AddSerenityStar("your-api-key");
 
-Inject and use the client in your services:
+// With custom base URL and timeout
+services.AddSerenityStar(
+    apiKey: "your-api-key",
+    timeoutSeconds: 60,
+    baseUrl: "https://custom-api.serenitystar.ai"
+);
 
-```csharp
 // In your service/controller
+using SerenityStar.Agents.System;
+
 public class YourService
 {
-    private readonly ISerenityAIHubClient _client;
+    private readonly ISerenityClient _client;
 
-    public YourService(ISerenityAIHubClient client)
+    public YourService(ISerenityClient client)
     {
         _client = client;
     }
 
     public async Task DoSomething()
     {
-        var conversation = await _client.CreateConversation("assistantagent");
+        Activity activity = _client.Agents.Activities.Create("marketing-campaign");
+        AgentResult response = await activity.ExecuteAsync();
+        Console.WriteLine(response.Content);
+    }
+}
+```
 
-        List<ExecuteParameter> input = [];
-        input.Add(new(
-                "chatId",
-                conversation.ChatId
-            ));
-        input.Add(new(
-            "message",
-            "Hello, how are you?"
-        ));
-        var response = await _client.Execute("assistantagent", input);
+## Assistants / Copilots
+
+Assistants and Copilots are conversational agents that maintain context across multiple messages. They're perfect for building chatbots, virtual assistants, and interactive applications. Both provide the same functionality - choose the terminology that best fits your use case.
+
+### Create a conversation and send messages
+
+```csharp
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Using Assistants
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Or using Copilots (same functionality)
+Conversation copilotConversation = client.Agents.Copilots.CreateConversation("chef-assistant");
+
+// First message - creates the conversation in Serenity Star automatically
+AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
+Console.WriteLine(response.Content);
+Console.WriteLine($"Conversation ID: {conversation.ConversationId}");
+
+// Subsequent messages use the conversation ID automatically
+AgentResult response2 = await conversation.SendMessageAsync("Can you suggest a side dish?");
+Console.WriteLine(response2.Content);
+```
+
+### Resume an existing conversation
+
+Use this when you don't already have a Conversation instance in memory, for example, when you load a stored conversation ID from your database.
+
+```csharp
+// Resume a conversation using an existing conversation ID with Assistants
+Conversation existingConversation = client.Agents.Assistants.CreateConversation(
+    "chef-assistant",
+    conversationId: "existing-conversation-id"
+);
+
+// Or with Copilots
+Conversation existingCopilot = client.Agents.Copilots.CreateConversation(
+    "chef-assistant",
+    conversationId: "existing-conversation-id"
+);
+
+AgentResult response = await existingConversation.SendMessageAsync("What was the recipe you suggested earlier?");
+Console.WriteLine(response.Content);
+```
+
+### Get conversation information
+
+You can retrieve detailed information about an assistant/copilot agent, including its configuration, capabilities, and metadata. This is useful for understanding what parameters the agent accepts and how it's configured.
+
+```csharp
+using SerenityStar.Models.Conversation;
+using SerenityStar.Models.Execute;
+
+// Get basic agent information by code (works with both Assistants and Copilots)
+ConversationInfoResult agentInfo = await client.Agents.Assistants.GetInfoByCodeAsync("chef-assistant");
+// Or: ConversationInfoResult agentInfo = await client.Agents.Copilots.GetInfoByCodeAsync("chef-assistant");
+
+Console.WriteLine($"Initial Message: {agentInfo.Conversation.InitialMessage}"); // "Hello! I'm your personal chef assistant..."
+Console.WriteLine($"Starters: {string.Join(", ", agentInfo.Conversation.Starters)}"); // ["What's for dinner tonight?", "Help me plan a meal", ...]
+Console.WriteLine($"Version: {agentInfo.Agent.Version}"); // 1
+Console.WriteLine($"Vision Enabled: {agentInfo.Agent.VisionEnabled}"); // true/false
+Console.WriteLine($"Is Realtime: {agentInfo.Agent.IsRealtime}"); // true/false
+if (agentInfo.Channel != null)
+    Console.WriteLine($"Channel: {agentInfo.Channel}"); // Optional chat widget configuration
+Console.WriteLine($"Image ID: {agentInfo.Agent.ImageId}"); // Agent's profile image ID
+
+
+// Get information about an assistant agent conversation (advanced example with options)
+ConversationInfoResult agentInfoAdvanced = await client.Agents.Assistants.GetInfoByCodeAsync(
+    "chef-assistant",
+    new AgentExecutionReq
+    {
+        AgentVersion = 2, // Target specific version of the agent
+        InputParameters = new Dictionary<string, object>
+        {
+            ["dietaryRestrictions"] = "vegetarian",
+            ["cuisinePreference"] = "italian",
+            ["skillLevel"] = "beginner"
+        },
+        UserIdentifier = "user-123",
+        Channel = "web"
+    }
+);
+
+Console.WriteLine($"Initial Message: {agentInfoAdvanced.Conversation.InitialMessage}"); // "Hello! I'm your personalized Italian vegetarian chef assistant for beginners..."
+Console.WriteLine($"Starters: {string.Join(", ", agentInfoAdvanced.Conversation.Starters)}"); // ["Show me easy vegetarian pasta recipes", "What Italian herbs should I use?", ...]
+Console.WriteLine($"Version: {agentInfoAdvanced.Agent.Version}"); // 2
+```
+
+### Get conversation by id
+
+You can retrieve an existing conversation by its ID, including all messages and metadata. This is useful for reviewing conversation history or resuming conversations.
+
+```csharp
+using SerenityStar.Models.Conversation;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Get conversation by id (basic example)
+ConversationRes conversation = await client.Agents.Assistants.GetConversationByIdAsync(
+    "chef-assistant",
+    "conversation-id-here"
+);
+
+Console.WriteLine($"Conversation ID: {conversation.Id}");
+Console.WriteLine($"Is Open: {conversation.Open}");
+Console.WriteLine($"Message Count: {conversation.Messages.Count}");
+
+// Display all messages
+foreach (ConversationMessage message in conversation.Messages)
+    Console.WriteLine($"{message.Role}: {message.Content}");
+
+// Get conversation by id with executor task logs
+ConversationRes conversationWithLogs = await client.Agents.Assistants.GetConversationByIdAsync(
+    "chef-assistant",
+    "conversation-id-here",
+    new GetConversationOptions
+    {
+        ShowExecutorTaskLogs = true
+    }
+);
+
+Console.WriteLine($"Executor Task Logs: {conversationWithLogs.ExecutorTaskLogs}");
+```
+
+### Stream message with SSE
+
+You can stream responses from assistant agents using Server-Sent Events (SSE). This is useful for real-time response processing and providing a better user experience with progressive message display.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Streaming;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Stream a message - get updates as they arrive
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Tell me a quick recipe"))
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart start:
+            Console.WriteLine("Stream started");
+            break;
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // Display content as it arrives
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"Task started: {taskStart.TaskKey}");
+            break;
+
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"Task completed: {taskStop.TaskKey} (Duration: {taskStop.Duration.TotalMilliseconds}ms)");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine("\nStream completed");
+            Console.WriteLine($"Conversation ID: {stop.Result?.InstanceId}");
+            if (stop.Result?.CompletionUsage != null)
+            {
+                Console.WriteLine($"Tokens used - Input: {stop.Result.CompletionUsage.PromptTokens}, Output: {stop.Result.CompletionUsage.CompletionTokens}");
+            }
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"Error: {error.Message}");
+            break;
+    }
+}
+```
+
+#### Stream subsequent messages
+
+Once a conversation is created, you can stream additional messages using the same conversation instance:
+
+```csharp
+// First message stream (creates the conversation)
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("What's a healthy breakfast?"))
+{
+    if (message is StreamingAgentMessageContent content)
+        Console.Write(content.Text);
+}
+
+// Subsequent message stream (uses existing conversation)
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Can you add protein options?"))
+{
+    if (message is StreamingAgentMessageContent content)
+        Console.Write(content.Text);
+}
+```
+
+#### Stream with execution options
+
+You can customize the streaming behaviour with execution options:
+
+```csharp
+// Create conversation with options
+Conversation conversation = client.Agents.Assistants.CreateConversation(
+    "chef-assistant",
+    options: new AgentExecutionReq
+    {
+        InputParameters = new Dictionary<string, object>
+        {
+            ["mealType"] = "dinner",
+            ["servings"] = 4
+        },
+        UserIdentifier = "user-456",
+        Channel = "mobile-app",
+        AgentVersion = 2
+    }
+);
+
+// Stream message with the configured options
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("I need a recipe"))
+{
+    if (message is StreamingAgentMessageContent content)
+        Console.Write(content.Text);
+}
+```
+
+### Message feedback
+
+You can collect user feedback on agent responses to help improve the quality of your assistant.
+
+#### Submit feedback
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.MessageFeedback;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Send a message
+AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
+
+// Submit positive feedback (thumbs up)
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = true
+});
+
+// Or submit negative feedback (thumbs down)
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = false
+});
+```
+
+#### Remove feedback
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.MessageFeedback;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Send a message
+AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
+
+// Submit feedback first
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = true
+});
+
+// Remove the feedback if the user changes their mind
+await conversation.RemoveFeedbackAsync(new RemoveFeedbackReq
+{
+    AgentMessageId = response.AgentMessageId!.Value
+});
+```
+
+### Connector Status
+
+Check the connection status of an agent's connector.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Connector;
+using SerenityStar.Models.Execute;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create conversation with an assistant
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Send a message that might require a connector
+AgentResult response = await conversation.SendMessageAsync("I need a summary of my latest meeting notes stored in google drive");
+
+// Check if there are pending actions (e.g., authentication required)
+if (response.PendingActions.Count > 0)
+{
+    foreach (PendingAction action in response.PendingActions)
+    {
+        if (action is PendingAction.Connection connectionAction)
+        {
+            Console.WriteLine($"Authentication required for {connectionAction.ConnectorName}");
+            Console.WriteLine($"Please visit: {connectionAction.Url}");
+
+            // Here the user should complete the authentication process.
+
+            // Check connector status for this conversation (you can use a loop to check every 5 seconds)
+            ConnectorStatusRes status = await conversation.GetConnectorStatusAsync(connectionAction.ConnectorId);
+
+            Console.WriteLine($"Is Connected: {status.IsConnected}"); // true or false
+
+            // You can use this to determine if a connector needs authentication
+            if (!status.IsConnected)
+            {
+                Console.WriteLine("Connector is not connected. Please authenticate.");
+                // Wait and check again...
+            }
+        }
+    }
+}
+
+// Once connected, send the message again
+// The agent will now have access to Google Drive to retrieve the meeting notes
+AgentResult newResponse = await conversation.SendMessageAsync("I need a summary of my latest meeting notes stored in google drive");
+Console.WriteLine(newResponse.Content); // Summary of the meeting notes
+```
+
+## Activities
+
+Activities are single-execution agents designed for one-time tasks like translations, data processing, or content generation. Unlike assistants, they don't maintain conversation history.
+
+### Execute an activity agent
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create and execute activity (basic example)
+Activity activity = client.Agents.Activities.Create("translator-activity");
+AgentResult response = await activity.ExecuteAsync();
+
+Console.WriteLine(response.Content);
+
+// Create and execute activity (advanced example)
+Activity activityAdvanced = client.Agents.Activities.Create(
+    "translator-activity",
+    new AgentExecutionReq
+    {
+        InputParameters = new Dictionary<string, object>
+        {
+            ["targetLanguage"] = "russian",
+            ["textToTranslate"] = "hello world"
+        }
+    }
+);
+
+AgentResult responseAdvanced = await activityAdvanced.ExecuteAsync();
+
+Console.WriteLine(responseAdvanced.Content); // Привет, мир!
+Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
+
+if (responseAdvanced.ExecutorTaskLogs != null)
+    foreach (AgentResult.Task log in responseAdvanced.ExecutorTaskLogs)
+        Console.WriteLine($"Task: {log.Description}, Duration: {log.Duration}ms, Success: {log.Success}");
+```
+### Stream message with SSE
+
+Activities support streaming responses using Server-Sent Events (SSE). This allows you to process results as they're generated.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create an activity with options
+Activity activity = client.Agents.Activities.Create(
+    "translator-activity",
+    new AgentExecutionReq
+    {
+        InputParameters = new Dictionary<string, object>
+        {
+            ["textToTranslate"] = "hello world",
+            ["targetLanguage"] = "spanish"
+        }
+    }
+);
+
+// Stream the response
+await foreach (StreamingAgentMessage message in activity.StreamAsync())
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart:
+            Console.WriteLine("Translation started...");
+            break;
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // "Hola" "mundo"
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"Task: {taskStart.TaskKey}");
+            break;
+
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"Task completed in {taskStop.Duration.TotalMilliseconds}ms");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine($"\nTranslation complete!");
+            if (stop.Result?.CompletionUsage != null)
+                Console.WriteLine($"Tokens used: {stop.Result.CompletionUsage.TotalTokens}");
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"Error: {error.Message}");
+            break;
+    }
+}
+```
+
+## AI Proxy
+
+AI Proxy provides direct access to AI models with consistent interfaces across different providers. They're ideal when you need fine-grained control over model parameters.
+
+### Execute a proxy agent
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create and execute a proxy agent
+Proxy proxy = client.Agents.AIProxy.Create(
+    "proxy-agent",
+    new ProxyExecutionReq
+    {
+        Model = "gpt-4o-mini-2024-07-18",
+        Messages = new List<ProxyExecutionMessage>
+        {
+            new ProxyExecutionMessage
+            {
+                Role = "system",
+                Content = "You are a helpful AI assistant specialized in explaining complex topics."
+            },
+            new ProxyExecutionMessage
+            {
+                Role = "user",
+                Content = "What is artificial intelligence?"
+            }
+        },
+        Temperature = 0.7,
+        MaxTokens = 500
+    }
+);
+
+AgentResult response = await proxy.ExecuteAsync();
+
+Console.WriteLine(response.Content);
+Console.WriteLine(response.CompletionUsage);
+Console.WriteLine(response.ExecutorTaskLogs);
+```
+
+### Stream responses with SSE
+
+AI Proxy supports streaming responses, perfect for real-time AI model interactions. You can process tokens as they arrive.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a proxy for streaming
+ProxyExecutionReq options = new()
+{
+    Model = "gpt-4o-mini-2024-07-18",
+    Messages = new List<ChatCompletionMessage>
+    {
+        new() { Role = "user", Content = "Write a short poem about programming" }
+    },
+    Temperature = 0.7f,
+    MaxTokens = 200
+};
+
+Proxy proxy = client.Agents.AIProxy.Create("openai-proxy", options);
+
+// Stream the response
+Console.WriteLine("Poem: ");
+await foreach (StreamingAgentMessage message in proxy.StreamAsync())
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart:
+            break; // Generation started
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // Print each chunk as it arrives
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"\nStarting: {taskStart.Key}");
+            break;
+
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"Completed in {taskStop.Duration.TotalMilliseconds}ms");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine("\n\nGeneration complete!");
+            if (stop.Result?.CompletionUsage != null)
+            {
+                Console.WriteLine($"Input tokens: {stop.Result.CompletionUsage.PromptTokens}");
+                Console.WriteLine($"Output tokens: {stop.Result.CompletionUsage.CompletionTokens}");
+            }
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"Error: {error.Message}");
+            break;
+    }
+}
+```
+
+### Proxy Execution Options
+
+The following options can be passed when executing a proxy agent via `ProxyExecutionReq`:
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.AIProxy;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+Proxy proxy = client.Agents.AIProxy.Create(
+    "proxy-agent",
+    new ProxyExecutionReq
+    {
+        // Specify the model to use
+        Model = "gpt-4-turbo",
+
+        // Define conversation messages
+        Messages = new List<ProxyExecutionMessage>
+        {
+            new ProxyExecutionMessage
+            {
+                Role = "system",
+                Content = "You are a knowledgeable AI assistant."
+            },
+            new ProxyExecutionMessage
+            {
+                Role = "user",
+                Content = "Can you explain the theory of relativity in simple terms?"
+            }
+        },
+
+        // Model parameters
+        Temperature = 0.7,           // Controls randomness (0-1)
+        MaxTokens = 500,             // Maximum length of response
+        TopP = 0.9,                  // Nucleus sampling parameter
+        TopK = 50,                   // Top-k sampling parameter
+        FrequencyPenalty = 0.5,      // Reduces repetition (-2 to 2)
+        PresencePenalty = 0.2,       // Encourages new topics (-2 to 2)
+
+        // Additional options
+        Vendor = "openai",           // AI provider
+        UserIdentifier = "user_123", // Unique user ID
+        GroupIdentifier = "org_456", // Organization ID
+        UseVision = false            // Enable/disable vision features
+    }
+);
+
+AgentResult response = await proxy.ExecuteAsync();
+```
+
+## Chat Completions
+
+Chat Completions provide a simplified interface for single-turn or multi-turn conversations without the overhead of managing conversation instances.
+
+### Execute a chat completion
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create and execute chat completion (basic example)
+ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create("AgentCreator", new ChatCompletionReq
+{
+    Message = "Hello!!!"
+});
+
+AgentResult response = await chatCompletion.ExecuteAsync();
+
+Console.WriteLine(response.Content); // AI-generated response
+Console.WriteLine($"Completion Usage: {response.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
+
+// Create and execute chat completion (advanced example)
+ChatCompletion chatCompletionAdvanced = client.Agents.ChatCompletions.Create("Health-Coach", new ChatCompletionReq
+{
+    UserIdentifier = "user-123",
+    AgentVersion = 2,
+    Channel = "web",
+    VolatileKnowledgeIds = new List<string> { "knowledge-1", "knowledge-2" },
+    Message = "Hi! How can I eat healthier?",
+    Messages = new List<ChatCompletionMessage>
+    {
+        new ChatCompletionMessage
+        {
+            Role = "assistant",
+            Content = "Hi there! How can I assist you?"
+        }
+    }
+});
+
+AgentResult responseAdvanced = await chatCompletionAdvanced.ExecuteAsync();
+
+Console.WriteLine(responseAdvanced.Content); // AI-generated response
+Console.WriteLine($"Completion Usage: {responseAdvanced.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
+```
+
+### Stream responses with SSE
+
+Chat completions support streaming for real-time chat interactions. Process model responses token-by-token.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a chat completion for streaming
+ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create(
+    "assistant-chat",
+    new ChatCompletionReq
+    {
+        Message = "Explain quantum computing in simple terms",
+        UserIdentifier = "user-123"
+    }
+);
+
+// Stream the response
+Console.WriteLine("Answer: ");
+await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
+{
+    switch (message)
+    {
+        case StreamingAgentMessageStart:
+            break; // Stream initialized
+
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text); // Print each chunk
+            break;
+
+        case StreamingAgentMessageTaskStart taskStart:
+            Console.WriteLine($"\n[Processing: {taskStart.TaskKey}]");
+            break;
+
+        case StreamingAgentMessageTaskStop taskStop:
+            Console.WriteLine($"[Task completed in {taskStop.Duration.TotalMilliseconds}ms]");
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine("\n\n[Response complete]");
+            if (stop.Result?.CompletionUsage != null)
+            {
+                Console.WriteLine($"Tokens - Input: {stop.Result.CompletionUsage.PromptTokens}, Output: {stop.Result.CompletionUsage.CompletionTokens}");
+            }
+            if (stop.Result?.TimeToFirstToken.HasValue == true)
+            {
+                Console.WriteLine($"Time to first token: {stop.Result.TimeToFirstToken}ms");
+            }
+            break;
+
+        case StreamingAgentMessageError error:
+            Console.WriteLine($"[Error: {error.Message}]");
+            break;
     }
 }
 ```
 
 ## Volatile Knowledge
 
-Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time based on your configuration.
+Volatile knowledge allows you to upload temporary documents that can be used in agent executions. These documents are processed and made available for a limited time based on your configuration. The volatile knowledge is scoped to the conversation or activity it's uploaded to and is automatically included in the next message.
 
-### Upload Volatile Knowledge
+### Upload and Use Volatile Knowledge in a Conversation
 
 ```csharp
-using FileStream fileStream = File.OpenRead("path/to/document.pdf");
+using SerenityStar.Client;
+using SerenityStar.Agents.Conversational;
+using SerenityStar.Models.VolatileKnowledge;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Step 1: Create a conversation
+Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+
+// Step 2: Upload volatile knowledge to the conversation
+using FileStream fileStream = File.OpenRead("document.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
     FileStream = fileStream,
     FileName = "document.pdf"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
+
+// Step 3: Check status until ready
+VolatileKnowledgeRes response = await conversation.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+
+// Wait until the knowledge is ready
+while (response.Status != "success" && response.Status != "error")
+{
+    await Task.Delay(1000);
+    response = await conversation.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+}
+
+if (response.Status == "error")
+    Console.WriteLine($"Processing failed: {response.Error}");
+else
+{
+    // Step 4: Send a message - the volatile knowledge is automatically included
+    AgentResult result = await conversation.SendMessageAsync("What does the document say about cooking techniques?");
+    Console.WriteLine(result.Content);
+
+    // The volatile knowledge is automatically cleared after sending the message
+    // Subsequent messages won't include it unless you upload new knowledge
+}
 ```
 
 ### Upload Volatile Knowledge with Text Content
 
 ```csharp
+Conversation conversation = client.Agents.Assistants.CreateConversation("research-assistant");
+
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
-    Content = "This is important information that needs to be processed."
+    Content = "https://serenitystar.ai"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadAsync(uploadRequest);
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.Status}");
 ```
 
 ### Upload with Custom Parameters
 
 ```csharp
+Conversation conversation = client.Agents.Assistants.CreateConversation("data-analyst");
+
 using FileStream fileStream = File.OpenRead("document.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
@@ -128,80 +912,93 @@ UploadVolatileKnowledgeReq uploadRequest = new()
     CallbackUrl = "https://your-app.com/knowledge-callback"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadAsync(
     uploadRequest,
-    processEmbeddings: true,      // Enable embedding processing (Use `false` for Vision)
-    noExpiration: false,           // Document will expire
-    expirationDays: 7);            // Expire in 7 days
+    processEmbeddings: true,         // Process embeddings for semantic search
+    noExpiration: false,             // Allow expiration
+    expirationDays: 7);              // Expire in 7 days
 
 Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}");
 if (knowledge.ExpirationDate.HasValue)
     Console.WriteLine($"Expires on: {knowledge.ExpirationDate.Value}");
 ```
 
-### Check Volatile Knowledge Status
+### Use Volatile Knowledge with Activities
 
 ```csharp
-VolatileKnowledge status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
-Console.WriteLine($"Status: {status.Status}");
+using SerenityStar.Agents.System;
 
-// Wait until the knowledge is ready
-while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
-{
-    await Task.Delay(1000);
-    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id);
-}
+// Create an activity
+Activity activity = client.Agents.Activities.Create("document-analyzer");
 
-if (status.Status == VolatileKnowledgeSimpleStatus.Error)
-    Console.WriteLine($"Processing failed: {status.Error}");
-```
-
-### Use Volatile Knowledge in Agent Execution
-
-Once the volatile knowledge is ready, you can use it in agent executions by passing the knowledge IDs:
-
-```csharp
-// Upload and wait for processing
-using FileStream fileStream = File.OpenRead("document.pdf");
+// Upload volatile knowledge to the activity
+using FileStream fileStream = File.OpenRead("report.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
     FileStream = fileStream,
-    FileName = "document.pdf"
+    FileName = "report.pdf"
 };
 
-VolatileKnowledge knowledge = await client.UploadVolatileKnowledgeAsync(uploadRequest);
+VolatileKnowledgeRes knowledge = await activity.VolatileKnowledge.UploadAsync(uploadRequest);
 
-// Wait until ready
-VolatileKnowledge status = knowledge;
-while (status.Status != VolatileKnowledgeSimpleStatus.Success && status.Status != VolatileKnowledgeSimpleStatus.Error)
+// Wait for processing
+VolatileKnowledgeRes response = await activity.VolatileKnowledge.GetStatusAsync(knowledge.Id);
+while (response.Status != "success" && response.Status != "error")
 {
     await Task.Delay(1000);
-    status = await client.GetVolatileKnowledgeStatusAsync(knowledge.Id.ToString());
+    response = await activity.VolatileKnowledge.GetStatusAsync(knowledge.Id);
 }
 
-// Execute agent with volatile knowledge
-List<ExecuteParameter> parameters = new();
-parameters.Add(new ExecuteParameter("message", "What does this document say about pricing?"));
-parameters.Add(new ExecuteParameter("chatId", "your-chat-id"));
-parameters.Add(new ExecuteParameter("volatileKnowledgeIds", new List<string> { knowledge.Id.ToString() }));
-
-AgentResult result = await client.Execute("assistantagent", parameters);
-Console.WriteLine($"Agent response: {result.Content}");
+if (response.Status == "success")
+{
+    // Execute the activity - volatile knowledge is automatically included
+    AgentResult result = await activity.ExecuteAsync();
+    Console.WriteLine(result.Content);
+    // Volatile knowledge is cleared after execution
+}
 ```
 
-## 📚 Documentation
+### Multiple Knowledge Documents
 
-<p>Learn more about Serenity AIHub <a aria-label="serenity documentation" href="https://docs.serenitystar.ai">in our official docs!</a></p>
+You can upload multiple documents to the same conversation or activity. All uploaded documents will be included in the next message and then automatically cleared.
 
-- [Getting Started](https://docs.serenitystar.ai/docs/getting-started/introduction)
-- [API Reference](https://docs.serenitystar.ai/docs/api/aihub/serenity-star-api-docs)
-- [Agents](https://docs.serenitystar.ai/docs/serenity-aihub/agents)
+```csharp
+Conversation conversation = client.Agents.Assistants.CreateConversation("multi-doc-assistant");
 
-## 🗺 Project Structure
+// Upload first document
+using (FileStream file1 = File.OpenRead("doc1.pdf"))
+{
+    VolatileKnowledgeRes knowledge1 = await conversation.VolatileKnowledge.UploadAsync(new()
+    {
+        FileStream = file1,
+        FileName = "doc1.pdf"
+    });
 
-- `src/Serenity.AIHub.SDK.NET.Core` - Core SDK package
-- `src/Serenity.AIHub.SDK.NET.Extensions` - Extension methods for dependency injection
-- `tests` - Test projects for the SDK
+    // Wait for processing
+    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge1.Id)).Status == "analyzing")
+        await Task.Delay(1000);
+}
+
+// Upload second document
+using (FileStream file2 = File.OpenRead("doc2.pdf"))
+{
+    VolatileKnowledgeRes knowledge2 = await conversation.VolatileKnowledge.UploadAsync(new()
+    {
+        FileStream = file2,
+        FileName = "doc2.pdf"
+    });
+
+    // Wait for processing
+    while ((await conversation.VolatileKnowledge.GetStatusAsync(knowledge2.Id)).Status == "analyzing")
+        await Task.Delay(1000);
+}
+
+// Both documents are included in this message
+AgentResult result = await conversation.SendMessageAsync("What can you say me about doc1 and doc2?");
+Console.WriteLine(result.Content);
+
+// Both documents are cleared after the message is sent
+```
 
 ## 🤝 Contributing
 

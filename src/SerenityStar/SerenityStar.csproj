@@ -1,0 +1,79 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <PackageId>SubgenAI.SerenityStar.SDK</PackageId>
+    <AssemblyName>SerenityStar</AssemblyName>
+    <RootNamespace>SerenityStar</RootNamespace>
+    <Authors>Serenity Star team</Authors>
+    <Company>Subgen AI</Company>
+    <Description>Official .NET SDK for Serenity Star API</Description>
+    <PackageProjectUrl>https://hub.serenitystar.ai/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/serenitystar-ai/serenity-dotnet</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Version>2.0.0</Version>
+    <PackageReleaseNotes>
+      Version 2.0.0 - Major Release
+
+      BREAKING CHANGES:
+      - Renamed SerenityAIHubClient to SerenityClient
+      - Complete API redesign to provide scoped methods based on agent types and other core entities (e.g., client.Agents.Activities.ExecuteAsync("agent-name"), conversation.SendMessageAsync("message"))
+
+      NEW FEATURES:
+      - Builder Pattern for Client Creation:
+        * SerenityClientBuilder with fluent API for flexible configuration
+        * Support for custom HttpClient injection
+        * Configurable timeouts and base URLs
+
+      - Volatile Knowledge Management: Upload and manage temporary documents (files or text) that can be used in agent executions with expiration control
+        * client.Agents.VolatileKnowledge.UploadAsync() - Upload documents or text content
+        * client.Agents.VolatileKnowledge.GetStatusAsync() - Check processing status
+        * Support for embeddings processing, custom expiration dates, and callback URLs
+        * Use volatile knowledge IDs in agent executions for context-aware responses
+
+      - Enhanced Connector Support: Better integration with external services
+        * conversation.GetConnectorStatusAsync(connectorId) - Check connection status for external services
+        * Support for ConnectionPendingAction with connector details (ConnectorId, Url, ConnectorName, ConnectorImgUrl)
+        * Improved handling of pending actions requiring user authentication
+        * Support for connector authentication workflows in conversations
+
+      - Unified Streaming Experience: Consistent streaming across all agent types
+        * Activities: activity.StreamAsync()
+        * Chat Completions: chatCompletion.StreamAsync()
+        * AI Proxy: proxy.StreamAsync()
+        * Assistants: conversation.StreamMessageAsync()
+        * Receive real-time updates with start, content, task logs, and stop events
+
+      IMPROVEMENTS:
+      - Enhanced error handling with detailed HTTP error messages
+      - Improved XML documentation across all public APIs
+      - Better type safety and null handling
+      - Consistent parameter naming and structure
+
+      DOCUMENTATION:
+      - Updated execution examples for all agents
+      - Streaming examples for each agent type
+      - Step-by-step guides for volatile knowledge workflows
+      - Connector integration patterns
+    </PackageReleaseNotes>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="/" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>
