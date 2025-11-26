@@ -1,20 +1,8 @@
-![Serenity .NET SDK](.github/resources/sdk-banner.png)
+![Serenity .NET SDK](https://raw.githubusercontent.com/serenitystar-ai/serenity-dotnet/main/.github/resources/sdk-banner.png)
 
-<p align="center">
-  <a href="https://serenitystar.ai/">
-    <h1 align="center">Serenity Star SDK for .NET</h1>
-  </a>
-</p>
+# Serenity Star SDK for .NET
 
-<p align="center">
-  <a aria-label="try Serenity Star" href="https://hub.serenitystar.ai/Identity/Account/Register"><b>Try Serenity Star</b></a>
-&ensp;•&ensp;
-  <a aria-label="Serenity documentation" href="https://docs.serenitystar.ai">Read the Documentation</a>
-&ensp;•&ensp;
-  <a aria-label="Serenity blog" href="https://docs.serenitystar.ai/blog">Learn more on our blog</a>
-&ensp;•&ensp;
-  <a aria-label="Serenity Discord channel" href="https://discord.gg/SrT3xP7tS8">Chat with us on Discord</a>
-</p>
+**[Try Serenity Star](https://hub.serenitystar.ai/Identity/Account/Register)** • **[Documentation](https://docs.serenitystar.ai)** • **[Blog](https://docs.serenitystar.ai/blog)** • **[Discord](https://discord.gg/SrT3xP7tS8)**
 
 ## Introduction
 
