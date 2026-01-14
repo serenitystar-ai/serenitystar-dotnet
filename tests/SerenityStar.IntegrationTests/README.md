@@ -11,3 +11,5 @@ To run the integration tests, you need to:
 {
   "ApiKey": "your-api-key-here"
 }
+
+3. If needed, change the code/endpoint of your agents
