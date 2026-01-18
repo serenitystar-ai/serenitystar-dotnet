@@ -198,7 +198,7 @@ namespace SerenityStar.Models.Execute
             /// <summary>
             /// Initializes a new instance of the <see cref="GuardrailRuleViolation"/> class with rule and score.
             /// </summary>
-            public GuardrailRuleViolation(string rule, double? score)
+            public GuardrailRuleViolation(int rule, double? score)
             {
                 Rule = rule;
                 ScoreInput = score;
@@ -207,11 +207,10 @@ namespace SerenityStar.Models.Execute
             /// <summary>
             /// Initializes a new instance of the <see cref="GuardrailRuleViolation"/> class with full details.
             /// </summary>
-            public GuardrailRuleViolation(string rule, bool isInputScore, double? score, string? ruleDisplayName = null)
+            public GuardrailRuleViolation(int rule, bool isInputScore, double? score, string? ruleDisplayName = null)
             {
                 Rule = rule;
-                RuleName = rule;
-                RuleDisplayName = ruleDisplayName ?? rule;
+                RuleDisplayName = ruleDisplayName;
                 ScoreInput = isInputScore ? score : null;
                 ScoreOutput = !isInputScore ? score : null;
             }
@@ -219,7 +218,7 @@ namespace SerenityStar.Models.Execute
             /// <summary>
             /// The guardrail rule that was violated.
             /// </summary>
-            public string Rule { get; set; } = string.Empty;
+            public int Rule { get; set; }
 
             /// <summary>
             /// The name of the rule.
