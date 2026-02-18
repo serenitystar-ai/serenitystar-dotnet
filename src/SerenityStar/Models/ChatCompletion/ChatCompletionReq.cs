@@ -26,10 +26,5 @@ namespace SerenityStar.Models.ChatCompletion
         /// Additional input parameters.
         /// </summary>
         public Dictionary<string, object>? InputParameters { get; set; }
-
-        /// <summary>
-        /// Specific version of the agent to execute.
-        /// </summary>
-        public int? AgentVersion { get; set; }
     }
 }

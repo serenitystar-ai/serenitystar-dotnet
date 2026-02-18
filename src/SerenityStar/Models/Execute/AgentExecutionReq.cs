@@ -13,11 +13,6 @@ namespace SerenityStar.Models.Execute
         public Dictionary<string, object>? InputParameters { get; set; }
 
         /// <summary>
-        /// Specific version of the agent to execute.
-        /// </summary>
-        public int? AgentVersion { get; set; }
-
-        /// <summary>
         /// User identifier for tracking and personalization.
         /// </summary>
         public string? UserIdentifier { get; set; }

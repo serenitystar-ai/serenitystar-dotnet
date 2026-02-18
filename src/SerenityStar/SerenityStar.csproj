@@ -14,8 +14,28 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.0.1</Version>
+    <Version>2.1.0</Version>
     <PackageReleaseNotes>
+      Version 2.1.0 - API Enhancement Release
+
+      IMPROVEMENTS:
+      - Agent Version Management: Simplified agent version specification
+        * Pass agent versions directly as method parameters instead of using AgentVersion property
+        * Activities.Create(agentCode, version, options)
+        * Assistants.CreateConversation(agentCode, version, options)
+        * ChatCompletions.Create(agentCode, version, options)
+        * GetInfoByCodeAsync(agentCode, version, options) support for versioned agent info retrieval
+
+      - API Refactoring: Cleaner and more intuitive method signatures
+        * Removed AgentVersion property from ChatCompletionReq and AgentExecutionReq
+        * Version parameter is now consistently passed at creation time
+        * Improved method overloads for better discoverability
+
+      - Code Quality:
+        * Better separation of concerns in version handling
+        * Consistent parameter ordering across all agent types
+        * Enhanced XML documentation for clarity
+
       Version 2.0.1 - Hotfix
       - Fixed GuardrailRuleViolation.Rule property type from string to int to match API response
       - Simplified GuardrailRuleViolation constructors removing automatic RuleName assignment

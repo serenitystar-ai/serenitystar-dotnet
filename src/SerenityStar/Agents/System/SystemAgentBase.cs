@@ -20,6 +20,7 @@ namespace SerenityStar.Agents.System
     {
         private readonly HttpClient _httpClient;
         private readonly string _agentCode;
+        private readonly int? _version;
         /// <summary>
         /// Execution options for the agent.
         /// </summary>
@@ -29,11 +30,27 @@ namespace SerenityStar.Agents.System
         /// Initializes a new instance of the SystemAgentBase class.
         /// </summary>
         protected SystemAgentBase(HttpClient httpClient, string agentCode, object? options)
+            : this(httpClient, agentCode, null, options)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the SystemAgentBase class with a specific version.
+        /// </summary>
+        protected SystemAgentBase(HttpClient httpClient, string agentCode, int? version, object? options)
         {
             _httpClient = httpClient;
             _agentCode = agentCode;
+            _version = version;
             Options = options;
         }
+
+        /// <summary>
+        /// Builds the execution URL, including version if specified.
+        /// </summary>
+        private string BuildExecuteUrl()
+            => $"/api/v2/agent/{_agentCode}/execute{(_version.HasValue ? $"/{_version.Value}" : "")}";
+
 
         /// <summary>
         /// Creates the base parameters for execution.
@@ -65,7 +82,7 @@ namespace SerenityStar.Agents.System
         /// </summary>
         public async Task<AgentResult> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            string url = $"/api/v2/agent/{_agentCode}/execute";
+            string url = BuildExecuteUrl();
 
             object body = CreateExecuteBody(false);
 
@@ -91,7 +108,7 @@ namespace SerenityStar.Agents.System
         public async IAsyncEnumerable<StreamingAgentMessage> StreamAsync(
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            string url = $"/api/v2/agent/{_agentCode}/execute";
+            string url = BuildExecuteUrl();
 
             object body = CreateExecuteBody(true);
 

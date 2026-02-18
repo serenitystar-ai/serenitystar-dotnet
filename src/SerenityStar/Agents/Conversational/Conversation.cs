@@ -25,6 +25,7 @@ namespace SerenityStar.Agents.Conversational
     {
         private readonly HttpClient _httpClient;
         private readonly string _agentCode;
+        private readonly int? _version;
         private readonly AgentExecutionReq? _options;
         private string? _chatId;
 
@@ -44,10 +45,11 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         public ConversationVolatileKnowledgeScope VolatileKnowledge { get; }
 
-        internal Conversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
+        internal Conversation(HttpClient httpClient, string agentCode, int? version = null, AgentExecutionReq? options = null)
         {
             _httpClient = httpClient;
             _agentCode = agentCode;
+            _version = version;
             _options = options;
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
@@ -67,15 +69,16 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         /// <param name="httpClient">The HTTP client to use for API calls.</param>
         /// <param name="agentCode">The assistant agent code.</param>
+        /// <param name="version">Optional specific version of the agent. If not specified, uses the published version.</param>
         /// <param name="options">Optional execution options.</param>
         /// <returns>A new conversation instance.</returns>
-        public static Conversation CreateConversation(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
-            => new Conversation(httpClient, agentCode, options);
+        public static Conversation CreateConversation(HttpClient httpClient, string agentCode, int? version = null, AgentExecutionReq? options = null)
+            => new Conversation(httpClient, agentCode, version, options);
 
         internal async Task InitializeInfoAsync(CancellationToken cancellationToken = default)
         {
-            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
-            string url = $"/api/v2/agent/{_agentCode}/{version}/conversation/info";
+            string versionPath = _version.HasValue ? $"/{_version.Value}" : string.Empty;
+            string url = $"/api/v2/agent/{_agentCode}{versionPath}/conversation/info";
 
             Dictionary<string, object?> requestBody = new Dictionary<string, object?>
             {
@@ -109,10 +112,11 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>The agent's response.</returns>
         public async Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
         {
-            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
-            string url = $"/api/v2/agent/{_agentCode}/execute{version}";
+            string url = _version.HasValue
+                ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
+                : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = new List<object>
+            List<object> parameters = new()
             {
                 new { Key = "message", Value = message }
             };
@@ -168,10 +172,11 @@ namespace SerenityStar.Agents.Conversational
             string message,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
-            string url = $"/api/v2/agent/{_agentCode}/execute{version}";
+            string url = _version.HasValue
+                ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
+                : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = new List<object>
+            List<object> parameters = new()
             {
                 new { Key = "message", Value = message },
                 new { Key = "stream", Value = true }
@@ -257,8 +262,8 @@ namespace SerenityStar.Agents.Conversational
             bool showExecutorTaskLogs = false,
             CancellationToken cancellationToken = default)
         {
-            string version = _options?.AgentVersion.HasValue == true ? $"/{_options.AgentVersion}" : string.Empty;
-            string url = $"/api/v2/agent/{_agentCode}/conversation/{conversationId}{version}?showExecutorTaskLogs={showExecutorTaskLogs}";
+            string versionPath = _version.HasValue ? $"/{_version.Value}" : string.Empty;
+            string url = $"/api/v2/agent/{_agentCode}/conversation/{conversationId}{versionPath}?showExecutorTaskLogs={showExecutorTaskLogs}";
 
             HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
 
@@ -284,7 +289,7 @@ namespace SerenityStar.Agents.Conversational
 
             string url = $"/api/v2/agent/{_agentCode}/conversation/{ConversationId}/message/{options.AgentMessageId}/feedback";
 
-            Dictionary<string, object> requestBody = new Dictionary<string, object>
+            Dictionary<string, object> requestBody = new()
             {
                 ["feedback"] = options.Feedback
             };
