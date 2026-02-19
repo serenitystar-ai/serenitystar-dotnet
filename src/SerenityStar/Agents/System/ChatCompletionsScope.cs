@@ -18,6 +18,7 @@ namespace SerenityStar.Agents.System
     public sealed class ChatCompletion : SystemAgentBase
     {
         private readonly ChatCompletionReq _chatOptions;
+        private readonly int? _version;
 
         /// <summary>
         /// Provides methods for managing volatile knowledge within this chat completion.
@@ -30,11 +31,13 @@ namespace SerenityStar.Agents.System
         /// </summary>
         /// <param name="httpClient">The HTTP client.</param>
         /// <param name="agentCode">The agent code.</param>
+        /// <param name="version">Optional specific version of the agent to execute. If not specified, uses the published version.</param>
         /// <param name="options">Chat completion options.</param>
-        public ChatCompletion(HttpClient httpClient, string agentCode, ChatCompletionReq options)
-            : base(httpClient, agentCode, options)
+        public ChatCompletion(HttpClient httpClient, string agentCode, int? version, ChatCompletionReq options)
+            : base(httpClient, agentCode, version, options)
         {
             _chatOptions = options;
+            _version = version;
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
 
@@ -89,6 +92,16 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Chat completion options.</param>
         /// <returns>A chat completion instance.</returns>
         public ChatCompletion Create(string agentCode, ChatCompletionReq options)
-            => new ChatCompletion(_httpClient, agentCode, options);
+            => new ChatCompletion(_httpClient, agentCode, null, options);
+
+        /// <summary>
+        /// Creates a chat completion agent instance with a specific version.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="version">The specific version of the agent to execute.</param>
+        /// <param name="options">Chat completion options.</param>
+        /// <returns>A chat completion instance.</returns>
+        public ChatCompletion Create(string agentCode, int version, ChatCompletionReq options)
+            => new ChatCompletion(_httpClient, agentCode, version, options);
     }
 }

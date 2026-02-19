@@ -35,7 +35,29 @@ namespace SerenityStar.Agents.Conversational
             string? conversationId = null,
             AgentExecutionReq? options = null)
         {
-            Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, options);
+            Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, null, options);
+            if (!string.IsNullOrEmpty(conversationId))
+                conversation.SetConversationId(conversationId);
+
+            return conversation;
+        }
+
+        /// <summary>
+        /// Creates a new conversation with a conversational agent using a specific version.
+        /// The conversation is created automatically when the first message is sent.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="version">The specific version of the agent to use.</param>
+        /// <param name="conversationId">Optional existing conversation ID to resume.</param>
+        /// <param name="options">Optional execution options.</param>
+        /// <returns>A new conversation instance.</returns>
+        public Conversation CreateConversation(
+            string agentCode,
+            int version,
+            string? conversationId = null,
+            AgentExecutionReq? options = null)
+        {
+            Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, version, options);
             if (!string.IsNullOrEmpty(conversationId))
                 conversation.SetConversationId(conversationId);
 
@@ -54,7 +76,26 @@ namespace SerenityStar.Agents.Conversational
             AgentExecutionReq? options = null,
             CancellationToken cancellationToken = default)
         {
-            Conversation conversation = new Conversation(_httpClient, agentCode, options);
+            Conversation conversation = new Conversation(_httpClient, agentCode, null, options);
+            await conversation.InitializeInfoAsync(cancellationToken);
+            return conversation.Info ?? throw new InvalidOperationException("Failed to get conversation info");
+        }
+
+        /// <summary>
+        /// Gets information about a conversational agent with a specific version.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="version">The specific version of the agent.</param>
+        /// <param name="options">Optional execution options.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Agent information.</returns>
+        public async Task<ConversationInfoResult> GetInfoByCodeAsync(
+            string agentCode,
+            int version,
+            AgentExecutionReq? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            Conversation conversation = new Conversation(_httpClient, agentCode, version, options);
             await conversation.InitializeInfoAsync(cancellationToken);
             return conversation.Info ?? throw new InvalidOperationException("Failed to get conversation info");
         }

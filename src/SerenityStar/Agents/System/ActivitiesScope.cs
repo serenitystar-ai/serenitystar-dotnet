@@ -24,9 +24,10 @@ namespace SerenityStar.Agents.System
         /// </summary>
         /// <param name="httpClient">The HTTP client.</param>
         /// <param name="agentCode">The agent code.</param>
+        /// <param name="version">Optional specific version of the agent to execute. If not specified, uses the published version.</param>
         /// <param name="options">Optional execution options.</param>
-        public Activity(HttpClient httpClient, string agentCode, AgentExecutionReq? options = null)
-            : base(httpClient, agentCode, options)
+        public Activity(HttpClient httpClient, string agentCode, int? version = null, AgentExecutionReq? options = null)
+            : base(httpClient, agentCode, version, options)
         {
             VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
         }
@@ -76,6 +77,16 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Optional execution options.</param>
         /// <returns>An activity instance.</returns>
         public Activity Create(string agentCode, AgentExecutionReq? options = null)
-            => new Activity(_httpClient, agentCode, options);
+            => new Activity(_httpClient, agentCode, null, options);
+
+        /// <summary>
+        /// Creates an activity agent instance with a specific version.
+        /// </summary>
+        /// <param name="agentCode">The agent code.</param>
+        /// <param name="version">The specific version of the agent to execute.</param>
+        /// <param name="options">Optional execution options.</param>
+        /// <returns>An activity instance.</returns>
+        public Activity Create(string agentCode, int version, AgentExecutionReq? options = null)
+            => new Activity(_httpClient, agentCode, version, options);
     }
 }

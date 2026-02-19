@@ -9,7 +9,7 @@
 Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
-![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)
+[![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
 
 ## Table of Contents
 
@@ -184,12 +184,12 @@ if (agentInfo.Channel != null)
 Console.WriteLine($"Image ID: {agentInfo.Agent.ImageId}"); // Agent's profile image ID
 
 
-// Get information about an assistant agent conversation (advanced example with options)
+// Get information about an assistant agent conversation (advanced example with specific version)
 ConversationInfoResult agentInfoAdvanced = await client.Agents.Assistants.GetInfoByCodeAsync(
     "chef-assistant",
+    2, // Target specific version of the agent
     new AgentExecutionReq
     {
-        AgentVersion = 2, // Target specific version of the agent
         InputParameters = new Dictionary<string, object>
         {
             ["dietaryRestrictions"] = "vegetarian",
@@ -317,9 +317,10 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
 You can customize the streaming behaviour with execution options:
 
 ```csharp
-// Create conversation with options
+// Create conversation with specific version and options
 Conversation conversation = client.Agents.Assistants.CreateConversation(
     "chef-assistant",
+    2, // Target specific version of the agent
     options: new AgentExecutionReq
     {
         InputParameters = new Dictionary<string, object>
@@ -328,8 +329,7 @@ Conversation conversation = client.Agents.Assistants.CreateConversation(
             ["servings"] = 4
         },
         UserIdentifier = "user-456",
-        Channel = "mobile-app",
-        AgentVersion = 2
+        Channel = "mobile-app"
     }
 );
 
@@ -737,11 +737,10 @@ AgentResult response = await chatCompletion.ExecuteAsync();
 Console.WriteLine(response.Content); // AI-generated response
 Console.WriteLine($"Completion Usage: {response.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 
-// Create and execute chat completion (advanced example)
-ChatCompletion chatCompletionAdvanced = client.Agents.ChatCompletions.Create("Health-Coach", new ChatCompletionReq
+// Create and execute chat completion (advanced example with specific version)
+ChatCompletion chatCompletionAdvanced = client.Agents.ChatCompletions.Create("Health-Coach", 2, new ChatCompletionReq
 {
     UserIdentifier = "user-123",
-    AgentVersion = 2,
     Channel = "web",
     VolatileKnowledgeIds = new List<string> { "knowledge-1", "knowledge-2" },
     Message = "Hi! How can I eat healthier?",

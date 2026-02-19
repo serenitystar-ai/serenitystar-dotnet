@@ -235,4 +235,68 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
         Assert.NotNull(conversationDetails);
         Assert.Equal(conversationId, conversationDetails.Id);
     }
+
+    [Fact]
+    public async Task CreateConversation_WithVersion_ShouldSucceed()
+    {
+        // Arrange - Create conversation with specific version
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+            _fixture.CopilotAgent,
+            2 // Specific version
+        );
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync("Hello with version");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task CreateConversation_WithVersionAndOptions_ShouldSucceed()
+    {
+        // Arrange - Create conversation with version and options
+        var options = new AgentExecutionReq
+        {
+            UserIdentifier = "version-test-user",
+            Channel = "web"
+        };
+
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+            _fixture.CopilotAgent,
+            2, // Specific version
+            options: options
+        );
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync("Hello with version and options");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task StreamMessage_WithVersion_ShouldSucceed()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+            _fixture.CopilotAgent,
+            2 // Specific version
+        );
+        List<StreamingAgentMessage> messages = [];
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Stream with version"))
+            messages.Add(message);
+
+        // Assert
+        Assert.NotEmpty(messages);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.NotNull(conversation.ConversationId);
+    }
 }

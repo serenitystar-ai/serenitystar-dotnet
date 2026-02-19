@@ -118,11 +118,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         ChatCompletionReq options = new()
         {
-            Message = "Hello",
-            AgentVersion = 1
+            Message = "Hello"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, 2, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -290,11 +289,10 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             {
                 ["complexity_level"] = "beginner",
                 ["use_analogies"] = true
-            },
-            AgentVersion = 1
+            }
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, 2, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();

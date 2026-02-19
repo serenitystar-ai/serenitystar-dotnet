@@ -97,11 +97,10 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             InputParameters = new Dictionary<string, object>
             {
                 ["word"] = "dancing"
-            },
-            AgentVersion = 25
+            }
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, 28, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();
