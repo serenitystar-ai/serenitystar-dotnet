@@ -20,7 +20,7 @@
 
       IMPROVEMENTS:
       - Agent Version Management: Simplified agent version specification
-        * Pass agent versions directly as method parameters instead of using AgentVersion property
+        * Pass optional agent version directly as method parameters instead of using AgentVersion property
         * Activities.Create(agentCode, version, options)
         * Assistants.CreateConversation(agentCode, version, options)
         * ChatCompletions.Create(agentCode, version, options)
