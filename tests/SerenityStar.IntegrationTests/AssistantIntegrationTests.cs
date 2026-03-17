@@ -218,7 +218,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task GetConversationInfo_WithOptions_ShouldSucceed()
     {
         // Arrange
-        var options = new AgentExecutionReq
+        AgentExecutionReq options = new()
         {
             UserIdentifier = "test-user",
             Channel = "web"
@@ -258,7 +258,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_WithVersionAndOptions_ShouldSucceed()
     {
         // Arrange - Create conversation with version and options
-        var options = new AgentExecutionReq
+        AgentExecutionReq options = new()
         {
             UserIdentifier = "version-test-user",
             Channel = "web"
@@ -313,4 +313,112 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
         Assert.NotNull(conversation.ConversationId);
     }
+
+    #region Audio Input
+
+    private Guid GetRequiredAudioFileId()
+    {
+        if (!_fixture.AudioFileId.HasValue)
+            throw new InvalidOperationException(
+                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
+                "to a valid audio file ID that exists in your Serenity Star instance.");
+
+        return _fixture.AudioFileId.Value;
+    }
+
+    [Fact]
+    public async Task SendMessage_WithInvalidAudioFileId_ShouldFail()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            conversation.SendMessageAsync(audioFileId: Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task SendMessage_WithAudioFileId_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync(audioFileId: fileId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task StreamMessage_WithAudioFileId_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        List<StreamingAgentMessage> messages = [];
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioFileId: fileId))
+            messages.Add(message);
+
+        // Assert
+        Assert.NotEmpty(messages);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStart);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task SendMessage_WithAudioThenTextMessage_ShouldMaintainConversation()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        // Act - Send audio first
+        AgentResult audioResult = await conversation.SendMessageAsync(audioFileId: fileId);
+        string? conversationId = conversation.ConversationId;
+
+        await Task.Delay(1000);
+
+        // Follow up with text only
+        AgentResult textResult = await conversation.SendMessageAsync("Can you summarize what I just said?");
+
+        // Assert
+        Assert.NotNull(audioResult.Content);
+        Assert.NotNull(textResult.Content);
+        Assert.NotNull(conversationId);
+        Assert.Equal(conversationId, conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task SendMessage_WithBothMessageAndAudioFileId_ShouldThrowArgumentException()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            conversation.SendMessageAsync("Hello", audioFileId: Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task SendMessage_WithNeitherMessageNorAudioFileId_ShouldThrowArgumentException()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            conversation.SendMessageAsync());
+    }
+
+    #endregion
 }

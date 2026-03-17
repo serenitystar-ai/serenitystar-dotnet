@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using SerenityStar.Agents;
+using SerenityStar.AIServices;
 using SerenityStar.Constants;
 using SerenityStar.Models;
 using System;
@@ -19,6 +20,11 @@ namespace SerenityStar.Client
         public AgentsScope Agents { get; }
 
         /// <summary>
+        /// Access AI services such as transcription, speech, and image generation.
+        /// </summary>
+        public AIServicesScope AIServices { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SerenityClient"/> class for dependency injection.
         /// </summary>
         /// <param name="options">The options containing the API key.</param>
@@ -34,6 +40,7 @@ namespace SerenityStar.Client
             // Configure the API key header
             _httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
             Agents = new AgentsScope(_httpClient);
+            AIServices = new AIServicesScope(_httpClient);
         }
 
         /// <summary>
@@ -63,6 +70,7 @@ namespace SerenityStar.Client
         {
             _httpClient = httpClient;
             Agents = new AgentsScope(_httpClient);
+            AIServices = new AIServicesScope(_httpClient);
         }
     }
 }

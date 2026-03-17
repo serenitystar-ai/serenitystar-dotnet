@@ -3,7 +3,6 @@ using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.Conversation;
-using SerenityStar.Models.VolatileKnowledge;
 using SerenityStar.Agents.Conversational;
 using Xunit;
 
@@ -259,7 +258,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_WithVersionAndOptions_ShouldSucceed()
     {
         // Arrange - Create conversation with version and options
-        var options = new AgentExecutionReq
+        AgentExecutionReq options = new()
         {
             UserIdentifier = "version-test-user",
             Channel = "web"
@@ -299,4 +298,67 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
         Assert.NotNull(conversation.ConversationId);
     }
+
+    #region Audio Input
+
+    private Guid GetRequiredAudioFileId()
+    {
+        if (!_fixture.AudioFileId.HasValue)
+            throw new InvalidOperationException(
+                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
+                "to a valid audio file ID that exists in your Serenity Star instance.");
+
+        return _fixture.AudioFileId.Value;
+    }
+
+    [Fact]
+    public async Task SendMessage_WithInvalidAudioFileId_ShouldFail()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            conversation.SendMessageAsync(audioFileId: Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task SendMessage_WithAudioFileId_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync(audioFileId: fileId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task StreamMessage_WithAudioFileId_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        List<StreamingAgentMessage> messages = [];
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioFileId: fileId))
+            messages.Add(message);
+
+        // Assert
+        Assert.NotEmpty(messages);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStart);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    #endregion
 }

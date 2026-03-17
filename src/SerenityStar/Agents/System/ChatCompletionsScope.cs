@@ -46,8 +46,12 @@ namespace SerenityStar.Agents.System
         {
             List<object> parameters = CreateBaseParameters(stream);
 
-            // Add message
-            parameters.Add(new { Key = "message", Value = _chatOptions.Message });
+            // Validate mutual exclusion of Message and AudioFileId
+            _chatOptions.Validate();
+
+            // Add message if provided
+            if (_chatOptions.Message != null)
+                parameters.Add(new { Key = "message", Value = _chatOptions.Message });
 
             // Add messages if provided
             if (_chatOptions.Messages != null && _chatOptions.Messages.Count > 0)
@@ -57,6 +61,10 @@ namespace SerenityStar.Agents.System
             if (_chatOptions.InputParameters != null)
                 foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
                     parameters.Add(new { param.Key, param.Value });
+
+            // Add audio input if provided
+            if (_chatOptions.AudioFileId.HasValue)
+                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = _chatOptions.AudioFileId.Value }, JsonSerializerOptionsCache.s_camelCase) });
 
             // Add volatile knowledge IDs if any are associated
             if (VolatileKnowledge.KnowledgeIds.Any())

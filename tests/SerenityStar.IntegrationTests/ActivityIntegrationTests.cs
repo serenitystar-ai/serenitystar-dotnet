@@ -58,7 +58,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange
         string[] words = ["swimming", "cycling", "hiking"];
-        var responses = new List<string>();
+        List<string> responses = new();
 
         // Act
         foreach (string word in words)
@@ -230,4 +230,83 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         Assert.NotEmpty(result.Content);
         Assert.NotEqual(Guid.Empty, result.InstanceId);
     }
+
+    #region Audio Input
+
+    private Guid GetRequiredAudioFileId()
+    {
+        if (!_fixture.AudioFileId.HasValue)
+            throw new InvalidOperationException(
+                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
+                "to a valid audio file ID that exists in your Serenity Star instance.");
+
+        return _fixture.AudioFileId.Value;
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithInvalidAudioFileId_ShouldFail()
+    {
+        // Arrange
+        AgentExecutionReq options = new()
+        {
+            AudioFileId = Guid.NewGuid()
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            activity.ExecuteAsync());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioFileId_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        AgentExecutionReq options = new()
+        {
+            AudioFileId = fileId
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
+        // Act
+        AgentResult result = await activity.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioFileIdAndInputParameters_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        AgentExecutionReq options = new()
+        {
+            AudioFileId = fileId,
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "running"
+            },
+            UserIdentifier = "audio-test-user",
+            Channel = "SDK-Tests"
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
+        // Act
+        AgentResult result = await activity.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    #endregion
 }

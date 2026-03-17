@@ -19,6 +19,9 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Activities](#activities)
 - [AI Proxy](#ai-proxy)
 - [Chat Completions](#chat-completions)
+- [Transcription](#transcription)
+- [Audio Input for Agents](#audio-input-for-agents)
+- [Volatile Knowledge](#volatile-knowledge)
 - [Documentation](#-documentation)
 
 ## 🚀 Installation
@@ -820,6 +823,205 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
             break;
     }
 }
+```
+
+## Transcription
+
+Transcription allows you to convert audio and video files into text using AI-powered speech-to-text models. There are two ways to use transcription:
+
+1. **Direct AI Service**: Upload an audio file or reference a stored file ID to get a transcription result.
+2. **Agent Audio Input**: Send audio to conversational or activity agents, which automatically transcribe it and use the result as input.
+
+### Transcribe an audio file
+
+Upload an audio file directly for transcription. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Transcription;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Transcribe an audio file
+using FileStream audioFile = File.OpenRead("meeting-recording.mp3");
+TranscribeAudioReq request = new()
+{
+    FileStream = audioFile,
+    FileName = "meeting-recording.mp3"
+};
+
+TranscribeResult result = await client.AIServices.Transcription.TranscribeAsync(request);
+
+Console.WriteLine(result.Transcript);                       // "Hello everyone, welcome to the meeting..."
+Console.WriteLine($"Instance ID: {result.InstanceId}");
+
+if (result.Metadata != null)
+{
+    Console.WriteLine($"Language: {result.Metadata.Language}");  // "en"
+    Console.WriteLine($"Duration: {result.Metadata.Duration}"); // 00:05:23
+}
+
+if (result.TokenUsage != null)
+    Console.WriteLine($"Tokens: {result.TokenUsage.TotalTokens}");
+
+if (result.Cost != null)
+    Console.WriteLine($"Cost: {result.Cost.Total} {result.Cost.Currency}");
+```
+
+### Transcribe with options
+
+You can provide additional options to guide the transcription, specify a model, or track usage.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Transcription;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+using FileStream audioFile = File.OpenRead("interview.wav");
+TranscribeAudioReq request = new()
+{
+    FileStream = audioFile,
+    FileName = "interview.wav",
+    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
+    Prompt = "Interview about artificial intelligence and machine learning", // Guide terminology
+    UserIdentifier = "user-123",             // For tracking
+    Channel = "web-app"                      // Execution channel
+};
+
+TranscribeResult result = await client.AIServices.Transcription.TranscribeAsync(request);
+Console.WriteLine(result.Transcript);
+```
+
+### Transcribe by file ID
+
+If the file is already stored in the system (e.g., uploaded via volatile knowledge), you can transcribe it by referencing its file ID.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Transcription;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+TranscribeAudioByFileIdReq request = new()
+{
+    FileId = Guid.Parse("existing-file-id"),
+    Prompt = "Transcribe this customer support call",
+    UserIdentifier = "user-123"
+};
+
+TranscribeResult result = await client.AIServices.Transcription.TranscribeByFileIdAsync(request);
+Console.WriteLine(result.Transcript);
+```
+
+## Audio Input for Agents
+
+Agents that have audio input support enabled can receive audio files and automatically transcribe them as part of the conversation or activity execution. Audio input is provided as an optional `audioFileId` parameter on existing methods.
+
+### Send audio to a conversational agent
+
+For assistants and copilots, pass the `audioFileId` parameter to `SendMessageAsync` or `StreamMessageAsync`. The agent transcribes the audio internally and processes the transcription as the user message.
+
+> **Note:** `message` and `audioFileId` are mutually exclusive. Provide one or the other, but not both. Passing both (or neither) will throw an `ArgumentException`.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Agents.Conversational;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create a conversation with an audio-enabled agent
+Conversation conversation = client.Agents.Assistants.CreateConversation("voice-assistant");
+
+// Send audio — no text message (they are mutually exclusive)
+Guid audioFileId = Guid.Parse("uploaded-audio-file-id");
+AgentResult response = await conversation.SendMessageAsync(audioFileId: audioFileId);
+
+Console.WriteLine(response.Content); // Agent's response based on the transcribed audio
+Console.WriteLine($"Conversation ID: {conversation.ConversationId}");
+```
+
+### Stream audio message responses
+
+You can also stream the response when sending audio to a conversational agent.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Streaming;
+using SerenityStar.Agents.Conversational;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+Conversation conversation = client.Agents.Assistants.CreateConversation("voice-assistant");
+
+Guid audioFileId = Guid.Parse("uploaded-audio-file-id");
+
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioFileId: audioFileId))
+{
+    switch (message)
+    {
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text);
+            break;
+
+        case StreamingAgentMessageStop stop:
+            Console.WriteLine($"\nConversation ID: {stop.Result?.InstanceId}");
+            break;
+    }
+}
+```
+
+### Send audio input to an activity agent
+
+For activity agents, set the `AudioFileId` property in the execution options. The agent will transcribe the audio and use it as input.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.Execute;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Create an activity with audio input
+Activity activity = client.Agents.Activities.Create(
+    "audio-analyzer",
+    new AgentExecutionReq
+    {
+        AudioFileId = Guid.Parse("uploaded-audio-file-id"),
+        InputParameters = new Dictionary<string, object>
+        {
+            ["analysisType"] = "sentiment"
+        }
+    }
+);
+
+AgentResult result = await activity.ExecuteAsync();
+Console.WriteLine(result.Content);
+```
+
+### Send audio input to a chat completion agent
+
+Chat completion agents can also receive audio input via the `AudioFileId` property.
+
+> **Note:** `Message` and `AudioFileId` are mutually exclusive. Provide one or the other, but not both. Passing both (or neither) will throw an `ArgumentException`.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.ChatCompletion;
+using SerenityStar.Agents.System;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create(
+    "voice-chat",
+    new ChatCompletionReq
+    {
+        AudioFileId = Guid.Parse("uploaded-audio-file-id")
+    }
+);
+
+AgentResult result = await chatCompletion.ExecuteAsync();
+Console.WriteLine(result.Content);
 ```
 
 ## Volatile Knowledge

@@ -106,20 +106,31 @@ namespace SerenityStar.Agents.Conversational
         /// Sends a message in the conversation.
         /// The conversation is created automatically on the first message.
         /// Subsequent messages use the instanceId from the first response as chatId.
+        /// Provide either a text message or an audio file ID, but not both.
         /// </summary>
-        /// <param name="message">The message to send.</param>
+        /// <param name="message">The text message to send. Must be null when audioFileId is provided.</param>
+        /// <param name="audioFileId">Optional file ID of a previously uploaded audio file. Must be null when message is provided.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The agent's response.</returns>
-        public async Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        /// <exception cref="ArgumentException">Thrown when both message and audioFileId are provided, or when neither is provided.</exception>
+        public async Task<AgentResult> SendMessageAsync(string? message = null, Guid? audioFileId = null, CancellationToken cancellationToken = default)
         {
+            if (message != null && audioFileId.HasValue)
+                throw new ArgumentException("Cannot provide both a text message and an audio file ID. Use either message or audioFileId, but not both.");
+            if (message == null && !audioFileId.HasValue)
+                throw new ArgumentException("Either a text message or an audio file ID must be provided.");
+
             string url = _version.HasValue
                 ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
                 : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = new()
-            {
-                new { Key = "message", Value = message }
-            };
+            List<object> parameters = new();
+
+            if (message != null)
+                parameters.Add(new { Key = "message", Value = message });
+
+            if (audioFileId.HasValue)
+                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = audioFileId.Value }, JsonSerializerOptionsCache.s_camelCase) });
 
             // Add chatId only if we have it from a previous message
             if (!string.IsNullOrEmpty(_chatId))
@@ -164,23 +175,37 @@ namespace SerenityStar.Agents.Conversational
         /// Streams a message in the conversation.
         /// The conversation is created automatically on the first message.
         /// Subsequent messages use the instanceId from the first response as chatId.
+        /// Provide either a text message or an audio file ID, but not both.
         /// </summary>
-        /// <param name="message">The message to send.</param>
+        /// <param name="message">The text message to send. Must be null when audioFileId is provided.</param>
+        /// <param name="audioFileId">Optional file ID of a previously uploaded audio file. Must be null when message is provided.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An async enumerable of streaming messages.</returns>
+        /// <exception cref="ArgumentException">Thrown when both message and audioFileId are provided, or when neither is provided.</exception>
         public async IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(
-            string message,
+            string? message = null,
+            Guid? audioFileId = null,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            if (message != null && audioFileId.HasValue)
+                throw new ArgumentException("Cannot provide both a text message and an audio file ID. Use either message or audioFileId, but not both.");
+            if (message == null && !audioFileId.HasValue)
+                throw new ArgumentException("Either a text message or an audio file ID must be provided.");
+
             string url = _version.HasValue
                 ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
                 : $"/api/v2/agent/{_agentCode}/execute";
 
             List<object> parameters = new()
             {
-                new { Key = "message", Value = message },
                 new { Key = "stream", Value = true }
             };
+
+            if (message != null)
+                parameters.Add(new { Key = "message", Value = message });
+
+            if (audioFileId.HasValue)
+                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = audioFileId.Value }, JsonSerializerOptionsCache.s_camelCase) });
 
             // Add chatId only if we have it from a previous message
             if (!string.IsNullOrEmpty(_chatId))

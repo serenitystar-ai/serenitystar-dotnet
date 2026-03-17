@@ -1,8 +1,10 @@
 using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Constants;
 using SerenityStar.Models.Execute;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,6 +44,10 @@ namespace SerenityStar.Agents.System
             if (executionOptions?.InputParameters != null)
                 foreach (KeyValuePair<string, object> param in executionOptions.InputParameters)
                     parameters.Add(new { param.Key, param.Value });
+
+            // Add audio input if provided
+            if (executionOptions?.AudioFileId.HasValue == true)
+                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = executionOptions.AudioFileId.Value }, JsonSerializerOptionsCache.s_camelCase) });
 
             // Add volatile knowledge IDs if any are associated
             if (VolatileKnowledge.KnowledgeIds.Any())

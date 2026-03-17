@@ -14,8 +14,32 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <PackageReleaseNotes>
+      Version 2.2.0 - Transcription and Audio Input Release
+
+      NEW FEATURES:
+      - AI Services Scope: New top-level AIServices scope for accessing AI-powered services
+        * client.AIServices.Transcription for audio/video transcription
+
+      - Audio Transcription:
+        * TranscribeAsync(TranscribeAudioReq) - Upload and transcribe audio/video files directly
+        * TranscribeByFileIdAsync(TranscribeAudioByFileIdReq) - Transcribe files already stored in the system
+        * Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm (max 25 MB)
+        * Returns transcript text, metadata, token usage, and cost
+        * Optional model selection, prompt guidance, user tracking, and channel
+
+      - Agent Audio Input: Send audio to agents for automatic transcription and processing
+        * Conversational agents (Assistants/Copilots): Pass audioFileId to SendMessageAsync or StreamMessageAsync
+        * Activity agents: Set AudioFileId on AgentExecutionReq
+        * Chat Completion agents: Set AudioFileId on ChatCompletionReq
+        * message and audioFileId are mutually exclusive — providing both throws ArgumentException
+
+      IMPROVEMENTS:
+      - ChatCompletionReq.Message is now nullable (string?) to support audio-only requests
+      - ChatCompletionReq.Validate() method for mutual exclusion validation
+      - Conversation.SendMessageAsync and StreamMessageAsync: message parameter is now optional (string?)
+
       Version 2.1.0 - API Enhancement Release
 
       IMPROVEMENTS:

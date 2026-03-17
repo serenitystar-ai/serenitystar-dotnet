@@ -328,4 +328,107 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         Assert.NotEmpty(messages);
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
     }
+
+    #region Audio Input
+
+    private Guid GetRequiredAudioFileId()
+    {
+        if (!_fixture.AudioFileId.HasValue)
+            throw new InvalidOperationException(
+                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
+                "to a valid audio file ID that exists in your Serenity Star instance.");
+
+        return _fixture.AudioFileId.Value;
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithInvalidAudioFileId_ShouldFail()
+    {
+        // Arrange
+        ChatCompletionReq options = new()
+        {
+            AudioFileId = Guid.NewGuid()
+        };
+
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            chatCompletion.ExecuteAsync());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioFileId_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        ChatCompletionReq options = new()
+        {
+            AudioFileId = fileId
+        };
+
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
+        // Act
+        AgentResult result = await chatCompletion.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioFileIdAndHistory_ShouldSucceed()
+    {
+        // Arrange
+        Guid fileId = GetRequiredAudioFileId();
+        ChatCompletionReq options = new()
+        {
+            AudioFileId = fileId,
+            Messages =
+            [
+                new() { Role = "user", Content = "I'm going to send you an audio file" },
+                new() { Role = "assistant", Content = "Sure, go ahead and send the audio." }
+            ],
+            UserIdentifier = "audio-test-user"
+        };
+
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
+        // Act
+        AgentResult result = await chatCompletion.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public void ChatCompletionReq_Validate_WithBothMessageAndAudioFileId_ShouldThrowArgumentException()
+    {
+        // Arrange
+        ChatCompletionReq options = new()
+        {
+            Message = "Hello",
+            AudioFileId = Guid.NewGuid()
+        };
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => options.Validate());
+    }
+
+    [Fact]
+    public void ChatCompletionReq_Validate_WithNeitherMessageNorAudioFileId_ShouldThrowArgumentException()
+    {
+        // Arrange
+        ChatCompletionReq options = new();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => options.Validate());
+    }
+
+    #endregion
 }
