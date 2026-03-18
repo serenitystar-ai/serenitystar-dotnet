@@ -23,21 +23,22 @@ namespace SerenityStar.Constants
         };
 
         /// <summary>
+        /// Options with CamelCase naming policy, case-insensitive property matching, and ignoring null values when writing.
+        /// </summary>
+        public static readonly JsonSerializerOptions s_camelCaseIgnoreNull = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        /// <summary>
         /// Options with SnakeCaseLower naming policy and case-insensitive property matching.
         /// </summary>
         public static readonly JsonSerializerOptions s_snakeCaseLower = new()
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-        };
-
-        /// <summary>
-        /// Options with CamelCase naming policy and ignoring null values when writing.
-        /// </summary>
-        public static readonly JsonSerializerOptions s_camelCaseIgnoreNull = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         /// <summary>

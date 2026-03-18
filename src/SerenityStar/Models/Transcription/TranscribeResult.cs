@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json.Serialization;
 
 namespace SerenityStar.Models.Transcription
 {
@@ -21,19 +20,16 @@ namespace SerenityStar.Models.Transcription
         /// <summary>
         /// Metadata from the transcription service including language and duration.
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public TranscriptionMetadata? Metadata { get; set; }
 
         /// <summary>
         /// Representation of the token counts processed for the transcription request.
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public TranscribeTokenUsage? TokenUsage { get; set; }
 
         /// <summary>
         /// The cost information for this transcription in the tenant's currency.
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public TranscribeCost? Cost { get; set; }
     }
 
@@ -45,13 +41,11 @@ namespace SerenityStar.Models.Transcription
         /// <summary>
         /// The detected language of the audio content (ISO 639-1 format, e.g., "en", "es", "fr").
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Language { get; set; }
 
         /// <summary>
         /// The total duration of the audio file.
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public TimeSpan? Duration { get; set; }
     }
 

@@ -73,7 +73,7 @@ namespace SerenityStar.AIServices
                 throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            return await response.Content.ReadFromJsonAsync<TranscribeResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<TranscribeResult>(JsonSerializerOptionsCache.s_camelCaseIgnoreNull, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize transcription result");
         }
 
