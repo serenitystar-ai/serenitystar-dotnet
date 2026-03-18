@@ -37,7 +37,7 @@
       IMPROVEMENTS:
       - ChatCompletionReq.Message is now nullable (string?) to support audio-only requests
       - ChatCompletionReq.Validate() method for mutual exclusion validation
-      - Conversation.SendMessageAsync and StreamMessageAsync: message parameter is now optional (string?)
+      - Conversation.SendMessageAsync and StreamMessageAsync: new overloads accepting (Stream audioStream, string audioFileName) for audio input
 
       Version 2.1.0 - API Enhancement Release
 
