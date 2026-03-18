@@ -24,16 +24,23 @@
 
       - Audio Transcription:
         * TranscribeAsync(TranscribeAudioReq) - Upload and transcribe audio/video files directly
-        * TranscribeByFileIdAsync(TranscribeAudioByFileIdReq) - Transcribe files already stored in the system
         * Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm (max 25 MB)
         * Returns transcript text, metadata, token usage, and cost
         * Optional model selection, prompt guidance, user tracking, and channel
 
-      - Agent Audio Input: Send audio to agents for automatic transcription and processing
-        * Conversational agents (Assistants/Copilots): Pass audioFileId to SendMessageAsync or StreamMessageAsync
-        * Activity agents: Set AudioFileId on AgentExecutionReq
-        * Chat Completion agents: Set AudioFileId on ChatCompletionReq
-        * message and audioFileId are mutually exclusive — providing both throws ArgumentException
+      - Agent Audio Input: Send audio file streams to agents for automatic upload, transcription and processing
+        * Conversational agents (Assistants/Copilots): Pass audioStream and audioFileName to SendMessageAsync or StreamMessageAsync
+        * Activity agents: Set AudioFileStream and AudioFileName on AgentExecutionReq
+        * Chat Completion agents: Set AudioFileStream and AudioFileName on ChatCompletionReq
+        * message and audioStream are mutually exclusive — providing both throws ArgumentException
+
+      - FileUploadHelper: Internal helper that uploads audio files to the Serenity Star API
+        * Automatically called before agent execution when an audio stream is provided
+        * Returns the file ID used for agent audio input
+
+      - PrepareExecutionAsync: New virtual hook in SystemAgentBase
+        * Called before CreateExecuteBody in both ExecuteAsync and StreamAsync
+        * Used by Activity and ChatCompletion to upload audio files asynchronously
 
       IMPROVEMENTS:
       - ChatCompletionReq.Message is now nullable (string?) to support audio-only requests

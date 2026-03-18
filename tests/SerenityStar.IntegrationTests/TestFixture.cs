@@ -16,7 +16,6 @@ public class TestFixture : IDisposable
     public string ChatCompletionAgent { get; }
     public Guid? TranscriptionModelId { get; }
     public string? AudioFilePath { get; }
-    public Guid? AudioFileId { get; }
 
     public TestFixture()
     {
@@ -41,10 +40,6 @@ public class TestFixture : IDisposable
             TranscriptionModelId = modelId;
 
         AudioFilePath = Configuration["SerenityStar:AudioFilePath"];
-
-        string? audioFileId = Configuration["SerenityStar:AudioFileId"];
-        if (!string.IsNullOrEmpty(audioFileId) && Guid.TryParse(audioFileId, out Guid fileId))
-            AudioFileId = fileId;
 
         // Check if we have a valid API key (not null, empty or the placeholder)
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";

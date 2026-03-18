@@ -1,7 +1,9 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Constants;
+using SerenityStar.Helpers;
 using SerenityStar.Models.ChatCompletion;
 using SerenityStar.Models.Execute;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -19,6 +21,7 @@ namespace SerenityStar.Agents.System
     {
         private readonly ChatCompletionReq _chatOptions;
         private readonly int? _version;
+        private Guid? _uploadedAudioFileId;
 
         /// <summary>
         /// Provides methods for managing volatile knowledge within this chat completion.
@@ -42,12 +45,19 @@ namespace SerenityStar.Agents.System
         }
 
         /// <inheritdoc/>
+        protected override async Task PrepareExecutionAsync(CancellationToken cancellationToken = default)
+        {
+            _chatOptions.Validate();
+
+            if (_chatOptions.AudioFileStream != null)
+                _uploadedAudioFileId = await FileUploadHelper.UploadFileAsync(
+                    _httpClient, _chatOptions.AudioFileStream, _chatOptions.AudioFileName!, cancellationToken);
+        }
+
+        /// <inheritdoc/>
         protected override object CreateExecuteBody(bool stream)
         {
             List<object> parameters = CreateBaseParameters(stream);
-
-            // Validate mutual exclusion of Message and AudioFileId
-            _chatOptions.Validate();
 
             // Add message if provided
             if (_chatOptions.Message != null)
@@ -62,9 +72,9 @@ namespace SerenityStar.Agents.System
                 foreach (KeyValuePair<string, object> param in _chatOptions.InputParameters)
                     parameters.Add(new { param.Key, param.Value });
 
-            // Add audio input if provided
-            if (_chatOptions.AudioFileId.HasValue)
-                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = _chatOptions.AudioFileId.Value }, JsonSerializerOptionsCache.s_camelCase) });
+            // Add audio input if file was uploaded
+            if (_uploadedAudioFileId.HasValue)
+                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = _uploadedAudioFileId.Value }, JsonSerializerOptionsCache.s_camelCase) });
 
             // Add volatile knowledge IDs if any are associated
             if (VolatileKnowledge.KnowledgeIds.Any())

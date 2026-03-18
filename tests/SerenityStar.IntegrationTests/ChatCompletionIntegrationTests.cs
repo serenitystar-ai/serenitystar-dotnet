@@ -331,23 +331,29 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
 
     #region Audio Input
 
-    private Guid GetRequiredAudioFileId()
+    private string GetRequiredAudioFilePath()
     {
-        if (!_fixture.AudioFileId.HasValue)
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
             throw new InvalidOperationException(
-                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
-                "to a valid audio file ID that exists in your Serenity Star instance.");
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
 
-        return _fixture.AudioFileId.Value;
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithInvalidAudioFileId_ShouldFail()
+    public async Task ExecuteAsync_WithEmptyAudioStream_ShouldFail()
     {
         // Arrange
+        using MemoryStream emptyStream = new(new byte[] { 0, 1, 2 });
         ChatCompletionReq options = new()
         {
-            AudioFileId = Guid.NewGuid()
+            AudioFileStream = emptyStream,
+            AudioFileName = "invalid.txt"
         };
 
         ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
@@ -358,13 +364,15 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithAudioFileId_ShouldSucceed()
+    public async Task ExecuteAsync_WithAudioStream_ShouldSucceed()
     {
         // Arrange
-        Guid fileId = GetRequiredAudioFileId();
+        string audioPath = GetRequiredAudioFilePath();
+        using FileStream audioStream = File.OpenRead(audioPath);
         ChatCompletionReq options = new()
         {
-            AudioFileId = fileId
+            AudioFileStream = audioStream,
+            AudioFileName = Path.GetFileName(audioPath)
         };
 
         ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
@@ -380,13 +388,15 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithAudioFileIdAndHistory_ShouldSucceed()
+    public async Task ExecuteAsync_WithAudioStreamAndHistory_ShouldSucceed()
     {
         // Arrange
-        Guid fileId = GetRequiredAudioFileId();
+        string audioPath = GetRequiredAudioFilePath();
+        using FileStream audioStream = File.OpenRead(audioPath);
         ChatCompletionReq options = new()
         {
-            AudioFileId = fileId,
+            AudioFileStream = audioStream,
+            AudioFileName = Path.GetFileName(audioPath),
             Messages =
             [
                 new() { Role = "user", Content = "I'm going to send you an audio file" },
@@ -407,13 +417,15 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public void ChatCompletionReq_Validate_WithBothMessageAndAudioFileId_ShouldThrowArgumentException()
+    public void ChatCompletionReq_Validate_WithBothMessageAndAudioStream_ShouldThrowArgumentException()
     {
         // Arrange
+        using MemoryStream dummyStream = new(new byte[] { 1, 2, 3 });
         ChatCompletionReq options = new()
         {
             Message = "Hello",
-            AudioFileId = Guid.NewGuid()
+            AudioFileStream = dummyStream,
+            AudioFileName = "test.wav"
         };
 
         // Act & Assert
@@ -421,7 +433,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public void ChatCompletionReq_Validate_WithNeitherMessageNorAudioFileId_ShouldThrowArgumentException()
+    public void ChatCompletionReq_Validate_WithNeitherMessageNorAudioStream_ShouldThrowArgumentException()
     {
         // Arrange
         ChatCompletionReq options = new();

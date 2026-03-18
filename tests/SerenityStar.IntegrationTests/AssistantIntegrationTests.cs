@@ -316,36 +316,31 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
 
     #region Audio Input
 
-    private Guid GetRequiredAudioFileId()
+    private string GetRequiredAudioFilePath()
     {
-        if (!_fixture.AudioFileId.HasValue)
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
             throw new InvalidOperationException(
-                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
-                "to a valid audio file ID that exists in your Serenity Star instance.");
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
 
-        return _fixture.AudioFileId.Value;
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
     }
 
     [Fact]
-    public async Task SendMessage_WithInvalidAudioFileId_ShouldFail()
+    public async Task SendMessage_WithAudioStream_ShouldSucceed()
     {
         // Arrange
+        string audioPath = GetRequiredAudioFilePath();
         Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
-            conversation.SendMessageAsync(audioFileId: Guid.NewGuid()));
-    }
-
-    [Fact]
-    public async Task SendMessage_WithAudioFileId_ShouldSucceed()
-    {
-        // Arrange
-        Guid fileId = GetRequiredAudioFileId();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        using FileStream audioStream = File.OpenRead(audioPath);
 
         // Act
-        AgentResult result = await conversation.SendMessageAsync(audioFileId: fileId);
+        AgentResult result = await conversation.SendMessageAsync(audioStream, Path.GetFileName(audioPath));
 
         // Assert
         Assert.NotNull(result);
@@ -356,15 +351,17 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task StreamMessage_WithAudioFileId_ShouldSucceed()
+    public async Task StreamMessage_WithAudioStream_ShouldSucceed()
     {
         // Arrange
-        Guid fileId = GetRequiredAudioFileId();
+        string audioPath = GetRequiredAudioFilePath();
         Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
         List<StreamingAgentMessage> messages = [];
 
+        using FileStream audioStream = File.OpenRead(audioPath);
+
         // Act
-        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioFileId: fileId))
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioStream, Path.GetFileName(audioPath)))
             messages.Add(message);
 
         // Assert
@@ -379,11 +376,13 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task SendMessage_WithAudioThenTextMessage_ShouldMaintainConversation()
     {
         // Arrange
-        Guid fileId = GetRequiredAudioFileId();
+        string audioPath = GetRequiredAudioFilePath();
         Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
 
+        using FileStream audioStream = File.OpenRead(audioPath);
+
         // Act - Send audio first
-        AgentResult audioResult = await conversation.SendMessageAsync(audioFileId: fileId);
+        AgentResult audioResult = await conversation.SendMessageAsync(audioStream, Path.GetFileName(audioPath));
         string? conversationId = conversation.ConversationId;
 
         await Task.Delay(1000);
@@ -396,28 +395,6 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
         Assert.NotNull(textResult.Content);
         Assert.NotNull(conversationId);
         Assert.Equal(conversationId, conversation.ConversationId);
-    }
-
-    [Fact]
-    public async Task SendMessage_WithBothMessageAndAudioFileId_ShouldThrowArgumentException()
-    {
-        // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
-            conversation.SendMessageAsync("Hello", audioFileId: Guid.NewGuid()));
-    }
-
-    [Fact]
-    public async Task SendMessage_WithNeitherMessageNorAudioFileId_ShouldThrowArgumentException()
-    {
-        // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
-            conversation.SendMessageAsync());
     }
 
     #endregion

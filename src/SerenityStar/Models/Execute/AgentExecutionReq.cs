@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SerenityStar.Models.Execute
 {
@@ -24,10 +24,16 @@ namespace SerenityStar.Models.Execute
         public string? Channel { get; set; }
 
         /// <summary>
-        /// Optional file ID of a previously uploaded audio file.
-        /// When set, the agent will transcribe the audio and use the transcription as input.
+        /// Optional audio file stream to upload and send as input.
+        /// The SDK uploads the file automatically and sends the resulting file ID to the agent.
         /// The agent must have audio input support enabled.
         /// </summary>
-        public Guid? AudioFileId { get; set; }
+        public Stream? AudioFileStream { get; set; }
+
+        /// <summary>
+        /// The file name including extension for the audio file (e.g., "recording.mp3").
+        /// Required when AudioFileStream is provided.
+        /// </summary>
+        public string? AudioFileName { get; set; }
     }
 }

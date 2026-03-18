@@ -12,7 +12,6 @@ namespace SerenityStar.AIServices
 {
     /// <summary>
     /// Provides methods for audio transcription operations.
-    /// Supports both direct file upload and transcription by file ID.
     /// </summary>
     public sealed class TranscriptionScope
     {
@@ -47,7 +46,7 @@ namespace SerenityStar.AIServices
             // Add the audio file
             StreamContent fileContent = new(request.FileStream);
             string contentType = GetAudioContentType(request.FileName);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
             content.Add(fileContent, "File", request.FileName);
 
             // Add optional parameters
@@ -66,39 +65,6 @@ namespace SerenityStar.AIServices
             HttpResponseMessage response = await _httpClient.PostAsync(
                 "/api/v2/audio/transcribe",
                 content,
-                cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            return await response.Content.ReadFromJsonAsync<TranscribeResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize transcription result");
-        }
-
-        /// <summary>
-        /// Transcribes an audio or video file that is already stored in the system.
-        /// Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm.
-        /// Maximum file size: 25 MB.
-        /// </summary>
-        /// <param name="request">The transcription request containing the file ID and optional parameters.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>The transcription result including the transcribed text, metadata, token usage, and cost.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when the request is null.</exception>
-        /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
-        public async Task<TranscribeResult> TranscribeByFileIdAsync(
-            TranscribeAudioByFileIdReq request,
-            CancellationToken cancellationToken = default)
-        {
-            if (request is null)
-                throw new ArgumentNullException(nameof(request));
-
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
-                "/api/v2/audio/transcribe/file",
-                request,
-                JsonSerializerOptionsCache.s_camelCaseIgnoreNull,
                 cancellationToken);
 
             if (!response.IsSuccessStatusCode)

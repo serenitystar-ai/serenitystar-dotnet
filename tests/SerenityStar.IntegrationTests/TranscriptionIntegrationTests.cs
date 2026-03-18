@@ -215,26 +215,4 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => request.Validate());
     }
-
-    [Fact]
-    public async Task TranscribeByFileIdAsync_WithInvalidFileId_ShouldFail()
-    {
-        // Arrange
-        TranscribeAudioByFileIdReq request = new()
-        {
-            FileId = Guid.NewGuid() // Non-existent file
-        };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.AIServices.Transcription.TranscribeByFileIdAsync(request));
-    }
-
-    [Fact]
-    public async Task TranscribeByFileIdAsync_WithNullRequest_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _client.AIServices.Transcription.TranscribeByFileIdAsync(null!));
-    }
 }

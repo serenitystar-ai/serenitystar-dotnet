@@ -18,7 +18,10 @@ namespace SerenityStar.Agents.System
     /// </summary>
     public abstract class SystemAgentBase
     {
-        private readonly HttpClient _httpClient;
+        /// <summary>
+        /// The HTTP client used for API calls. Accessible to derived classes for file uploads.
+        /// </summary>
+        protected readonly HttpClient _httpClient;
         private readonly string _agentCode;
         private readonly int? _version;
         /// <summary>
@@ -71,6 +74,13 @@ namespace SerenityStar.Agents.System
         protected abstract object CreateExecuteBody(bool stream);
 
         /// <summary>
+        /// Called before execution to perform async preparation such as file uploads.
+        /// Override in derived classes that need async setup before building the request body.
+        /// </summary>
+        protected virtual Task PrepareExecutionAsync(CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        /// <summary>
         /// Called after execution completes. Override in derived classes for cleanup.
         /// </summary>
         protected virtual void OnExecutionComplete()
@@ -82,6 +92,8 @@ namespace SerenityStar.Agents.System
         /// </summary>
         public async Task<AgentResult> ExecuteAsync(CancellationToken cancellationToken = default)
         {
+            await PrepareExecutionAsync(cancellationToken);
+
             string url = BuildExecuteUrl();
 
             object body = CreateExecuteBody(false);
@@ -108,6 +120,8 @@ namespace SerenityStar.Agents.System
         public async IAsyncEnumerable<StreamingAgentMessage> StreamAsync(
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            await PrepareExecutionAsync(cancellationToken);
+
             string url = BuildExecuteUrl();
 
             object body = CreateExecuteBody(true);

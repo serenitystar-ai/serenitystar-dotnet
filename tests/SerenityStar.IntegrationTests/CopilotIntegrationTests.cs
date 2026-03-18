@@ -301,36 +301,43 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
 
     #region Audio Input
 
-    private Guid GetRequiredAudioFileId()
+    private string GetRequiredAudioFilePath()
     {
-        if (!_fixture.AudioFileId.HasValue)
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
             throw new InvalidOperationException(
-                "No audio file ID configured. Please set 'SerenityStar:AudioFileId' in appsettings.Development.json " +
-                "to a valid audio file ID that exists in your Serenity Star instance.");
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
 
-        return _fixture.AudioFileId.Value;
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
     }
 
     [Fact]
-    public async Task SendMessage_WithInvalidAudioFileId_ShouldFail()
+    public async Task SendMessage_WithEmptyAudioStream_ShouldFail()
     {
         // Arrange
         Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        using MemoryStream emptyStream = new(new byte[] { 0, 1, 2 });
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            conversation.SendMessageAsync(audioFileId: Guid.NewGuid()));
+            conversation.SendMessageAsync(emptyStream, "invalid.txt"));
     }
 
     [Fact]
-    public async Task SendMessage_WithAudioFileId_ShouldSucceed()
+    public async Task SendMessage_WithAudioStream_ShouldSucceed()
     {
         // Arrange
-        Guid fileId = GetRequiredAudioFileId();
+        string audioPath = GetRequiredAudioFilePath();
         Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
 
+        using FileStream audioStream = File.OpenRead(audioPath);
+
         // Act
-        AgentResult result = await conversation.SendMessageAsync(audioFileId: fileId);
+        AgentResult result = await conversation.SendMessageAsync(audioStream, Path.GetFileName(audioPath));
 
         // Assert
         Assert.NotNull(result);
@@ -341,15 +348,17 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task StreamMessage_WithAudioFileId_ShouldSucceed()
+    public async Task StreamMessage_WithAudioStream_ShouldSucceed()
     {
         // Arrange
-        Guid fileId = GetRequiredAudioFileId();
+        string audioPath = GetRequiredAudioFilePath();
         Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
         List<StreamingAgentMessage> messages = [];
 
+        using FileStream audioStream = File.OpenRead(audioPath);
+
         // Act
-        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioFileId: fileId))
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioStream, Path.GetFileName(audioPath)))
             messages.Add(message);
 
         // Assert
