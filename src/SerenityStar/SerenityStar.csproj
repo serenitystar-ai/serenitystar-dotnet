@@ -34,14 +34,6 @@
         * Chat Completion agents: Set AudioFileStream and AudioFileName on ChatCompletionReq
         * message and audioStream are mutually exclusive — providing both throws ArgumentException
 
-      - FileUploadHelper: Internal helper that uploads audio files to the Serenity Star API
-        * Automatically called before agent execution when an audio stream is provided
-        * Returns the file ID used for agent audio input
-
-      - PrepareExecutionAsync: New virtual hook in SystemAgentBase
-        * Called before CreateExecuteBody in both ExecuteAsync and StreamAsync
-        * Used by Activity and ChatCompletion to upload audio files asynchronously
-
       IMPROVEMENTS:
       - ChatCompletionReq.Message is now nullable (string?) to support audio-only requests
       - ChatCompletionReq.Validate() method for mutual exclusion validation
