@@ -328,4 +328,119 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         Assert.NotEmpty(messages);
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
     }
+
+    #region Audio Input
+
+    private string GetRequiredAudioFilePath()
+    {
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
+            throw new InvalidOperationException(
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithEmptyAudioStream_ShouldFail()
+    {
+        // Arrange
+        using MemoryStream emptyStream = new(new byte[] { 0, 1, 2 });
+        ChatCompletionReq options = new()
+        {
+            AudioFileStream = emptyStream,
+            AudioFileName = "invalid.txt"
+        };
+
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            chatCompletion.ExecuteAsync());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioStream_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        using FileStream audioStream = File.OpenRead(audioPath);
+        ChatCompletionReq options = new()
+        {
+            AudioFileStream = audioStream,
+            AudioFileName = Path.GetFileName(audioPath)
+        };
+
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
+        // Act
+        AgentResult result = await chatCompletion.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioStreamAndHistory_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        using FileStream audioStream = File.OpenRead(audioPath);
+        ChatCompletionReq options = new()
+        {
+            AudioFileStream = audioStream,
+            AudioFileName = Path.GetFileName(audioPath),
+            Messages =
+            [
+                new() { Role = "user", Content = "I'm going to send you an audio file" },
+                new() { Role = "assistant", Content = "Sure, go ahead and send the audio." }
+            ],
+            UserIdentifier = "audio-test-user"
+        };
+
+        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+
+        // Act
+        AgentResult result = await chatCompletion.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public void ChatCompletionReq_Validate_WithBothMessageAndAudioStream_ShouldThrowArgumentException()
+    {
+        // Arrange
+        using MemoryStream dummyStream = new(new byte[] { 1, 2, 3 });
+        ChatCompletionReq options = new()
+        {
+            Message = "Hello",
+            AudioFileStream = dummyStream,
+            AudioFileName = "test.wav"
+        };
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => options.Validate());
+    }
+
+    [Fact]
+    public void ChatCompletionReq_Validate_WithNeitherMessageNorAudioStream_ShouldThrowArgumentException()
+    {
+        // Arrange
+        ChatCompletionReq options = new();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => options.Validate());
+    }
+
+    #endregion
 }

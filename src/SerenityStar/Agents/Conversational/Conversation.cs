@@ -1,5 +1,6 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Constants;
+using SerenityStar.Helpers;
 using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
@@ -103,41 +104,35 @@ namespace SerenityStar.Agents.Conversational
         }
 
         /// <summary>
-        /// Sends a message in the conversation.
+        /// Sends a text message in the conversation.
         /// The conversation is created automatically on the first message.
         /// Subsequent messages use the instanceId from the first response as chatId.
         /// </summary>
-        /// <param name="message">The message to send.</param>
+        /// <param name="message">The text message to send.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The agent's response.</returns>
-        public async Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
+        public Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
+            => SendMessageCoreAsync(message, null, null, cancellationToken);
+
+        /// <summary>
+        /// Sends an audio file in the conversation. The SDK uploads the file and the agent transcribes the audio internally.
+        /// The conversation is created automatically on the first message.
+        /// Subsequent messages use the instanceId from the first response as chatId.
+        /// </summary>
+        /// <param name="audioStream">The audio file stream to upload and send as input.</param>
+        /// <param name="audioFileName">The file name including extension (e.g., "recording.mp3").</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The agent's response.</returns>
+        public Task<AgentResult> SendMessageAsync(Stream audioStream, string audioFileName, CancellationToken cancellationToken = default)
+            => SendMessageCoreAsync(null, audioStream, audioFileName, cancellationToken);
+
+        private async Task<AgentResult> SendMessageCoreAsync(string? message, Stream? audioStream, string? audioFileName, CancellationToken cancellationToken)
         {
             string url = _version.HasValue
                 ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
                 : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = new()
-            {
-                new { Key = "message", Value = message }
-            };
-
-            // Add chatId only if we have it from a previous message
-            if (!string.IsNullOrEmpty(_chatId))
-                parameters.Insert(0, new { Key = "chatId", Value = _chatId });
-
-            if (_options?.InputParameters != null)
-                foreach (KeyValuePair<string, object> param in _options.InputParameters)
-                    parameters.Add(new { param.Key, param.Value });
-
-            if (_options?.UserIdentifier != null)
-                parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
-
-            if (_options?.Channel != null)
-                parameters.Add(new { Key = "channel", Value = _options.Channel });
-
-            // Add volatile knowledge IDs if any are associated
-            if (VolatileKnowledge.KnowledgeIds.Any())
-                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+            List<object> parameters = await BuildParametersAsync(message, audioStream, audioFileName, isStream: false, cancellationToken);
 
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, parameters, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
 
@@ -161,44 +156,39 @@ namespace SerenityStar.Agents.Conversational
         }
 
         /// <summary>
-        /// Streams a message in the conversation.
+        /// Streams a text message in the conversation.
         /// The conversation is created automatically on the first message.
         /// Subsequent messages use the instanceId from the first response as chatId.
         /// </summary>
-        /// <param name="message">The message to send.</param>
+        /// <param name="message">The text message to send.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An async enumerable of streaming messages.</returns>
-        public async IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(
-            string message,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(string message, CancellationToken cancellationToken = default)
+            => StreamMessageCoreAsync(message, null, null, cancellationToken);
+
+        /// <summary>
+        /// Streams an audio file in the conversation. The SDK uploads the file and the agent transcribes the audio internally.
+        /// The conversation is created automatically on the first message.
+        /// Subsequent messages use the instanceId from the first response as chatId.
+        /// </summary>
+        /// <param name="audioStream">The audio file stream to upload and send as input.</param>
+        /// <param name="audioFileName">The file name including extension (e.g., "recording.mp3").</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An async enumerable of streaming messages.</returns>
+        public IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(Stream audioStream, string audioFileName, CancellationToken cancellationToken = default)
+            => StreamMessageCoreAsync(null, audioStream, audioFileName, cancellationToken);
+
+        private async IAsyncEnumerable<StreamingAgentMessage> StreamMessageCoreAsync(
+            string? message,
+            Stream? audioStream,
+            string? audioFileName,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             string url = _version.HasValue
                 ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
                 : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = new()
-            {
-                new { Key = "message", Value = message },
-                new { Key = "stream", Value = true }
-            };
-
-            // Add chatId only if we have it from a previous message
-            if (!string.IsNullOrEmpty(_chatId))
-                parameters.Insert(0, new { Key = "chatId", Value = _chatId });
-
-            if (_options?.InputParameters != null)
-                foreach (KeyValuePair<string, object> param in _options.InputParameters)
-                    parameters.Add(new { param.Key, param.Value });
-
-            if (_options?.UserIdentifier != null)
-                parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
-
-            if (_options?.Channel != null)
-                parameters.Add(new { Key = "channel", Value = _options.Channel });
-
-            // Add volatile knowledge IDs if any are associated
-            if (VolatileKnowledge.KnowledgeIds.Any())
-                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+            List<object> parameters = await BuildParametersAsync(message, audioStream, audioFileName, isStream: true, cancellationToken);
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
@@ -248,6 +238,43 @@ namespace SerenityStar.Agents.Conversational
                     }
                 }
             }
+        }
+
+        private async Task<List<object>> BuildParametersAsync(string? message, Stream? audioStream, string? audioFileName, bool isStream, CancellationToken cancellationToken)
+        {
+            List<object> parameters = new();
+
+            if (isStream)
+                parameters.Add(new { Key = "stream", Value = true });
+
+            if (message != null)
+                parameters.Add(new { Key = "message", Value = message });
+
+            if (audioStream != null)
+            {
+                Guid uploadedFileId = await FileUploadHelper.UploadFileAsync(_httpClient, audioStream, audioFileName!, cancellationToken);
+                parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = uploadedFileId }, JsonSerializerOptionsCache.s_camelCase) });
+            }
+
+            // Add chatId only if we have it from a previous message
+            if (!string.IsNullOrEmpty(_chatId))
+                parameters.Insert(0, new { Key = "chatId", Value = _chatId });
+
+            if (_options?.InputParameters != null)
+                foreach (KeyValuePair<string, object> param in _options.InputParameters)
+                    parameters.Add(new { param.Key, param.Value });
+
+            if (_options?.UserIdentifier != null)
+                parameters.Add(new { Key = "userIdentifier", Value = _options.UserIdentifier });
+
+            if (_options?.Channel != null)
+                parameters.Add(new { Key = "channel", Value = _options.Channel });
+
+            // Add volatile knowledge IDs if any are associated
+            if (VolatileKnowledge.KnowledgeIds.Any())
+                parameters.Add(new { Key = "volatileKnowledgeIds", Value = VolatileKnowledge.KnowledgeIds.Select(id => id.ToString()).ToList() });
+
+            return parameters;
         }
 
         /// <summary>

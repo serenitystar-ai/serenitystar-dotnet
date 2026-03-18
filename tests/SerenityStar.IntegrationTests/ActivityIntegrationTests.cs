@@ -58,7 +58,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange
         string[] words = ["swimming", "cycling", "hiking"];
-        var responses = new List<string>();
+        List<string> responses = new();
 
         // Act
         foreach (string word in words)
@@ -230,4 +230,93 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         Assert.NotEmpty(result.Content);
         Assert.NotEqual(Guid.Empty, result.InstanceId);
     }
+
+    #region Audio Input
+
+    private string GetRequiredAudioFilePath()
+    {
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
+            throw new InvalidOperationException(
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithInvalidAudioFile_ShouldFail()
+    {
+        // Arrange — a fake file that is not valid audio
+        using MemoryStream fakeStream = new(new byte[] { 0, 1, 2 });
+        AgentExecutionReq options = new()
+        {
+            AudioFileStream = fakeStream,
+            AudioFileName = "invalid.txt"
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
+        // Act & Assert — upload succeeds but the agent should reject the invalid audio
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            activity.ExecuteAsync());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioStream_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        using FileStream audioStream = File.OpenRead(audioPath);
+        AgentExecutionReq options = new()
+        {
+            AudioFileStream = audioStream,
+            AudioFileName = Path.GetFileName(audioPath)
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
+        // Act
+        AgentResult result = await activity.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithAudioStreamAndInputParameters_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        using FileStream audioStream = File.OpenRead(audioPath);
+        AgentExecutionReq options = new()
+        {
+            AudioFileStream = audioStream,
+            AudioFileName = Path.GetFileName(audioPath),
+            InputParameters = new Dictionary<string, object>
+            {
+                ["word"] = "running"
+            },
+            UserIdentifier = "audio-test-user",
+            Channel = "SDK-Tests"
+        };
+
+        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+
+        // Act
+        AgentResult result = await activity.ExecuteAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+    }
+
+    #endregion
 }

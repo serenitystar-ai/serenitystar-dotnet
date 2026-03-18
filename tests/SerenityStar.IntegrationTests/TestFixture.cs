@@ -14,6 +14,8 @@ public class TestFixture : IDisposable
     public string ActivityAgent { get; }
     public string ProxyAgent { get; }
     public string ChatCompletionAgent { get; }
+    public Guid? TranscriptionModelId { get; }
+    public string? AudioFilePath { get; }
 
     public TestFixture()
     {
@@ -32,6 +34,12 @@ public class TestFixture : IDisposable
         ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
         ProxyAgent = Configuration["SerenityStar:ProxyAgent"] ?? "proxyagent";
         ChatCompletionAgent = Configuration["SerenityStar:ChatCompletionAgent"] ?? "chatcompletionagent";
+
+        string? transcriptionModelId = Configuration["SerenityStar:TranscriptionModelId"];
+        if (!string.IsNullOrEmpty(transcriptionModelId) && Guid.TryParse(transcriptionModelId, out Guid modelId))
+            TranscriptionModelId = modelId;
+
+        AudioFilePath = Configuration["SerenityStar:AudioFilePath"];
 
         // Check if we have a valid API key (not null, empty or the placeholder)
         HasValidApiKey = !string.IsNullOrEmpty(apiKey) && apiKey != "your-api-key-here";

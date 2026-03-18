@@ -3,7 +3,6 @@ using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.Conversation;
-using SerenityStar.Models.VolatileKnowledge;
 using SerenityStar.Agents.Conversational;
 using Xunit;
 
@@ -259,7 +258,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_WithVersionAndOptions_ShouldSucceed()
     {
         // Arrange - Create conversation with version and options
-        var options = new AgentExecutionReq
+        AgentExecutionReq options = new()
         {
             UserIdentifier = "version-test-user",
             Channel = "web"
@@ -299,4 +298,76 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
         Assert.NotNull(conversation.ConversationId);
     }
+
+    #region Audio Input
+
+    private string GetRequiredAudioFilePath()
+    {
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
+            throw new InvalidOperationException(
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
+    }
+
+    [Fact]
+    public async Task SendMessage_WithEmptyAudioStream_ShouldFail()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        using MemoryStream emptyStream = new(new byte[] { 0, 1, 2 });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            conversation.SendMessageAsync(emptyStream, "invalid.txt"));
+    }
+
+    [Fact]
+    public async Task SendMessage_WithAudioStream_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+
+        using FileStream audioStream = File.OpenRead(audioPath);
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync(audioStream, Path.GetFileName(audioPath));
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task StreamMessage_WithAudioStream_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        List<StreamingAgentMessage> messages = [];
+
+        using FileStream audioStream = File.OpenRead(audioPath);
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioStream, Path.GetFileName(audioPath)))
+            messages.Add(message);
+
+        // Assert
+        Assert.NotEmpty(messages);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStart);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    #endregion
 }

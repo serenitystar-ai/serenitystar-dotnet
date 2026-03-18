@@ -1,4 +1,5 @@
 using SerenityStar.Agents;
+using SerenityStar.AIServices;
 
 namespace SerenityStar.Client
 {
@@ -12,5 +13,10 @@ namespace SerenityStar.Client
         /// Gets the agents scope for accessing all agent types.
         /// </summary>
         AgentsScope Agents { get; }
+
+        /// <summary>
+        /// Gets the AI services scope for accessing transcription, speech, and other AI services.
+        /// </summary>
+        AIServicesScope AIServices { get; }
     }
 }

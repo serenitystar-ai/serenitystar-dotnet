@@ -218,7 +218,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task GetConversationInfo_WithOptions_ShouldSucceed()
     {
         // Arrange
-        var options = new AgentExecutionReq
+        AgentExecutionReq options = new()
         {
             UserIdentifier = "test-user",
             Channel = "web"
@@ -258,7 +258,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_WithVersionAndOptions_ShouldSucceed()
     {
         // Arrange - Create conversation with version and options
-        var options = new AgentExecutionReq
+        AgentExecutionReq options = new()
         {
             UserIdentifier = "version-test-user",
             Channel = "web"
@@ -313,4 +313,89 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
         Assert.NotNull(conversation.ConversationId);
     }
+
+    #region Audio Input
+
+    private string GetRequiredAudioFilePath()
+    {
+        string? path = _fixture.AudioFilePath;
+        if (string.IsNullOrEmpty(path))
+            throw new InvalidOperationException(
+                "No audio file path configured. Please set 'SerenityStar:AudioFilePath' in appsettings.Development.json " +
+                "to a valid audio file path.");
+
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Audio file not found at '{path}'.");
+
+        return path;
+    }
+
+    [Fact]
+    public async Task SendMessage_WithAudioStream_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        using FileStream audioStream = File.OpenRead(audioPath);
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync(audioStream, Path.GetFileName(audioPath));
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Content);
+        Assert.NotEmpty(result.Content);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task StreamMessage_WithAudioStream_ShouldSucceed()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        List<StreamingAgentMessage> messages = [];
+
+        using FileStream audioStream = File.OpenRead(audioPath);
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(audioStream, Path.GetFileName(audioPath)))
+            messages.Add(message);
+
+        // Assert
+        Assert.NotEmpty(messages);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStart);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+        Assert.NotNull(conversation.ConversationId);
+    }
+
+    [Fact]
+    public async Task SendMessage_WithAudioThenTextMessage_ShouldMaintainConversation()
+    {
+        // Arrange
+        string audioPath = GetRequiredAudioFilePath();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        using FileStream audioStream = File.OpenRead(audioPath);
+
+        // Act - Send audio first
+        AgentResult audioResult = await conversation.SendMessageAsync(audioStream, Path.GetFileName(audioPath));
+        string? conversationId = conversation.ConversationId;
+
+        await Task.Delay(1000);
+
+        // Follow up with text only
+        AgentResult textResult = await conversation.SendMessageAsync("Can you summarize what I just said?");
+
+        // Assert
+        Assert.NotNull(audioResult.Content);
+        Assert.NotNull(textResult.Content);
+        Assert.NotNull(conversationId);
+        Assert.Equal(conversationId, conversation.ConversationId);
+    }
+
+    #endregion
 }
