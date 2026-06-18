@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Client;
+using SerenityStar.Models.Execute;
 using SerenityStar.Models.VolatileKnowledge;
 using Xunit;
 
@@ -160,6 +161,50 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
             () => conversation.VolatileKnowledge.UploadForAgentAsync(request));
 
         Assert.Contains("400", ex.Message);
+    }
+
+    [Fact]
+    public async Task ExecuteAgent_WithAgentUploadedKnowledge_ShouldUseUploadedDocument()
+    {
+        // Arrange - upload knowledge through the agent-scoped endpoint
+        EnsureTestFileExists();
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        using FileStream fileStream = File.OpenRead(_testFilePath);
+        UploadVolatileKnowledgeReq uploadRequest = new()
+        {
+            FileStream = fileStream,
+            FileName = TestFileName
+        };
+
+        VolatileKnowledgeRes uploaded = await conversation.VolatileKnowledge.UploadForAgentAsync(uploadRequest);
+        Guid knowledgeId = uploaded.Id;
+
+        // Wait for processing to complete
+        VolatileKnowledgeRes status = uploaded;
+        int maxAttempts = 30;
+        int attempts = 0;
+        while (status.Status != VolatileKnowledgeSimpleStatus.Invalid
+            && status.Status != VolatileKnowledgeSimpleStatus.Error
+            && status.Status != VolatileKnowledgeSimpleStatus.Success
+            && attempts < maxAttempts)
+        {
+            await Task.Delay(1000);
+            status = await conversation.VolatileKnowledge.GetStatusAsync(knowledgeId);
+            attempts++;
+        }
+
+        Assert.Equal(VolatileKnowledgeSimpleStatus.Success, status.Status);
+
+        // Act - the agent-uploaded knowledge is automatically associated with the next message
+        AgentResult result = await conversation.SendMessageAsync(
+            "Según el documento adjunto, ¿en qué año se levantó el sitio de Orléans? Responde solo con el año.");
+
+        // Assert - the answer (1429) only appears in the uploaded document
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Content);
+        Assert.Contains("1429", result.Content);
+        Assert.NotNull(conversation.ConversationId);
     }
 
     [Fact]
