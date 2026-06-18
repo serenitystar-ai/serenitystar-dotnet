@@ -37,5 +37,15 @@ namespace SerenityStar.Models.VolatileKnowledge
         /// Gets or sets the file ID associated with the uploaded file.
         /// </summary>
         public Guid? FileId { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether embeddings have been generated for this knowledge.
+        /// </summary>
+        public bool EmbeddingsGenerated { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the content has been scanned.
+        /// </summary>
+        public bool Scanned { get; set; }
     }
 }

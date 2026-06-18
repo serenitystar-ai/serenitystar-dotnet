@@ -52,7 +52,7 @@ namespace SerenityStar.Agents.Conversational
             _agentCode = agentCode;
             _version = version;
             _options = options;
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
         }
 
         /// <summary>

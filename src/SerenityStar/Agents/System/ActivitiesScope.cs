@@ -35,7 +35,7 @@ namespace SerenityStar.Agents.System
         public Activity(HttpClient httpClient, string agentCode, int? version = null, AgentExecutionReq? options = null)
             : base(httpClient, agentCode, version, options)
         {
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
         }
 
         /// <inheritdoc/>
