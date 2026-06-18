@@ -35,7 +35,7 @@ namespace SerenityStar.Agents.System
             : base(httpClient, agentCode, options)
         {
             _proxyOptions = options;
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
         }
 
         /// <inheritdoc/>

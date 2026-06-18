@@ -41,7 +41,7 @@ namespace SerenityStar.Agents.System
         {
             _chatOptions = options;
             _version = version;
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
         }
 
         /// <inheritdoc/>
