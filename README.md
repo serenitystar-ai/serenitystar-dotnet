@@ -433,11 +433,14 @@ await conversation.RemoveFeedbackAsync(new RemoveFeedbackReq
 
 You can page through all the feedback submitted for an agent, including the comments, to analyze response quality.
 
+Unlike submitting or removing feedback, this operation needs an API key with the **Audit** permission for the agent. An execution key gets an HTTP 403 response. See the warning at the end of this section before using it.
+
 ```csharp
 using SerenityStar.Client;
 using SerenityStar.Models.MessageFeedback;
 
-SerenityClient client = SerenityClient.Create("your-api-key");
+// Requires an API key with the Audit permission for the agent, not an execution key
+SerenityClient client = SerenityClient.Create("your-audit-api-key");
 
 // Most recent feedback first (default page size is 20)
 MessageFeedbackPage page = await client.Agents.Assistants.GetMessageFeedbackAsync("chef-assistant");
