@@ -348,6 +348,8 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
 
 You can collect user feedback on agent responses to help improve the quality of your assistant.
 
+Feedback is tied to a conversation message, so it is only available for the conversational agent types — **Assistants and Copilots**. Activities, Chat Completions and AI Proxies do not create conversations and therefore cannot receive feedback.
+
 #### Submit feedback
 
 ```csharp
@@ -377,6 +379,28 @@ await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
 });
 ```
 
+#### Submit feedback with a comment
+
+Feedback can carry an optional free-text comment explaining the rating.
+
+```csharp
+await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+{
+    AgentMessageId = response.AgentMessageId!.Value,
+    Feedback = false,
+    Comment = "The recipe skipped the cooking temperature."
+});
+```
+
+Notes on `Comment`:
+
+- It is limited to **1000 characters**. Longer values are rejected by the API with an HTTP 400 response, surfaced as an `HttpRequestException`.
+- Leading and trailing whitespace is trimmed, and blank values are stored as no comment.
+- Submitting feedback again for the same message **overwrites** the stored comment. Omitting `Comment` on a later submission clears the one submitted before it.
+
+> [!IMPORTANT]
+> The comment is free text written by your end users and it is persisted and displayed in the Serenity Star back office. Do not pre-fill it with sensitive data, and make sure your UI discourages users from entering personal or confidential information. Avoid logging comments verbatim on your side.
+
 #### Remove feedback
 
 ```csharp
@@ -404,6 +428,57 @@ await conversation.RemoveFeedbackAsync(new RemoveFeedbackReq
     AgentMessageId = response.AgentMessageId!.Value
 });
 ```
+
+#### Retrieve submitted feedback
+
+You can page through all the feedback submitted for an agent, including the comments, to analyze response quality.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Models.MessageFeedback;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+
+// Most recent feedback first (default page size is 20)
+MessageFeedbackPage page = await client.Agents.Assistants.GetMessageFeedbackAsync("chef-assistant");
+
+Console.WriteLine($"{page.Total} feedback entries in total");
+
+foreach (MessageFeedbackRes feedback in page.Items)
+{
+    string rating = feedback.Feedback ? "👍" : "👎";
+    Console.WriteLine($"{feedback.DateUtc:u} {rating} {feedback.Comment ?? "(no comment)"}");
+}
+```
+
+Filter by date, page size and sort direction:
+
+```csharp
+MessageFeedbackPage negativeLastWeek = await client.Agents.Assistants.GetMessageFeedbackAsync(
+    "chef-assistant",
+    new GetMessageFeedbackReq
+    {
+        Page = 1,
+        PageSize = 100,
+        StartDate = DateTime.UtcNow.AddDays(-7),
+        EndDate = DateTime.UtcNow,
+        SortDirection = "asc"
+    });
+```
+
+The same operation is available on Copilots:
+
+```csharp
+MessageFeedbackPage page = await client.Agents.Copilots.GetMessageFeedbackAsync("support-copilot");
+```
+
+Notes:
+
+- `PageSize` is capped at **1000** and `SortDirection` must be `"asc"` or `"desc"`. Other values are rejected by the API with an HTTP 400 response.
+- Paginate with `Page` while `page.Items.Count` is non-empty and `page.Page * page.PageSize < page.Total`.
+
+> [!WARNING]
+> This endpoint requires an API key with the **Audit** permission for the agent — a stronger permission than the **Execution** one needed to submit or remove feedback. The response exposes end-user conversation content (`UserMessage`, `AgentMessage`, `Comment`) and `UserIdentifier` across every conversation of the agent. Treat it as personal data: use a dedicated audit key rather than your public execution key, never call it from a browser or mobile client where the key would be exposed, and do not log the entries verbatim.
 
 ### Connector Status
 
