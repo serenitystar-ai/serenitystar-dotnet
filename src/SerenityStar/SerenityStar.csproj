@@ -14,8 +14,23 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <PackageReleaseNotes>
+      Version 2.3.0 - Agent-Scoped Volatile Knowledge Release
+
+      NEW FEATURES:
+      - Agent-Scoped Volatile Knowledge Upload: Upload volatile knowledge validated against an agent's configured allowed MIME types at upload time
+        * UploadForAgentAsync(UploadVolatileKnowledgeReq) - Upload a file or content scoped to the agent
+        * UploadFromFileForAgentAsync(UploadVolatileKnowledgeFromFileReq) - Upload from an existing file ID
+        * UploadFromUrlForAgentAsync(UploadVolatileKnowledgeFromUrlReq) - Upload from a URL
+        * UploadFromBase64ForAgentAsync(UploadVolatileKnowledgeFromBase64Req) - Upload from base64-encoded content
+        * GetAllowedMimeTypesAsync() - Retrieve the MIME types allowed for the agent (falls back to all platform-supported types when none are configured)
+
+      - Volatile Knowledge Metadata: VolatileKnowledgeRes now exposes FileId, EmbeddingsGenerated, and Scanned
+
+      IMPROVEMENTS:
+      - The existing subtenant-scoped UploadAsync remains available for uploads without agent-level MIME type validation
+
       Version 2.2.0 - Transcription and Audio Input Release
 
       NEW FEATURES:
