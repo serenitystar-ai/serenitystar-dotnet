@@ -42,6 +42,137 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
+    public async Task SubmitFeedback_WithComment_ShouldSucceed()
+    {
+        // Arrange - Create a conversation and send a message
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        AgentResult result = await conversation.SendMessageAsync("Give me a recipe for parmesan chicken");
+
+        Assert.NotNull(result.AgentMessageId);
+
+        // Act - Submit negative feedback with a comment explaining why
+        SubmitFeedbackReq feedbackOptions = new()
+        {
+            AgentMessageId = result.AgentMessageId!.Value,
+            Feedback = false,
+            Comment = "The recipe skipped the cooking temperature."
+        };
+
+        await conversation.SubmitFeedbackAsync(feedbackOptions);
+
+        // Assert - If no exception is thrown, the feedback was submitted successfully
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task SubmitFeedback_WithCommentAtMaxLength_ShouldSucceed()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        AgentResult result = await conversation.SendMessageAsync("What is AI?");
+
+        Assert.NotNull(result.AgentMessageId);
+
+        // Act - The API accepts comments of up to 1000 characters
+        SubmitFeedbackReq feedbackOptions = new()
+        {
+            AgentMessageId = result.AgentMessageId!.Value,
+            Feedback = true,
+            Comment = new string('a', 1000)
+        };
+
+        await conversation.SubmitFeedbackAsync(feedbackOptions);
+
+        // Assert
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task SubmitFeedback_WithCommentExceedingMaxLength_ShouldFail()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        AgentResult result = await conversation.SendMessageAsync("What is AI?");
+
+        Assert.NotNull(result.AgentMessageId);
+
+        // The SDK does not validate the length locally, the API answers with a 400
+        SubmitFeedbackReq feedbackOptions = new()
+        {
+            AgentMessageId = result.AgentMessageId!.Value,
+            Feedback = true,
+            Comment = new string('a', 1001)
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            conversation.SubmitFeedbackAsync(feedbackOptions));
+    }
+
+    [Fact]
+    public async Task SubmitFeedback_WithWhitespaceComment_ShouldSucceed()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        AgentResult result = await conversation.SendMessageAsync("Tell me a fun fact");
+
+        Assert.NotNull(result.AgentMessageId);
+
+        // Act - A blank comment is treated as no comment at all
+        SubmitFeedbackReq feedbackOptions = new()
+        {
+            AgentMessageId = result.AgentMessageId!.Value,
+            Feedback = true,
+            Comment = "   "
+        };
+
+        await conversation.SubmitFeedbackAsync(feedbackOptions);
+
+        // Assert
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task SubmitFeedback_ResubmittedWithoutComment_ShouldClearTheComment()
+    {
+        // Arrange - Submit feedback with a comment
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        AgentResult result = await conversation.SendMessageAsync("Explain quantum computing");
+
+        Assert.NotNull(result.AgentMessageId);
+        Guid agentMessageId = result.AgentMessageId!.Value;
+
+        await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+        {
+            AgentMessageId = agentMessageId,
+            Feedback = false,
+            Comment = "Too technical for me."
+        });
+
+        await Task.Delay(500);
+
+        // Act - Re-submit without a comment, which overwrites the stored one
+        await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+        {
+            AgentMessageId = agentMessageId,
+            Feedback = true
+        });
+
+        await Task.Delay(500);
+
+        // Assert - Reading it back shows the comment was cleared
+        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(
+            _fixture.AssistantAgent,
+            new GetMessageFeedbackReq { PageSize = 100 });
+
+        MessageFeedbackRes? stored = page.Items.FirstOrDefault(f => f.AgentMessageId == agentMessageId);
+
+        Assert.NotNull(stored);
+        Assert.True(stored!.Feedback);
+        Assert.True(string.IsNullOrEmpty(stored.Comment));
+    }
+
+    [Fact]
     public async Task SubmitFeedback_WithNegativeFeedback_ShouldSucceed()
     {
         // Arrange - Create a conversation and send a message
@@ -264,5 +395,133 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
 
         // Assert
         Assert.Equal(messageTypes.Length, feedbackCount);
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_ShouldReturnSubmittedFeedbackWithComment()
+    {
+        // Arrange - Submit feedback with a known comment
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        AgentResult result = await conversation.SendMessageAsync("How do I boil an egg?");
+
+        Assert.NotNull(result.AgentMessageId);
+        Guid agentMessageId = result.AgentMessageId!.Value;
+        string comment = $"Integration test comment {agentMessageId}";
+
+        await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
+        {
+            AgentMessageId = agentMessageId,
+            Feedback = false,
+            Comment = comment
+        });
+
+        await Task.Delay(500);
+
+        // Act
+        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(
+            _fixture.AssistantAgent,
+            new GetMessageFeedbackReq { PageSize = 100 });
+
+        // Assert
+        Assert.Equal(_fixture.AssistantAgent, page.AgentCode);
+        Assert.Equal(1, page.Page);
+        Assert.Equal(100, page.PageSize);
+        Assert.True(page.Total > 0);
+
+        MessageFeedbackRes? stored = page.Items.FirstOrDefault(f => f.AgentMessageId == agentMessageId);
+
+        Assert.NotNull(stored);
+        Assert.Equal(comment, stored!.Comment);
+        Assert.False(stored.Feedback);
+        Assert.NotEqual(Guid.Empty, stored.Id);
+        Assert.False(string.IsNullOrEmpty(stored.AgentMessage));
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_WithDefaultOptions_ShouldUseApiDefaults()
+    {
+        // Act - No options means page 1 with the API default page size
+        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent);
+
+        // Assert
+        Assert.Equal(1, page.Page);
+        Assert.Equal(20, page.PageSize);
+        Assert.True(page.Items.Count <= 20);
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_WithDateRange_ShouldReturnOnlyFeedbackInRange()
+    {
+        // Arrange
+        DateTime startDate = DateTime.UtcNow.AddDays(-7);
+        DateTime endDate = DateTime.UtcNow.AddMinutes(5);
+
+        // Act
+        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(
+            _fixture.AssistantAgent,
+            new GetMessageFeedbackReq
+            {
+                PageSize = 100,
+                StartDate = startDate,
+                EndDate = endDate,
+                SortDirection = "asc"
+            });
+
+        // Assert
+        Assert.All(page.Items, feedback =>
+        {
+            Assert.True(feedback.DateUtc >= startDate);
+            Assert.True(feedback.DateUtc <= endDate);
+        });
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_WithInvalidSortDirection_ShouldFail()
+    {
+        // The SDK does not validate the sort direction locally, the API answers with a 400
+        GetMessageFeedbackReq options = new() { SortDirection = "sideways" };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            _client.Agents.Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_WithPageSizeAboveLimit_ShouldFail()
+    {
+        // The API caps the page size at 1000
+        GetMessageFeedbackReq options = new() { PageSize = 1001 };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            _client.Agents.Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_WithUnknownAgentCode_ShouldFail()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            _client.Agents.Assistants.GetMessageFeedbackAsync("agent-that-does-not-exist"));
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_WithEmptyAgentCode_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert - This one is validated locally, no request is issued
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            _client.Agents.Assistants.GetMessageFeedbackAsync(string.Empty));
+    }
+
+    [Fact]
+    public async Task GetAllFeedback_OnCopilots_ShouldSucceed()
+    {
+        // Feedback exists for both conversational agent types, so the operation is available
+        // on Copilots too and not only on Assistants
+        MessageFeedbackPage page = await _client.Agents.Copilots.GetMessageFeedbackAsync(_fixture.CopilotAgent);
+
+        // Assert
+        Assert.Equal(_fixture.CopilotAgent, page.AgentCode);
+        Assert.Equal(1, page.Page);
     }
 }

@@ -309,6 +309,11 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         /// <param name="options">The feedback options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <remarks>
+        /// Submitting feedback again for the same message overwrites the previous feedback, including
+        /// its comment. Leaving <see cref="SubmitFeedbackReq.Comment"/> null clears a comment that was
+        /// submitted previously.
+        /// </remarks>
         public async Task SubmitFeedbackAsync(SubmitFeedbackReq options, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(ConversationId))
@@ -320,6 +325,10 @@ namespace SerenityStar.Agents.Conversational
             {
                 ["feedback"] = options.Feedback
             };
+
+            // The comment length limit is enforced by the API, which responds with 400 when exceeded.
+            if (!string.IsNullOrWhiteSpace(options.Comment))
+                requestBody["comment"] = options.Comment!;
 
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
 

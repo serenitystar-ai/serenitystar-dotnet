@@ -14,8 +14,21 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
     <PackageReleaseNotes>
+      Version 2.4.0 - Message Feedback Comments Release
+
+      NEW FEATURES:
+      - Feedback Comments: SubmitFeedbackReq now accepts an optional Comment explaining why a message was rated that way
+        * Limited to 1000 characters by the API, which rejects longer values with an HTTP 400 response
+        * Blank comments are stored as no comment, and re-submitting feedback overwrites the previously stored comment
+
+      - Message Feedback Retrieval: Audit the feedback submitted for a conversational agent
+        * GetMessageFeedbackAsync(agentCode, GetMessageFeedbackReq) on Assistants and Copilots - Page through the feedback submitted for an agent, including comments
+        * Supports paging (page size capped at 1000), date range filtering and sort direction
+        * Requires an API key with the Audit permission for the agent, and returns end-user conversation content and user identifiers
+        * Feedback is tied to a conversation message, so it is not available for Activities, Chat Completions or AI Proxies
+
       Version 2.3.0 - Agent-Scoped Volatile Knowledge Release
 
       NEW FEATURES:
