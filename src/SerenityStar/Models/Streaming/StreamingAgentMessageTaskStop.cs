@@ -39,5 +39,10 @@ namespace SerenityStar.Models.Streaming
         /// The output of the task execution.
         /// </summary>
         public object? Output { get; set; }
+
+        /// <summary>
+        /// Whether the task completed successfully.
+        /// </summary>
+        public bool Success { get; set; }
     }
 }

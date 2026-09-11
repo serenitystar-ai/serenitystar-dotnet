@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using SerenityStar.Models.Citations;
+
 namespace SerenityStar.Models.Streaming
 {
     /// <summary>
@@ -12,5 +15,10 @@ namespace SerenityStar.Models.Streaming
         /// The text content.
         /// </summary>
         public string Text { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Citations grounding this content in source knowledge, if any.
+        /// </summary>
+        public IReadOnlyList<CitationResult>? Citations { get; set; }
     }
 }
