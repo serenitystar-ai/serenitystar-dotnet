@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
+using SerenityStar.Models.Citations;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Agents.Conversational;
 using Xunit;
@@ -144,6 +145,43 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
         Assert.Contains(messages, m => m is StreamingAgentMessageStart);
         Assert.Contains(messages, m => m is StreamingAgentMessageContent);
         Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+    }
+
+    [Fact]
+    public async Task StreamMessage_AllMessageTypes_ShouldBeRecognized()
+    {
+        // Arrange
+        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        List<StreamingAgentMessage> messages = [];
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Send a notification indicating that the system is back online and report once its done"))
+            messages.Add(message);
+
+        // Assert - every message the live API sent maps to a known type; none fell through to Unsupported.
+        // This guards against drift between the API's message contract and the SDK's converter.
+        StreamingAgentMessageUnsupported? unsupported = messages.OfType<StreamingAgentMessageUnsupported>().FirstOrDefault();
+        Assert.True(
+            unsupported is null,
+            $"Stream contained an unrecognized message type '{unsupported?.OriginalType}'. Raw: {unsupported?.RawData}");
+
+        Assert.Contains(messages, m => m is StreamingAgentMessageStart);
+        Assert.Contains(messages, m => m is StreamingAgentMessageContent);
+        Assert.Contains(messages, m => m is StreamingAgentMessageStop);
+
+        // Any citations that were streamed must be well-formed.
+        foreach (StreamingAgentMessageContent content in messages.OfType<StreamingAgentMessageContent>())
+        {
+            if (content.Citations is null)
+                continue;
+
+            foreach (CitationResult citation in content.Citations)
+            {
+                Assert.True(citation.CitationIndex > 0);
+if (citation.Source is null)
+                    continue;
+            }
+        }
     }
 
     [Fact]
