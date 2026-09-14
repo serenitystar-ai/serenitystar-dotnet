@@ -14,8 +14,24 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.4.0</Version>
+    <Version>2.5.0</Version>
     <PackageReleaseNotes>
+      Version 2.5.0 - Streaming Events Enhancement Release
+
+      NEW FEATURES:
+      - Reasoning Events: New StreamingAgentMessageReasoning ("reasoning") surfaces model reasoning text during streaming
+
+      - Ping Events: New StreamingAgentMessagePing ("ping") represents keep-alive pings sent during streaming
+
+      - Citations: Content events (StreamingAgentMessageContent) now expose a Citations list linking response spans back to their source
+        * CitationResult carries CitationIndex, StartIndex/EndIndex, Relevance, CitedText, and Source metadata
+        * Polymorphic SourceInfo resolved by "type": KnowledgeFile, KnowledgeWebsite, and WebSearch
+
+      - Forward-Compatible Unsupported Events: Unknown streaming message types are now surfaced as StreamingAgentMessageUnsupported (with OriginalType and the raw JSON payload) instead of failing the stream with an error
+
+      IMPROVEMENTS:
+      - Task Events: StreamingAgentMessageTaskStart now includes Metadata, and StreamingAgentMessageTaskStop now includes a Success flag
+
       Version 2.4.0 - Message Feedback Comments Release
 
       NEW FEATURES:
