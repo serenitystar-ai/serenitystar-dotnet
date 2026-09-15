@@ -1,4 +1,5 @@
 using SerenityStar.Client;
+using SerenityStar.Extensions;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -37,11 +38,7 @@ namespace SerenityStar.Helpers
             HttpResponseMessage response = await apiClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException(
-                    $"File upload failed with status code {response.StatusCode}: {errorContent}");
-            }
+                throw await response.ToSerenityApiExceptionAsync("File upload failed");
 
             string responseBody = await response.Content.ReadAsStringAsync();
 

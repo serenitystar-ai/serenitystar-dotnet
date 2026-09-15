@@ -137,7 +137,7 @@ namespace SerenityStar.Agents.Conversational
         /// accordingly.
         /// </remarks>
         /// <exception cref="ArgumentNullException">Thrown when the agent code is null or empty.</exception>
-        /// <exception cref="HttpRequestException">
+        /// <exception cref="Exceptions.SerenityApiException">
         /// Thrown when the API rejects the request: an HTTP 403 response when the API key lacks the
         /// Audit permission for the agent, or an HTTP 400 response when
         /// <see cref="GetMessageFeedbackReq.PageSize"/> exceeds 1000 or
