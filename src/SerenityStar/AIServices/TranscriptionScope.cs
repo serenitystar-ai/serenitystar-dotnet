@@ -1,10 +1,10 @@
-using SerenityStar.Constants;
+using SerenityStar.Client;
+using SerenityStar.Extensions;
 using SerenityStar.Models.Transcription;
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,11 +15,11 @@ namespace SerenityStar.AIServices
     /// </summary>
     public sealed class TranscriptionScope
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
-        internal TranscriptionScope(HttpClient httpClient)
+        internal TranscriptionScope(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
         }
 
         /// <summary>
@@ -62,19 +62,14 @@ namespace SerenityStar.AIServices
             if (!string.IsNullOrEmpty(request.Channel))
                 content.Add(new StringContent(request.Channel), "Channel");
 
-            HttpResponseMessage response = await _httpClient.PostAsync(
-                "/api/v2/audio/transcribe",
-                content,
-                cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v2/audio/transcribe")
             {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
+                Content = content
+            };
 
-            return await response.Content.ReadFromJsonAsync<TranscribeResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize transcription result");
+            HttpResponseMessage response = await _apiClient.SendAsync(httpRequest, cancellationToken);
+
+            return await response.ReadSerenityJsonAsync<TranscribeResult>(cancellationToken);
         }
 
         #region Private Methods

@@ -1,4 +1,5 @@
 using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Client;
 using SerenityStar.Constants;
 using SerenityStar.Helpers;
 using SerenityStar.Models.ChatCompletion;
@@ -6,7 +7,6 @@ using SerenityStar.Models.Execute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -32,16 +32,16 @@ namespace SerenityStar.Agents.System
         /// <summary>
         /// Initializes a new instance of the ChatCompletion class.
         /// </summary>
-        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="apiClient">The API client.</param>
         /// <param name="agentCode">The agent code.</param>
         /// <param name="version">Optional specific version of the agent to execute. If not specified, uses the published version.</param>
         /// <param name="options">Chat completion options.</param>
-        public ChatCompletion(HttpClient httpClient, string agentCode, int? version, ChatCompletionReq options)
-            : base(httpClient, agentCode, version, options)
+        internal ChatCompletion(SerenityApiClient apiClient, string agentCode, int? version, ChatCompletionReq options)
+            : base(apiClient, agentCode, version, options)
         {
             _chatOptions = options;
             _version = version;
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(apiClient, agentCode);
         }
 
         /// <inheritdoc/>
@@ -51,7 +51,7 @@ namespace SerenityStar.Agents.System
 
             if (_chatOptions.AudioFileStream != null)
                 _uploadedAudioFileId = await FileUploadHelper.UploadFileAsync(
-                    _httpClient, _chatOptions.AudioFileStream, _chatOptions.AudioFileName!, cancellationToken);
+                    _apiClient, _chatOptions.AudioFileStream, _chatOptions.AudioFileName!, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -96,11 +96,11 @@ namespace SerenityStar.Agents.System
     /// </summary>
     public sealed class ChatCompletionsScope
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
-        internal ChatCompletionsScope(HttpClient httpClient)
+        internal ChatCompletionsScope(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Chat completion options.</param>
         /// <returns>A chat completion instance.</returns>
         public ChatCompletion Create(string agentCode, ChatCompletionReq options)
-            => new ChatCompletion(_httpClient, agentCode, null, options);
+            => new ChatCompletion(_apiClient, agentCode, null, options);
 
         /// <summary>
         /// Creates a chat completion agent instance with a specific version.
@@ -120,6 +120,6 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Chat completion options.</param>
         /// <returns>A chat completion instance.</returns>
         public ChatCompletion Create(string agentCode, int version, ChatCompletionReq options)
-            => new ChatCompletion(_httpClient, agentCode, version, options);
+            => new ChatCompletion(_apiClient, agentCode, version, options);
     }
 }

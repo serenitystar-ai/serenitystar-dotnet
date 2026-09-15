@@ -1,6 +1,6 @@
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
-using System.Net.Http;
+using SerenityStar.Client;
 
 namespace SerenityStar.Agents
 {
@@ -34,14 +34,14 @@ namespace SerenityStar.Agents
         /// </summary>
         public CopilotScope Copilots { get; }
 
-        internal AgentsScope(HttpClient httpClient)
+        internal AgentsScope(SerenityApiClient apiClient)
         {
             // Agents
-            Activities = new ActivitiesScope(httpClient);
-            ChatCompletions = new ChatCompletionsScope(httpClient);
-            AIProxies = new AIProxiesScope(httpClient);
-            Assistants = new AssistantsScope(httpClient);
-            Copilots = new CopilotScope(httpClient);
+            Activities = new ActivitiesScope(apiClient);
+            ChatCompletions = new ChatCompletionsScope(apiClient);
+            AIProxies = new AIProxiesScope(apiClient);
+            Assistants = new AssistantsScope(apiClient);
+            Copilots = new CopilotScope(apiClient);
         }
     }
 }

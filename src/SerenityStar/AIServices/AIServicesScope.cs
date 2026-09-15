@@ -1,4 +1,4 @@
-using System.Net.Http;
+using SerenityStar.Client;
 
 namespace SerenityStar.AIServices
 {
@@ -12,9 +12,9 @@ namespace SerenityStar.AIServices
         /// </summary>
         public TranscriptionScope Transcription { get; }
 
-        internal AIServicesScope(HttpClient httpClient)
+        internal AIServicesScope(SerenityApiClient apiClient)
         {
-            Transcription = new TranscriptionScope(httpClient);
+            Transcription = new TranscriptionScope(apiClient);
         }
     }
 }

@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using SerenityStar.Constants;
+using SerenityStar.Client;
+using SerenityStar.Extensions;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.MessageFeedback;
@@ -17,14 +17,14 @@ namespace SerenityStar.Agents.Conversational
     /// </summary>
     public abstract class ConversationalAgentBase
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
         /// <summary>
         /// Initializes a new instance of the ConversationalAgentBase class.
         /// </summary>
-        protected ConversationalAgentBase(HttpClient httpClient)
+        internal ConversationalAgentBase(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace SerenityStar.Agents.Conversational
             string? conversationId = null,
             AgentExecutionReq? options = null)
         {
-            Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, null, options);
+            Conversation conversation = Conversation.CreateConversation(_apiClient, agentCode, null, options);
             if (!string.IsNullOrEmpty(conversationId))
                 conversation.SetConversationId(conversationId);
 
@@ -62,7 +62,7 @@ namespace SerenityStar.Agents.Conversational
             string? conversationId = null,
             AgentExecutionReq? options = null)
         {
-            Conversation conversation = Conversation.CreateConversation(_httpClient, agentCode, version, options);
+            Conversation conversation = Conversation.CreateConversation(_apiClient, agentCode, version, options);
             if (!string.IsNullOrEmpty(conversationId))
                 conversation.SetConversationId(conversationId);
 
@@ -81,7 +81,7 @@ namespace SerenityStar.Agents.Conversational
             AgentExecutionReq? options = null,
             CancellationToken cancellationToken = default)
         {
-            Conversation conversation = new Conversation(_httpClient, agentCode, null, options);
+            Conversation conversation = new Conversation(_apiClient, agentCode, null, options);
             await conversation.InitializeInfoAsync(cancellationToken);
             return conversation.Info ?? throw new InvalidOperationException("Failed to get conversation info");
         }
@@ -100,7 +100,7 @@ namespace SerenityStar.Agents.Conversational
             AgentExecutionReq? options = null,
             CancellationToken cancellationToken = default)
         {
-            Conversation conversation = new Conversation(_httpClient, agentCode, version, options);
+            Conversation conversation = new Conversation(_apiClient, agentCode, version, options);
             await conversation.InitializeInfoAsync(cancellationToken);
             return conversation.Info ?? throw new InvalidOperationException("Failed to get conversation info");
         }
@@ -119,7 +119,7 @@ namespace SerenityStar.Agents.Conversational
             bool showExecutorTaskLogs = false,
             CancellationToken cancellationToken = default)
         {
-            Conversation conversation = new Conversation(_httpClient, agentCode);
+            Conversation conversation = new Conversation(_apiClient, agentCode);
             return await conversation.GetConversationByIdAsync(conversationId, showExecutorTaskLogs, cancellationToken);
         }
 
@@ -170,16 +170,10 @@ namespace SerenityStar.Agents.Conversational
 
             string url = $"/api/v2/agent/{Uri.EscapeDataString(agentCode)}/feedback?{string.Join("&", queryParams)}";
 
-            HttpResponseMessage response = await _httpClient.GetAsync(url, cancellationToken);
+            HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
+            HttpResponseMessage response = await _apiClient.SendAsync(httpRequest, cancellationToken);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            return await response.Content.ReadFromJsonAsync<MessageFeedbackPage>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize message feedback page");
+            return await response.ReadSerenityJsonAsync<MessageFeedbackPage>(cancellationToken);
         }
 
         private static string FormatDate(DateTime value)

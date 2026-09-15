@@ -1,10 +1,11 @@
+using SerenityStar.Client;
+using SerenityStar.Extensions;
 using SerenityStar.Models.VolatileKnowledge;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,11 +16,11 @@ namespace SerenityStar.Agents.VolatileKnowledge
     /// </summary>
     public sealed class VolatileKnowledgeScope
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
-        internal VolatileKnowledgeScope(HttpClient httpClient)
+        internal VolatileKnowledgeScope(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
         }
 
         /// <summary>
@@ -72,20 +73,10 @@ namespace SerenityStar.Agents.VolatileKnowledge
                 string queryString = string.Join("&", queryParams);
                 string endpoint = $"/api/v2/volatileknowledge?{queryString}";
 
-                HttpResponseMessage response = await _httpClient.PostAsync(
-                    endpoint,
-                    content,
-                    cancellationToken);
+                HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
+                HttpResponseMessage response = await _apiClient.SendAsync(httpRequest, cancellationToken);
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    string errorContent = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-                }
-
-                VolatileKnowledgeRes? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledgeRes>(cancellationToken: cancellationToken);
-
-                return volatileKnowledge ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
+                return await response.ReadSerenityJsonAsync<VolatileKnowledgeRes>(cancellationToken);
             }
         }
 
@@ -99,19 +90,13 @@ namespace SerenityStar.Agents.VolatileKnowledge
             Guid knowledgeId,
             CancellationToken cancellationToken = default)
         {
-            HttpResponseMessage response = await _httpClient.GetAsync(
-                $"/api/v2/volatileknowledge/{knowledgeId}",
-                cancellationToken);
+            HttpRequestMessage request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/api/v2/volatileknowledge/{knowledgeId}");
 
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
+            HttpResponseMessage response = await _apiClient.SendAsync(request, cancellationToken);
 
-            VolatileKnowledgeRes? volatileKnowledge = await response.Content.ReadFromJsonAsync<VolatileKnowledgeRes>(cancellationToken: cancellationToken);
-
-            return volatileKnowledge ?? throw new InvalidOperationException("Failed to deserialize volatile knowledge response");
+            return await response.ReadSerenityJsonAsync<VolatileKnowledgeRes>(cancellationToken);
         }
 
         #region Private Methods
