@@ -49,7 +49,12 @@ public class TestFixture : IDisposable
                 "No valid API key found. Please set 'SerenityStar:ApiKey' in appsettings.Development.json or environment variables. " +
                 "Integration tests require a valid Serenity Star API key to run.");
 
+        // Treat an empty BaseUrl as unset so the SDK falls back to its default endpoint
+        // (AddSerenityStar only coalesces null, and new Uri("") would throw).
         string? baseUrl = Configuration["SerenityStar:BaseUrl"];
+        if (string.IsNullOrEmpty(baseUrl))
+            baseUrl = null;
+
         services.AddSerenityStar(apiKey!, baseUrl: baseUrl);
 
         ServiceProvider = services.BuildServiceProvider();

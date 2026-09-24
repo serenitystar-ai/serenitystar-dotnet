@@ -31,10 +31,12 @@ namespace SerenityStar.Models.Streaming
                 "start" => JsonSerializer.Deserialize<StreamingAgentMessageStart>(jsonObject, options),
                 "task_start" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStart>(jsonObject, options),
                 "content" => JsonSerializer.Deserialize<StreamingAgentMessageContent>(jsonObject, options),
+                "reasoning" => JsonSerializer.Deserialize<StreamingAgentMessageReasoning>(jsonObject, options),
                 "task_stop" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStop>(jsonObject, options),
                 "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(jsonObject, options),
                 "error" => JsonSerializer.Deserialize<StreamingAgentMessageError>(jsonObject, options),
-                _ => CreateUnsupportedMessage(type)
+                "ping" => JsonSerializer.Deserialize<StreamingAgentMessagePing>(jsonObject, options),
+                _ => CreateUnsupportedMessage(type, jsonObject)
             } ?? throw new JsonException($"Failed to deserialize streaming message of type '{type}'");
 
             return message;
@@ -45,12 +47,14 @@ namespace SerenityStar.Models.Streaming
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }
 
-        private static StreamingAgentMessage CreateUnsupportedMessage(string type)
+        private static StreamingAgentMessage CreateUnsupportedMessage(string type, JsonElement jsonObject)
         {
-            // Return a generic error message for unsupported types
-            return new StreamingAgentMessageError
+            // Preserve forward compatibility: surface unknown message types instead of failing the stream.
+            return new StreamingAgentMessageUnsupported
             {
-                Message = $"Unsupported message type: {type}"
+                OriginalType = type,
+                // Clone so the element survives disposal of the JsonDocument in Read().
+                RawData = jsonObject.Clone()
             };
         }
     }

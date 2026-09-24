@@ -22,6 +22,11 @@ namespace SerenityStar.Models.Streaming
         public string TaskKey { get; set; } = string.Empty;
 
         /// <summary>
+        /// Additional metadata associated with the task.
+        /// </summary>
+        public IDictionary<string, object>? Metadata { get; set; }
+
+        /// <summary>
         /// The UTC time when the task started.
         /// </summary>
         public DateTime StartTimeUtc { get; set; }

@@ -269,6 +269,15 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
 
         case StreamingAgentMessageContent content:
             Console.Write(content.Text); // Display content as it arrives
+            if (content.Citations != null)
+            {
+                foreach (var citation in content.Citations)
+                    Console.WriteLine($"\n[{citation.CitationIndex}] {citation.CitedText}");
+            }
+            break;
+
+        case StreamingAgentMessageReasoning reasoning:
+            Console.Write(reasoning.Text); // Display reasoning as it arrives
             break;
 
         case StreamingAgentMessageTaskStart taskStart:
@@ -288,8 +297,17 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
             }
             break;
 
+        case StreamingAgentMessagePing:
+            // Keep-alive heartbeat sent to hold the connection open; no action needed
+            break;
+
         case StreamingAgentMessageError error:
             Console.WriteLine($"Error: {error.Message}");
+            break;
+
+        case StreamingAgentMessageUnsupported unsupported:
+            // Forward-compatibility: a message type this SDK version doesn't model yet
+            Console.WriteLine($"Unsupported message type: {unsupported.OriginalType}");
             break;
     }
 }
@@ -612,6 +630,10 @@ await foreach (StreamingAgentMessage message in activity.StreamAsync())
             Console.Write(content.Text); // "Hola" "mundo"
             break;
 
+        case StreamingAgentMessageReasoning reasoning:
+            Console.Write(reasoning.Text); // Model's reasoning tokens
+            break;
+
         case StreamingAgentMessageTaskStart taskStart:
             Console.WriteLine($"Task: {taskStart.TaskKey}");
             break;
@@ -715,6 +737,10 @@ await foreach (StreamingAgentMessage message in proxy.StreamAsync())
 
         case StreamingAgentMessageContent content:
             Console.Write(content.Text); // Print each chunk as it arrives
+            break;
+
+        case StreamingAgentMessageReasoning reasoning:
+            Console.Write(reasoning.Text); // Model's reasoning tokens
             break;
 
         case StreamingAgentMessageTaskStart taskStart:
@@ -874,6 +900,10 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
 
         case StreamingAgentMessageContent content:
             Console.Write(content.Text); // Print each chunk
+            break;
+
+        case StreamingAgentMessageReasoning reasoning:
+            Console.Write(reasoning.Text); // Model's reasoning tokens
             break;
 
         case StreamingAgentMessageTaskStart taskStart:
