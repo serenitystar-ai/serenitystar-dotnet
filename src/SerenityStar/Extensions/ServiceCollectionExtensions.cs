@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
-using SerenityStar.Constants;
 using SerenityStar.Models;
 using System;
 
@@ -32,9 +31,10 @@ namespace SerenityStar.Extensions
                 options.BaseUrl = baseUrl;
             });
 
+            // Auth and base URL are applied per-request by SerenityApiClient (built inside
+            // SerenityClient from the options), so only the timeout is configured on the client here.
             services.AddHttpClient<ISerenityClient, SerenityClient>((_, client) =>
             {
-                client.BaseAddress = new Uri(baseUrl ?? ClientConstants.BaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             });
 
