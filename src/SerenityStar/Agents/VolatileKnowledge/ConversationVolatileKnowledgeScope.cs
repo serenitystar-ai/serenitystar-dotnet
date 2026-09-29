@@ -1,5 +1,6 @@
 using SerenityStar.Client;
 using SerenityStar.Constants;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Models.VolatileKnowledge;
 using System;
@@ -50,6 +51,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="expirationDays">Optional parameter to specify the number of days until expiration.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> UploadAsync(
             UploadVolatileKnowledgeReq request,
             bool processEmbeddings = true,
@@ -81,6 +83,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="expirationDays">Optional parameter to specify the number of days until expiration.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity, associated with the agent.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> UploadForAgentAsync(
             UploadVolatileKnowledgeReq request,
             bool processEmbeddings = true,
@@ -108,6 +111,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="request">The upload request containing the file ID and options.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity, associated with the agent.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> UploadFromFileForAgentAsync(
             UploadVolatileKnowledgeFromFileReq request,
             CancellationToken cancellationToken = default)
@@ -133,6 +137,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="request">The upload request containing the file URL and options.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity, associated with the agent.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> UploadFromUrlForAgentAsync(
             UploadVolatileKnowledgeFromUrlReq request,
             CancellationToken cancellationToken = default)
@@ -158,6 +163,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="request">The upload request containing the base64 content and options.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity, associated with the agent.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> UploadFromBase64ForAgentAsync(
             UploadVolatileKnowledgeFromBase64Req request,
             CancellationToken cancellationToken = default)
@@ -182,6 +188,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The list of allowed MIME types.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<IReadOnlyList<string>> GetAllowedMimeTypesAsync(
             CancellationToken cancellationToken = default)
         {
@@ -200,6 +207,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="knowledgeId">The knowledge ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The volatile knowledge entity with current status.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> GetStatusAsync(
             Guid knowledgeId,
             CancellationToken cancellationToken = default)
