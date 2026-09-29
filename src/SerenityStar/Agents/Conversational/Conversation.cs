@@ -1,6 +1,7 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Client;
 using SerenityStar.Constants;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Helpers;
 using SerenityStar.Models.Connector;
@@ -111,6 +112,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="message">The text message to send.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The agent's response.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
             => SendMessageCoreAsync(message, null, null, cancellationToken);
 
@@ -123,6 +125,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="audioFileName">The file name including extension (e.g., "recording.mp3").</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The agent's response.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response, including when the audio upload fails.</exception>
         public Task<AgentResult> SendMessageAsync(Stream audioStream, string audioFileName, CancellationToken cancellationToken = default)
             => SendMessageCoreAsync(null, audioStream, audioFileName, cancellationToken);
 
@@ -161,6 +164,10 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="message">The text message to send.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An async enumerable of streaming messages.</returns>
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the API rejects the request before the stream opens. Errors after that are yielded as
+        /// <see cref="StreamingAgentMessageError"/>.
+        /// </exception>
         public IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(string message, CancellationToken cancellationToken = default)
             => StreamMessageCoreAsync(message, null, null, cancellationToken);
 
@@ -173,6 +180,10 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="audioFileName">The file name including extension (e.g., "recording.mp3").</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An async enumerable of streaming messages.</returns>
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the audio upload fails or the API rejects the request before the stream opens. Errors after
+        /// that are yielded as <see cref="StreamingAgentMessageError"/>.
+        /// </exception>
         public IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(Stream audioStream, string audioFileName, CancellationToken cancellationToken = default)
             => StreamMessageCoreAsync(null, audioStream, audioFileName, cancellationToken);
 
@@ -278,6 +289,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="showExecutorTaskLogs">Whether to include executor task logs.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The conversation details.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<ConversationRes> GetConversationByIdAsync(
             string conversationId,
             bool showExecutorTaskLogs = false,
@@ -302,6 +314,7 @@ namespace SerenityStar.Agents.Conversational
         /// its comment. Leaving <see cref="SubmitFeedbackReq.Comment"/> null clears a comment that was
         /// submitted previously.
         /// </remarks>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task SubmitFeedbackAsync(SubmitFeedbackReq options, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(ConversationId))
@@ -333,6 +346,7 @@ namespace SerenityStar.Agents.Conversational
         /// </summary>
         /// <param name="options">The remove feedback options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task RemoveFeedbackAsync(RemoveFeedbackReq options, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(ConversationId))
@@ -352,6 +366,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="connectorId">The connector ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The connector status.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<ConnectorStatusRes> GetConnectorStatusAsync(
             Guid connectorId,
             CancellationToken cancellationToken = default)

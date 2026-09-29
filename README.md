@@ -22,7 +22,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Transcription](#transcription)
 - [Audio Input for Agents](#audio-input-for-agents)
 - [Volatile Knowledge](#volatile-knowledge)
-- [Error handling](#error-handling)
+- [Error Handling](#error-handling)
 - [Documentation](#-documentation)
 
 ## 🚀 Installation
@@ -308,8 +308,9 @@ await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(
             // Keep-alive heartbeat sent to hold the connection open; no action needed
             break;
 
-        case StreamingAgentMessageError error:
-            Console.WriteLine($"Error: {error.Message}");
+        case StreamingAgentMessageError errorMessage:
+            // See "Error Handling" for the error types and what each one carries
+            Console.WriteLine($"Error ({errorMessage.Error.Code}): {errorMessage.Message}");
             break;
 
         case StreamingAgentMessageUnsupported unsupported:
@@ -419,7 +420,7 @@ await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
 
 Notes on `Comment`:
 
-- It is limited to **1000 characters**. Longer values are rejected by the API with an HTTP 400 response, surfaced as a `SerenityApiException` (see [Error handling](#error-handling)).
+- It is limited to **1000 characters**. Longer values are rejected by the API with an HTTP 400 response, surfaced as a `SerenityApiException` (see [Error Handling](#error-handling)).
 - Leading and trailing whitespace is trimmed, and blank values are stored as no comment.
 - Submitting feedback again for the same message **overwrites** the stored comment. Omitting `Comment` on a later submission clears the one submitted before it.
 
@@ -655,8 +656,9 @@ await foreach (StreamingAgentMessage message in activity.StreamAsync())
                 Console.WriteLine($"Tokens used: {stop.Result.CompletionUsage.TotalTokens}");
             break;
 
-        case StreamingAgentMessageError error:
-            Console.WriteLine($"Error: {error.Message}");
+        case StreamingAgentMessageError errorMessage:
+            // See "Error Handling" for the error types and what each one carries
+            Console.WriteLine($"Error ({errorMessage.Error.Code}): {errorMessage.Message}");
             break;
     }
 }
@@ -767,8 +769,9 @@ await foreach (StreamingAgentMessage message in proxy.StreamAsync())
             }
             break;
 
-        case StreamingAgentMessageError error:
-            Console.WriteLine($"Error: {error.Message}");
+        case StreamingAgentMessageError errorMessage:
+            // See "Error Handling" for the error types and what each one carries
+            Console.WriteLine($"Error ({errorMessage.Error.Code}): {errorMessage.Message}");
             break;
     }
 }
@@ -933,8 +936,8 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
             }
             break;
 
-        case StreamingAgentMessageError error:
-            Console.WriteLine($"[Error: {error.Message}]");
+        case StreamingAgentMessageError errorMessage:
+            Console.WriteLine($"[Error ({errorMessage.Error.Code}): {errorMessage.Message}]");
             break;
     }
 }
@@ -1285,28 +1288,107 @@ Console.WriteLine(result.Content);
 // Both documents are cleared after the message is sent
 ```
 
-## Error handling
+## Error Handling
 
-When the API returns an unsuccessful HTTP response, the SDK throws a `SerenityApiException`. It derives from `HttpRequestException`, so existing `catch (HttpRequestException)` handlers keep working, and it also exposes the response details:
+Every error the Serenity Star API returns carries a stable `code`, a localised `message` and a `documentationUrl`. The SDK surfaces it as a `SerenityApiError`. Branch on its type or on `Code`, not on `Message`.
 
-- `StatusCode` — the `HttpStatusCode` returned by the API.
-- `ReasonPhrase` — the HTTP reason phrase, if any.
-- `ResponseJson` — the parsed JSON error payload as a `System.Text.Json.JsonElement?`. The API returns JSON error bodies for all responses except HTTP 429 (rate limiting), so this is `null` when the body was missing or not valid JSON. Use `JsonElement.GetRawText()` to read the raw text.
+| Namespace | Contents |
+|---|---|
+| `SerenityStar.Errors` | `SerenityApiException` |
+| `SerenityStar.Errors.Models` | `SerenityApiError` and its subclasses, plus the attempt details |
+| `SerenityStar.Errors.Constants` | `SerenityErrorCodes`, `VendorErrorCodes`, `ValidationErrorKeys`, `ResourceNotFoundKeys` and `AgentModelTypes` |
+
+Errors arrive in one of two ways:
+
+- **`SerenityApiException`**, thrown when the API returns a non-success HTTP response. It has the HTTP `StatusCode` and the `Error`. On streaming calls, this happens when the request is rejected before the stream opens (for example, authentication, validation or the API's own rate limit).
+- **`StreamingAgentMessageError`**, yielded when a streaming call fails after the stream opened. It has the same `Error`.
+
+The same `SerenityApiError` types are used on both paths, so one handler can serve both:
+
+| `Code` | Type | Extra data |
+|---|---|---|
+| `input_validation_error` | `InputValidationError` | `Errors`: request field → every message for that field |
+| `validation_error` | `ValidationError` | `Errors`: failed rule → message (see `ValidationErrorKeys`); `AgentResult` and `GeneratedJson` when an agent's output failed its JSON format |
+| `resource_not_found` | `ResourceNotFoundError` | `Errors`: the missing resource (see `ResourceNotFoundKeys`) |
+| `rate_limit_exceeded` | `RateLimitExceededError` | none |
+| `agent_execution_failed` | `AgentExecutionFailedError` | `Errors` and every `Attempts` entry (main and fallback models) |
+| `aiservice_execution_failed` | `AIServiceExecutionFailedError` | `Errors`, and `Attempts` (or `Files` for OCR) |
+| Any other code | `SerenityApiError` | none |
+
+Every error also has `RetryAfter`, set when the API says how long to wait before retrying. Fields this SDK version doesn't model yet are kept in `ExtensionData`. A response that isn't a Serenity API error at all, such as an HTML page from a proxy, reads `Code == SerenityErrorCodes.Unknown`, and the exception keeps the raw body in `ResponseContent`.
+
+### Handle errors from a request
 
 ```csharp
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
+using SerenityStar.Errors.Constants;
+using SerenityStar.Errors.Models;
 
 try
 {
-    var result = await client.Agents.Activities
-        .Create("marketing-campaign")
-        .ExecuteAsync();
+    AgentResult result = await conversation.SendMessageAsync("Hello");
+}
+catch (SerenityApiException ex) when (ex.Error is RateLimitExceededError)
+{
+    await Task.Delay(ex.Error.RetryAfter ?? TimeSpan.FromSeconds(30));
+}
+catch (SerenityApiException ex) when (ex.Error is ValidationError { Errors: { } errors }
+                                      && errors.ContainsKey(ValidationErrorKeys.ConversationClosed))
+{
+    conversation = client.Agents.Assistants.CreateConversation("assistant-agent");
 }
 catch (SerenityApiException ex)
 {
-    Console.WriteLine($"Request failed ({(int)ex.StatusCode} {ex.ReasonPhrase})");
-    if (ex.ResponseJson is not null)
-        Console.WriteLine(ex.ResponseJson.Value.GetRawText());
+    Console.WriteLine($"{ex.Error.Code} (HTTP {(int)ex.StatusCode}): {ex.Message}");
+    Console.WriteLine($"See {ex.Error.DocumentationUrl}");
+}
+```
+
+### Handle errors from a stream
+
+```csharp
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
+
+try
+{
+    await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Hello"))
+    {
+        switch (message)
+        {
+            case StreamingAgentMessageContent content:
+                Console.Write(content.Text);
+                break;
+
+            case StreamingAgentMessageError errorMessage:
+                HandleError(errorMessage.Error); // Failed after the stream opened
+                break;
+        }
+    }
+}
+catch (SerenityApiException ex)
+{
+    HandleError(ex.Error); // Failed before the stream opened
+}
+
+static void HandleError(SerenityApiError error)
+{
+    switch (error)
+    {
+        case AgentExecutionFailedError failed:
+            foreach (AgentExecutionAttempt attempt in failed.Attempts)
+                Console.WriteLine($"[{attempt.ModelType}] {attempt.Code} (HTTP {attempt.StatusCode}): {attempt.VendorError}");
+            break;
+
+        case InputValidationError invalid:
+            foreach (KeyValuePair<string, List<string>> field in invalid.Errors)
+                Console.WriteLine($"{field.Key}: {string.Join(", ", field.Value)}");
+            break;
+
+        default:
+            Console.WriteLine($"{error.Code}: {error.Message}");
+            break;
+    }
 }
 ```
 

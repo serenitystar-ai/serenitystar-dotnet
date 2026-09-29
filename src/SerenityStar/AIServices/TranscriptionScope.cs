@@ -1,4 +1,5 @@
 using SerenityStar.Client;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Models.Transcription;
 using System;
@@ -31,7 +32,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The transcription result including the transcribed text, metadata, token usage, and cost.</returns>
         /// <exception cref="ArgumentNullException">Thrown when the request, file stream, or file name is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<TranscribeResult> TranscribeAsync(
             TranscribeAudioReq request,
             CancellationToken cancellationToken = default)

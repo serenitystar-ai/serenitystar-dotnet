@@ -1,8 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Client;
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.VolatileKnowledge;
+using System.Net;
 using Xunit;
 
 namespace SerenityStar.IntegrationTests;
@@ -157,10 +160,10 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert - the backend rejects unsupported types with a 400 that the SDK surfaces.
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(
+        SerenityApiException ex = await Assert.ThrowsAsync<SerenityApiException>(
             () => conversation.VolatileKnowledge.UploadForAgentAsync(request));
 
-        Assert.Contains("400", ex.Message);
+        Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
     }
 
     [Fact]
@@ -218,9 +221,10 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(
+        SerenityApiException ex = await Assert.ThrowsAsync<SerenityApiException>(
             () => conversation.VolatileKnowledge.UploadForAgentAsync(request));
 
-        Assert.Contains("404", ex.Message);
+        Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
+        Assert.IsType<ResourceNotFoundError>(ex.Error);
     }
 }

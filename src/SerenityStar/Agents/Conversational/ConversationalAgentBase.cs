@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using SerenityStar.Client;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
@@ -76,6 +77,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="options">Optional execution options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Agent information.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<ConversationInfoResult> GetInfoByCodeAsync(
             string agentCode,
             AgentExecutionReq? options = null,
@@ -94,6 +96,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="options">Optional execution options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Agent information.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<ConversationInfoResult> GetInfoByCodeAsync(
             string agentCode,
             int version,
@@ -113,6 +116,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="showExecutorTaskLogs">Whether to include executor task logs.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The conversation details.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<ConversationRes> GetConversationByIdAsync(
             string agentCode,
             string conversationId,
@@ -137,8 +141,8 @@ namespace SerenityStar.Agents.Conversational
         /// accordingly.
         /// </remarks>
         /// <exception cref="ArgumentNullException">Thrown when the agent code is null or empty.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">
-        /// Thrown when the API rejects the request: an HTTP 403 response when the API key lacks the
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the API returns an error response: an HTTP 403 response when the API key lacks the
         /// Audit permission for the agent, or an HTTP 400 response when
         /// <see cref="GetMessageFeedbackReq.PageSize"/> exceeds 1000 or
         /// <see cref="GetMessageFeedbackReq.SortDirection"/> is not "asc" or "desc".

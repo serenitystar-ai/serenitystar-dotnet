@@ -1,5 +1,6 @@
 using SerenityStar.Client;
 using SerenityStar.Constants;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
@@ -92,6 +93,7 @@ namespace SerenityStar.Agents.System
         /// <summary>
         /// Executes the agent.
         /// </summary>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<AgentResult> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             await PrepareExecutionAsync(cancellationToken);
@@ -117,6 +119,10 @@ namespace SerenityStar.Agents.System
         /// <summary>
         /// Streams execution results.
         /// </summary>
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the API rejects the request before the stream opens. Errors after that are yielded as
+        /// <see cref="StreamingAgentMessageError"/>.
+        /// </exception>
         public async IAsyncEnumerable<StreamingAgentMessage> StreamAsync(
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {

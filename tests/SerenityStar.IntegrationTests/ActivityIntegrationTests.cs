@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
+using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Agents.System;
@@ -49,7 +50,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             activity.ExecuteAsync());
     }
 

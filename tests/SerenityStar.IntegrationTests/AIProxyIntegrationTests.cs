@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
+using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.AIProxy;
@@ -146,7 +147,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
         Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             proxy.ExecuteAsync());
     }
 

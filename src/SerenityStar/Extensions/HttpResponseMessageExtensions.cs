@@ -1,7 +1,10 @@
 using SerenityStar.Constants;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
+using SerenityStar.Errors.Constants;
+using SerenityStar.Errors.Models;
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
@@ -15,62 +18,29 @@ namespace SerenityStar.Extensions
     internal static class HttpResponseMessageExtensions
     {
         /// <summary>
-        /// Throws a <see cref="SerenityApiException"/> containing the status code, reason phrase and
-        /// parsed JSON error payload when the response does not indicate success.
+        /// Throws a <see cref="SerenityApiException"/> when the response is not successful.
         /// </summary>
         internal static async Task EnsureSerenitySuccessAsync(this HttpResponseMessage response)
         {
             if (response.IsSuccessStatusCode)
                 return;
 
-            throw await response.ToSerenityApiExceptionAsync("Request failed");
+            string content = await response.Content.ReadAsStringAsync();
+
+            SerenityApiError error = TryParse(content) ?? new SerenityApiError { Code = SerenityErrorCodes.Unknown };
+
+            // Keep the raw body only when it couldn't be read as a Serenity API error, as it's the only diagnostic left.
+            string? responseContent = error.Code == SerenityErrorCodes.Unknown ? content : null;
+
+            if (string.IsNullOrEmpty(error.Message))
+                error.Message = string.IsNullOrEmpty(response.ReasonPhrase)
+                    ? $"HTTP {(int)response.StatusCode}"
+                    : response.ReasonPhrase;
+
+            error.RetryAfter = ReadRetryAfter(response.Headers.RetryAfter) ?? error.RetryAfter;
+
+            throw new SerenityApiException(response.StatusCode, error, responseContent);
         }
-
-        /// <summary>
-        /// Builds a <see cref="SerenityApiException"/> from an unsuccessful response, reading the body
-        /// and parsing it as JSON when possible (the Serenity Star API returns JSON for all responses
-        /// except HTTP 429).
-        /// </summary>
-        internal static async Task<SerenityApiException> ToSerenityApiExceptionAsync(
-            this HttpResponseMessage response,
-            string messagePrefix)
-        {
-            string errorContent = await response.Content.ReadAsStringAsync();
-
-            return new SerenityApiException(
-                $"{messagePrefix} with status code {response.StatusCode}",
-                response.StatusCode,
-                response.ReasonPhrase,
-                TryParseJson(response.Content.Headers.ContentType?.MediaType, errorContent));
-        }
-
-        private static JsonElement? TryParseJson(string? mediaType, string content)
-        {
-            // The Serenity Star API returns JSON error bodies for every response except HTTP 429, which
-            // has no JSON content type. Skip parsing when the content type is not JSON (e.g. text/plain).
-            if (!IsJsonMediaType(mediaType) || string.IsNullOrWhiteSpace(content))
-                return null;
-
-            try
-            {
-                // Clone so the returned element is self-contained and the pooled document buffers
-                // can be released, since the value is stored on a long-lived exception.
-                using JsonDocument document = JsonDocument.Parse(content);
-                return document.RootElement.Clone();
-            }
-            catch (JsonException)
-            {
-                // Defensive: the content type claimed JSON but the body was not valid JSON.
-                return null;
-            }
-        }
-
-        // Matches "application/json", "text/json" and structured suffixes such as
-        // "application/problem+json", ignoring any charset parameter.
-        private static bool IsJsonMediaType(string? mediaType) =>
-            mediaType != null
-            && (mediaType.EndsWith("/json", StringComparison.OrdinalIgnoreCase)
-                || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase));
 
         /// <summary>
         /// Ensures the response indicates success and deserializes its JSON body into
@@ -84,6 +54,36 @@ namespace SerenityStar.Extensions
 
             return await response.Content.ReadFromJsonAsync<T>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize response");
+        }
+
+        private static SerenityApiError? TryParse(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return null;
+
+            try
+            {
+                using JsonDocument document = JsonDocument.Parse(content);
+                return SerenityApiErrorParser.Parse(document.RootElement, JsonSerializerOptionsCache.s_camelCase);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private static TimeSpan? ReadRetryAfter(RetryConditionHeaderValue? retryAfter)
+        {
+            if (retryAfter?.Delta is TimeSpan delta)
+                return delta;
+
+            if (retryAfter?.Date is DateTimeOffset date)
+            {
+                TimeSpan wait = date - DateTimeOffset.UtcNow;
+                return wait > TimeSpan.Zero ? wait : TimeSpan.Zero;
+            }
+
+            return null;
         }
     }
 }
