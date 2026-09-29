@@ -14,9 +14,35 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>3.0.0-beta1</Version>
+    <Version>3.0.0-beta2</Version>
     <PackageReleaseNotes>
-      Version 3.0.0 - Per-Request Authentication Release
+      Version 3.0.0-beta2 - Error Handling Release
+
+      BREAKING CHANGES:
+      - SerenityApiException moved from SerenityStar.Exceptions to SerenityStar.Errors, and now exposes the parsed error
+        * ReasonPhrase and ResponseJson are replaced by Error (the SerenityApiError) and ResponseContent (the raw body, set only when it couldn't be mapped to a Serenity API error)
+        * Exception.Message is now the error message returned by the API, instead of "Request failed with status code X"
+        * It still derives from HttpRequestException, so existing catch (HttpRequestException) blocks keep working
+
+      - StreamingAgentMessageError: removed Errors (use Error instead) and Status (no longer sent by the API)
+        * Message is kept, and is now a read-only shortcut for Error.Message
+
+      - Requires the Serenity Star API error format with error codes. Errors without a code read as SerenityErrorCodes.Unknown
+
+      NEW FEATURES:
+      - SerenityApiError (namespace SerenityStar.Errors.Models): the full error returned by the API, with Code, Message, DocumentationUrl, RetryAfter and ExtensionData
+        * Typed by code: InputValidationError, ValidationError, ResourceNotFoundError, RateLimitExceededError, AgentExecutionFailedError and AIServiceExecutionFailedError
+        * AgentExecutionFailedError and AIServiceExecutionFailedError list every attempt made against the AI provider, with its code, raw provider status and provider detail (VendorError)
+        * ValidationError exposes AgentResult and GeneratedJson when a system agent's output failed its JSON format
+        * Fields this SDK version doesn't model yet are kept in ExtensionData
+
+      - StreamingAgentMessageError.Error carries the same SerenityApiError types, so one handler serves both HTTP and streaming errors
+
+      - RetryAfter is read from the Retry-After header on HTTP responses, and from retry_after_seconds on streaming error events
+
+      - Constants for codes and keys (namespace SerenityStar.Errors.Constants): SerenityErrorCodes, VendorErrorCodes, ValidationErrorKeys, ResourceNotFoundKeys and AgentModelTypes
+
+      Version 3.0.0-beta1 - Per-Request Authentication Release
 
       NEW FEATURES:
       - Richer error information: failed API responses now throw SerenityApiException (in the
