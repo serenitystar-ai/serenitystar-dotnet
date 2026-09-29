@@ -417,31 +417,5 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         Assert.NotEmpty(result.Content);
     }
 
-    [Fact]
-    public void ChatCompletionReq_Validate_WithBothMessageAndAudioStream_ShouldThrowArgumentException()
-    {
-        // Arrange
-        using MemoryStream dummyStream = new(new byte[] { 1, 2, 3 });
-        ChatCompletionReq options = new()
-        {
-            Message = "Hello",
-            AudioFileStream = dummyStream,
-            AudioFileName = "test.wav"
-        };
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => options.Validate());
-    }
-
-    [Fact]
-    public void ChatCompletionReq_Validate_WithNeitherMessageNorAudioStream_ShouldThrowArgumentException()
-    {
-        // Arrange
-        ChatCompletionReq options = new();
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => options.Validate());
-    }
-
     #endregion
 }

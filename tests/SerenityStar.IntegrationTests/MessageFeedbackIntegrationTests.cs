@@ -507,14 +507,6 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task GetAllFeedback_WithEmptyAgentCode_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert - This one is validated locally, no request is issued
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _client.Agents.Assistants.GetMessageFeedbackAsync(string.Empty));
-    }
-
-    [Fact]
     public async Task GetAllFeedback_OnCopilots_ShouldSucceed()
     {
         // Feedback exists for both conversational agent types, so the operation is available

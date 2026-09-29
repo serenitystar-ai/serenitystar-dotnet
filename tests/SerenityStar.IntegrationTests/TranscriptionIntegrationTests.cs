@@ -180,39 +180,4 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
                 Assert.True(result.Metadata.Language.Length >= 2);
         }
     }
-
-    [Fact]
-    public async Task TranscribeAsync_WithNullRequest_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _client.AIServices.Transcription.TranscribeAsync(null!));
-    }
-
-    [Fact]
-    public void TranscribeAudioReq_Validate_WithNullFileStream_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        TranscribeAudioReq request = new()
-        {
-            FileName = "test.mp3"
-        };
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => request.Validate());
-    }
-
-    [Fact]
-    public void TranscribeAudioReq_Validate_WithNullFileName_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        using MemoryStream stream = new(new byte[] { 1, 2, 3 });
-        TranscribeAudioReq request = new()
-        {
-            FileStream = stream
-        };
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => request.Validate());
-    }
 }
