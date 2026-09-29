@@ -1,14 +1,9 @@
 using SerenityStar.Agents.VolatileKnowledge;
-using SerenityStar.Constants;
+using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.Execute;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SerenityStar.Agents.System
 {
@@ -28,14 +23,14 @@ namespace SerenityStar.Agents.System
         /// <summary>
         /// Initializes a new instance of the Proxy class.
         /// </summary>
-        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="apiClient">The API client.</param>
         /// <param name="agentCode">The agent code.</param>
         /// <param name="options">Proxy execution options.</param>
-        public Proxy(HttpClient httpClient, string agentCode, ProxyExecutionReq options)
-            : base(httpClient, agentCode, options)
+        internal Proxy(SerenityApiClient apiClient, string agentCode, ProxyExecutionReq options)
+            : base(apiClient, agentCode, options)
         {
             _proxyOptions = options;
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(apiClient, agentCode);
         }
 
         /// <inheritdoc/>
@@ -106,11 +101,11 @@ namespace SerenityStar.Agents.System
     /// </summary>
     public sealed class AIProxiesScope
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
-        internal AIProxiesScope(HttpClient httpClient)
+        internal AIProxiesScope(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
         }
 
         /// <summary>
@@ -120,6 +115,6 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Proxy execution options.</param>
         /// <returns>A proxy instance.</returns>
         public Proxy Create(string agentCode, ProxyExecutionReq options)
-            => new Proxy(_httpClient, agentCode, options);
+            => new Proxy(_apiClient, agentCode, options);
     }
 }

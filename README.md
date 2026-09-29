@@ -22,6 +22,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Transcription](#transcription)
 - [Audio Input for Agents](#audio-input-for-agents)
 - [Volatile Knowledge](#volatile-knowledge)
+- [Error handling](#error-handling)
 - [Documentation](#-documentation)
 
 ## 🚀 Installation
@@ -71,7 +72,8 @@ using SerenityStar.Client;
 using SerenityStar.Agents.System;
 
 var customHttpClient = new HttpClient();
-// Configure your custom HttpClient as needed
+// Configure your custom HttpClient as needed (e.g. timeout, handlers)
+customHttpClient.Timeout = TimeSpan.FromSeconds(30);
 
 SerenityClient client = new SerenityClientBuilder()
     .WithApiKey("your-api-key")
@@ -83,6 +85,11 @@ Activity activity = client.Agents.Activities.Create("marketing-campaign");
 AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
+
+> **Note:** When you supply your own `HttpClient`, the SDK does not modify it. The API key is
+> attached per request (not as a default header), and `BaseAddress` is not overwritten, so the
+> client remains safe to share with other code. Because of this, `WithTimeout(...)` is ignored when
+> a custom `HttpClient` is provided — configure the timeout on your own client instead.
 
 ### Using Dependency Injection
 
@@ -412,7 +419,7 @@ await conversation.SubmitFeedbackAsync(new SubmitFeedbackReq
 
 Notes on `Comment`:
 
-- It is limited to **1000 characters**. Longer values are rejected by the API with an HTTP 400 response, surfaced as an `HttpRequestException`.
+- It is limited to **1000 characters**. Longer values are rejected by the API with an HTTP 400 response, surfaced as a `SerenityApiException` (see [Error handling](#error-handling)).
 - Leading and trailing whitespace is trimmed, and blank values are stored as no comment.
 - Submitting feedback again for the same message **overwrites** the stored comment. Omitting `Comment` on a later submission clears the one submitted before it.
 
@@ -1276,6 +1283,31 @@ AgentResult result = await conversation.SendMessageAsync("What can you say me ab
 Console.WriteLine(result.Content);
 
 // Both documents are cleared after the message is sent
+```
+
+## Error handling
+
+When the API returns an unsuccessful HTTP response, the SDK throws a `SerenityApiException`. It derives from `HttpRequestException`, so existing `catch (HttpRequestException)` handlers keep working, and it also exposes the response details:
+
+- `StatusCode` — the `HttpStatusCode` returned by the API.
+- `ReasonPhrase` — the HTTP reason phrase, if any.
+- `ResponseJson` — the parsed JSON error payload as a `System.Text.Json.JsonElement?`. The API returns JSON error bodies for all responses except HTTP 429 (rate limiting), so this is `null` when the body was missing or not valid JSON. Use `JsonElement.GetRawText()` to read the raw text.
+
+```csharp
+using SerenityStar.Exceptions;
+
+try
+{
+    var result = await client.Agents.Activities
+        .Create("marketing-campaign")
+        .ExecuteAsync();
+}
+catch (SerenityApiException ex)
+{
+    Console.WriteLine($"Request failed ({(int)ex.StatusCode} {ex.ReasonPhrase})");
+    if (ex.ResponseJson is not null)
+        Console.WriteLine(ex.ResponseJson.Value.GetRawText());
+}
 ```
 
 ## 🤝 Contributing

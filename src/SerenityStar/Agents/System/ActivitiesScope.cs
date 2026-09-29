@@ -1,11 +1,11 @@
 using SerenityStar.Agents.VolatileKnowledge;
+using SerenityStar.Client;
 using SerenityStar.Constants;
 using SerenityStar.Helpers;
 using SerenityStar.Models.Execute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,14 +28,14 @@ namespace SerenityStar.Agents.System
         /// <summary>
         /// Initializes a new instance of the Activity class.
         /// </summary>
-        /// <param name="httpClient">The HTTP client.</param>
+        /// <param name="apiClient">The API client.</param>
         /// <param name="agentCode">The agent code.</param>
         /// <param name="version">Optional specific version of the agent to execute. If not specified, uses the published version.</param>
         /// <param name="options">Optional execution options.</param>
-        public Activity(HttpClient httpClient, string agentCode, int? version = null, AgentExecutionReq? options = null)
-            : base(httpClient, agentCode, version, options)
+        internal Activity(SerenityApiClient apiClient, string agentCode, int? version = null, AgentExecutionReq? options = null)
+            : base(apiClient, agentCode, version, options)
         {
-            VolatileKnowledge = new ConversationVolatileKnowledgeScope(httpClient, agentCode);
+            VolatileKnowledge = new ConversationVolatileKnowledgeScope(apiClient, agentCode);
         }
 
         /// <inheritdoc/>
@@ -48,7 +48,7 @@ namespace SerenityStar.Agents.System
                     throw new ArgumentNullException(nameof(executionOptions.AudioFileName), "Audio file name is required when providing an audio file stream.");
 
                 _uploadedAudioFileId = await FileUploadHelper.UploadFileAsync(
-                    _httpClient, executionOptions.AudioFileStream, executionOptions.AudioFileName, cancellationToken);
+                    _apiClient, executionOptions.AudioFileStream, executionOptions.AudioFileName, cancellationToken);
             }
         }
 
@@ -87,11 +87,11 @@ namespace SerenityStar.Agents.System
     /// </summary>
     public sealed class ActivitiesScope
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
-        internal ActivitiesScope(HttpClient httpClient)
+        internal ActivitiesScope(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Optional execution options.</param>
         /// <returns>An activity instance.</returns>
         public Activity Create(string agentCode, AgentExecutionReq? options = null)
-            => new Activity(_httpClient, agentCode, null, options);
+            => new Activity(_apiClient, agentCode, null, options);
 
         /// <summary>
         /// Creates an activity agent instance with a specific version.
@@ -111,6 +111,6 @@ namespace SerenityStar.Agents.System
         /// <param name="options">Optional execution options.</param>
         /// <returns>An activity instance.</returns>
         public Activity Create(string agentCode, int version, AgentExecutionReq? options = null)
-            => new Activity(_httpClient, agentCode, version, options);
+            => new Activity(_apiClient, agentCode, version, options);
     }
 }

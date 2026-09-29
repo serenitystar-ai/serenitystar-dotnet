@@ -1,3 +1,5 @@
+using SerenityStar.Client;
+using SerenityStar.Extensions;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -17,7 +19,7 @@ namespace SerenityStar.Helpers
         /// Uploads a file and returns the resulting file ID.
         /// </summary>
         internal static async Task<Guid> UploadFileAsync(
-            HttpClient httpClient,
+            SerenityApiClient apiClient,
             Stream fileStream,
             string fileName,
             CancellationToken cancellationToken = default)
@@ -28,17 +30,15 @@ namespace SerenityStar.Helpers
             fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             content.Add(fileContent, "formFile", fileName);
 
-            HttpResponseMessage response = await httpClient.PostAsync(
-                "/api/File/upload/public",
-                content,
-                cancellationToken);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "/api/File/upload/public")
+            {
+                Content = content
+            };
+
+            HttpResponseMessage response = await apiClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException(
-                    $"File upload failed with status code {response.StatusCode}: {errorContent}");
-            }
+                throw await response.ToSerenityApiExceptionAsync("File upload failed");
 
             string responseBody = await response.Content.ReadAsStringAsync();
 

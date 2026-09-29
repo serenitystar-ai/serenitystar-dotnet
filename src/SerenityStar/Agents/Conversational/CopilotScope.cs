@@ -1,4 +1,4 @@
-using System.Net.Http;
+using SerenityStar.Client;
 
 namespace SerenityStar.Agents.Conversational
 {
@@ -7,8 +7,8 @@ namespace SerenityStar.Agents.Conversational
     /// </summary>
     public sealed class CopilotScope : ConversationalAgentBase
     {
-        internal CopilotScope(HttpClient httpClient)
-            : base(httpClient)
+        internal CopilotScope(SerenityApiClient apiClient)
+            : base(apiClient)
         {
         }
     }

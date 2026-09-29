@@ -1,4 +1,3 @@
-using SerenityStar.Constants;
 using System;
 using System.Net.Http;
 
@@ -59,6 +58,11 @@ namespace SerenityStar.Client
         /// <summary>
         /// Sets the timeout for HTTP requests in seconds.
         /// </summary>
+        /// <remarks>
+        /// This value is ignored when a custom <see cref="HttpClient"/> is supplied via
+        /// <see cref="WithHttpClient"/>; configure the timeout on that client instead, since the
+        /// builder does not mutate a caller-provided client.
+        /// </remarks>
         /// <param name="timeoutSeconds">The timeout in seconds.</param>
         /// <returns>The current builder instance for method chaining.</returns>
         /// <exception cref="ArgumentException">Thrown when timeoutSeconds is less than or equal to zero.</exception>
@@ -93,18 +97,17 @@ namespace SerenityStar.Client
             if (string.IsNullOrEmpty(_apiKey))
                 throw new InvalidOperationException("API key must be set before building the client. Use WithApiKey() to configure it.");
 
+            bool ownsHttpClient = _httpClient is null;
             HttpClient httpClient = _httpClient ?? new HttpClient();
-            ConfigureHttpClient(httpClient, _apiKey, _baseUrl, _timeoutSeconds);
 
-            return new SerenityClient(httpClient);
-        }
+            // Only configure a client we created. A caller-provided HttpClient is left untouched;
+            // auth and base URL are applied per-request by SerenityApiClient instead.
+            if (ownsHttpClient && _timeoutSeconds.HasValue)
+                httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds.Value);
 
-        private static void ConfigureHttpClient(HttpClient client, string apiKey, string? baseUrl, int? timeoutSeconds)
-        {
-            client.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
-            baseUrl ??= ClientConstants.BaseUrl;
-            client.BaseAddress = new Uri(baseUrl);
-            client.Timeout = TimeSpan.FromSeconds(timeoutSeconds ?? 100);
+            SerenityApiClient apiClient = new SerenityApiClient(httpClient, _apiKey!, _baseUrl);
+
+            return new SerenityClient(apiClient);
         }
     }
 }

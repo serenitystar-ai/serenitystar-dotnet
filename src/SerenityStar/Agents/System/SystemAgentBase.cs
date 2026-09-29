@@ -1,4 +1,6 @@
+using SerenityStar.Client;
 using SerenityStar.Constants;
+using SerenityStar.Extensions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using System;
@@ -19,9 +21,9 @@ namespace SerenityStar.Agents.System
     public abstract class SystemAgentBase
     {
         /// <summary>
-        /// The HTTP client used for API calls. Accessible to derived classes for file uploads.
+        /// The API client used for authenticated API calls. Accessible to derived classes for file uploads.
         /// </summary>
-        protected readonly HttpClient _httpClient;
+        private protected readonly SerenityApiClient _apiClient;
         private readonly string _agentCode;
         private readonly int? _version;
         /// <summary>
@@ -32,17 +34,17 @@ namespace SerenityStar.Agents.System
         /// <summary>
         /// Initializes a new instance of the SystemAgentBase class.
         /// </summary>
-        protected SystemAgentBase(HttpClient httpClient, string agentCode, object? options)
-            : this(httpClient, agentCode, null, options)
+        internal SystemAgentBase(SerenityApiClient apiClient, string agentCode, object? options)
+            : this(apiClient, agentCode, null, options)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the SystemAgentBase class with a specific version.
         /// </summary>
-        protected SystemAgentBase(HttpClient httpClient, string agentCode, int? version, object? options)
+        internal SystemAgentBase(SerenityApiClient apiClient, string agentCode, int? version, object? options)
         {
-            _httpClient = httpClient;
+            _apiClient = apiClient;
             _agentCode = agentCode;
             _version = version;
             Options = options;
@@ -98,16 +100,14 @@ namespace SerenityStar.Agents.System
 
             object body = CreateExecuteBody(false);
 
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, body, JsonSerializerOptionsCache.s_camelCase, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
+                Content = JsonContent.Create(body, options: JsonSerializerOptionsCache.s_camelCase)
+            };
 
-            AgentResult result = await response.Content.ReadFromJsonAsync<AgentResult>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
-                   ?? throw new InvalidOperationException("Failed to deserialize response");
+            HttpResponseMessage response = await _apiClient.SendAsync(request, cancellationToken);
+
+            AgentResult result = await response.ReadSerenityJsonAsync<AgentResult>(cancellationToken);
 
             OnExecutionComplete();
 
@@ -131,13 +131,9 @@ namespace SerenityStar.Agents.System
                 Content = JsonContent.Create(body, options: JsonSerializerOptionsCache.s_camelCase)
             };
 
-            HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            HttpResponseMessage response = await _apiClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
+            await response.EnsureSerenitySuccessAsync();
 
             using (Stream stream = await response.Content.ReadAsStreamAsync())
             using (StreamReader reader = new StreamReader(stream))

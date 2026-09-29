@@ -11,7 +11,7 @@ namespace SerenityStar.Client
     /// <inheritdoc />
     public sealed class SerenityClient : ISerenityClient
     {
-        private readonly HttpClient _httpClient;
+        private readonly SerenityApiClient _apiClient;
 
         /// <summary>
         /// Interact with the different agents available in Serenity Star.
@@ -35,12 +35,13 @@ namespace SerenityStar.Client
                 throw new ArgumentNullException(nameof(options));
 
             string apiKey = options.Value.ApiKey ?? throw new ArgumentNullException(nameof(options), "The ApiKey property of the options. Value object is null.");
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            if (httpClient == null)
+                throw new ArgumentNullException(nameof(httpClient));
 
-            // Configure the API key header
-            _httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
-            Agents = new AgentsScope(_httpClient);
-            AIServices = new AIServicesScope(_httpClient);
+            // Auth is attached per-request by SerenityApiClient rather than mutating the HttpClient.
+            _apiClient = new SerenityApiClient(httpClient, apiKey, options.Value.BaseUrl);
+            Agents = new AgentsScope(_apiClient);
+            AIServices = new AIServicesScope(_apiClient);
         }
 
         /// <summary>
@@ -65,12 +66,12 @@ namespace SerenityStar.Client
         /// Initializes a new instance of the <see cref="SerenityClient"/> class.
         /// This constructor is for internal use by the builder pattern.
         /// </summary>
-        /// <param name="httpClient">The configured HTTP client.</param>
-        internal SerenityClient(HttpClient httpClient)
+        /// <param name="apiClient">The configured API client.</param>
+        internal SerenityClient(SerenityApiClient apiClient)
         {
-            _httpClient = httpClient;
-            Agents = new AgentsScope(_httpClient);
-            AIServices = new AIServicesScope(_httpClient);
+            _apiClient = apiClient;
+            Agents = new AgentsScope(_apiClient);
+            AIServices = new AIServicesScope(_apiClient);
         }
     }
 }

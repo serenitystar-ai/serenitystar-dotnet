@@ -14,8 +14,29 @@
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.5.0</Version>
+    <Version>3.0.0-beta1</Version>
     <PackageReleaseNotes>
+      Version 3.0.0 - Per-Request Authentication Release
+
+      NEW FEATURES:
+      - Richer error information: failed API responses now throw SerenityApiException (in the
+        SerenityStar.Exceptions namespace) exposing StatusCode, ReasonPhrase and the parsed JSON error
+        payload as ResponseJson (a JsonElement?, null for non-JSON bodies such as HTTP 429).
+        It derives from HttpRequestException, so existing catch (HttpRequestException) handlers keep working.
+
+      BREAKING CHANGES:
+      - Authentication is now attached per-request instead of on HttpClient.DefaultRequestHeaders.
+        A caller-provided HttpClient (via SerenityClientBuilder.WithHttpClient) is no longer mutated:
+        its BaseAddress, Timeout and default headers are left untouched, and the API key is applied
+        to each outgoing request. Configure the timeout on your own client; SerenityClientBuilder.WithTimeout
+        is ignored when a custom HttpClient is supplied.
+      - Direct construction entry points that took a raw HttpClient are no longer public. Create agents
+        through SerenityClient (e.g. client.Agents.Activities.Create(...)) instead:
+        * Activity, ChatCompletion and Proxy constructors are now internal
+        * Conversation.CreateConversation(HttpClient, ...) is now internal
+        * SystemAgentBase and ConversationalAgentBase base constructors are now internal
+        * SerenityClient's internal builder constructor now takes a SerenityApiClient
+
       Version 2.5.0 - Streaming Events Enhancement Release
 
       NEW FEATURES:
@@ -31,6 +52,7 @@
 
       IMPROVEMENTS:
       - Task Events: StreamingAgentMessageTaskStart now includes Metadata, and StreamingAgentMessageTaskStop now includes a Success flag
+
 
       Version 2.4.0 - Message Feedback Comments Release
 
