@@ -126,7 +126,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
                 ".txt" => "text/plain",
                 ".csv" => "text/csv",
                 ".md" => "text/markdown",
-                ".jpg" => "image/jpg",
+                ".jpg" => "image/jpeg",
                 ".jpeg" => "image/jpeg",
                 ".png" => "image/png",
                 _ => throw new NotSupportedException($"File extension '{extension}' is not supported for upload."),
