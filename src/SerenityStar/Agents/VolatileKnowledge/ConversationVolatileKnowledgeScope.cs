@@ -291,7 +291,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
                 ".txt" => "text/plain",
                 ".csv" => "text/csv",
                 ".md" => "text/markdown",
-                ".jpg" => "image/jpg",
+                ".jpg" => "image/jpeg",
                 ".jpeg" => "image/jpeg",
                 ".png" => "image/png",
                 // Fall back to a generic content type for unknown extensions; the backend validates
