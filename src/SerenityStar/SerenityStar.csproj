@@ -8,14 +8,17 @@
     <Company>Subgen AI</Company>
     <Description>Official .NET SDK for Serenity Star API</Description>
     <PackageProjectUrl>https://hub.serenitystar.ai/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/serenitystar-ai/serenity-dotnet</RepositoryUrl>
+    <RepositoryUrl>https://github.com/serenitystar-ai/serenitystar-dotnet</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.5.0</Version>
+    <Version>2.5.1</Version>
     <PackageReleaseNotes>
+      Version 2.5.1 - Hotfix
+      - Fixed volatile knowledge uploads of .jpg files sending the non-standard "image/jpg" MIME type; they now use "image/jpeg"
+
       Version 2.5.0 - Streaming Events Enhancement Release
 
       NEW FEATURES:
