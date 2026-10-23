@@ -18,7 +18,7 @@ SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Each feature package adds extension methods to SerenityClient, e.g.
 // client.GetAgents()               (SubgenAI.SerenityStar.SDK)
-// client.GetTranscriptionClient()  (SubgenAI.SerenityStar.AIServices)
+// client.GetAnonymizerClient()     (SubgenAI.SerenityStar.AIServices)
 ```
 
 See the full documentation at https://github.com/serenitystar-ai/serenitystar-dotnet.

@@ -15,17 +15,15 @@ Create a single `SerenityClient` and get one client per AI service from it:
 ```csharp
 using SerenityStar.AIServices;
 using SerenityStar.Client;
-using SerenityStar.Models.Transcription;
+using SerenityStar.Models.Anonymizer;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-ITranscriptionClient transcription = client.GetTranscriptionClient();
+IAnonymizerClient anonymizer = client.GetAnonymizerClient();
 
-using FileStream audioFile = File.OpenRead("meeting.mp3");
-TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
+AnonymizerResult result = await anonymizer.ObfuscateAsync(new AnonymizerReq
 {
-    FileStream = audioFile,
-    FileName = "meeting.mp3"
+    Inputs = "My name is Jane Doe and my email is jane.doe@example.com"
 });
 ```
 

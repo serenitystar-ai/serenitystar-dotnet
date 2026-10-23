@@ -576,10 +576,10 @@ namespace SerenityStar.AIServices.IntegrationTests
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
         {
-            CapturingHandler handler = new("""{"message":"Model not found","code":"not_found"}""", statusCode: HttpStatusCode.NotFound);
+            CapturingHandler handler = new("""{"message":"Vendor not found","code":"not_found"}""", statusCode: HttpStatusCode.NotFound);
 
             SerenityApiException exception = await Assert.ThrowsAsync<SerenityApiException>(() =>
-                CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { Content = { "x" } }));
+                CreateClient(handler).GetAnonymizerClient().ObfuscateAsync(new AnonymizerReq { Inputs = "x" }));
 
             Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
             Assert.Equal("not_found", exception.ResponseJson!.Value.GetProperty("code").GetString());
@@ -590,8 +590,14 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             SerenityClient client = null!;
 
-            Assert.Throws<ArgumentNullException>(() => client.GetTranscriptionClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetAnonymizerClient());
             Assert.Throws<ArgumentNullException>(() => client.GetDecisionClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetEmbeddingClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetImageGenerationClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetSpeechGenerationClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetTranscriptionClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetVisionClient());
         }
 
         [Fact]
@@ -607,13 +613,13 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             using ServiceProvider provider = services.BuildServiceProvider();
 
-            Assert.NotNull(provider.GetRequiredService<ITranscriptionClient>());
-            Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
-            Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
-            Assert.NotNull(provider.GetRequiredService<IVisionClient>());
-            Assert.NotNull(provider.GetRequiredService<IOcrClient>());
-            Assert.NotNull(provider.GetRequiredService<IEmbeddingClient>());
             Assert.NotNull(provider.GetRequiredService<IDecisionClient>());
+            Assert.NotNull(provider.GetRequiredService<IEmbeddingClient>());
+            Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
+            Assert.NotNull(provider.GetRequiredService<IOcrClient>());
+            Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
+            Assert.NotNull(provider.GetRequiredService<ITranscriptionClient>());
+            Assert.NotNull(provider.GetRequiredService<IVisionClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 

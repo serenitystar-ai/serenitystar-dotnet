@@ -56,7 +56,7 @@ dotnet add package SubgenAI.SerenityStar.AIServices
 > each package depends on the exact same version of `SubgenAI.SerenityStar.Core`.
 
 Every feature is obtained from a single `SerenityClient`: `client.GetAgents()` for agents and
-`client.Get<Service>Client()` (e.g. `client.GetTranscriptionClient()`) for each AI service. These methods are
+`client.Get<Service>Client()` (e.g. `client.GetAnonymizerClient()`) for each AI service. These methods are
 in the `SerenityStar.Client` namespace, next to `SerenityClient`.
 
 ## 🔧 Usage
@@ -143,13 +143,13 @@ using SerenityStar.AIServices;
 public class YourService
 {
     private readonly AgentsScope _agents;
-    private readonly ITranscriptionClient _transcription;
+    private readonly IAnonymizerClient _anonymizer;
 
     // Inject SerenityClient, AgentsScope or any AI service interface
-    public YourService(AgentsScope agents, ITranscriptionClient transcription)
+    public YourService(AgentsScope agents, IAnonymizerClient anonymizer)
     {
         _agents = agents;
-        _transcription = transcription;
+        _anonymizer = anonymizer;
     }
 
     public async Task DoSomething()
