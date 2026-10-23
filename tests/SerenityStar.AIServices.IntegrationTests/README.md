@@ -32,5 +32,3 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
 | `ImageFilePath` | Yes | Image for the decisions image input (jpg, jpeg, png, gif, webp; max 20 MB). |
 
 Settings can also be provided as environment variables, e.g. `SerenityStar__ApiKey`.
-
-The `*ByFileIdAsync` tests upload the configured file to Serenity Star as a **private** file first. Use non-sensitive test files only: they are sent to the configured AI providers.
