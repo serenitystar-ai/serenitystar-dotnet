@@ -182,6 +182,26 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
+    public async Task TranscribeByFileIdAsync_WithUploadedFile_ShouldReturnTranscript()
+    {
+        // Arrange
+        Guid fileId = await _fixture.UploadFileAsync(GetAudioFilePath());
+        TranscribeAudioByFileIdReq request = new()
+        {
+            FileId = fileId,
+            ModelId = _fixture.TranscriptionModelId
+        };
+
+        // Act
+        TranscribeResult result = await _client.TranscribeByFileIdAsync(request);
+
+        // Assert
+        Assert.NotEqual(Guid.Empty, result.InstanceId);
+        Assert.NotNull(result.Transcript);
+        Assert.NotEmpty(result.Transcript);
+    }
+
+    [Fact]
     public async Task TranscribeAsync_WithNullRequest_ShouldThrowArgumentNullException()
     {
         // Act & Assert

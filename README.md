@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as transcription, speech, image generation, vision, OCR, embeddings, anonymizer and decisions.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -22,14 +22,14 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Audio Input for Agents](#audio-input-for-agents)
 - [Volatile Knowledge](#volatile-knowledge)
 - [AI Services](#ai-services)
-  - [Transcription](#transcription)
-  - [Speech Generation](#speech-generation)
-  - [Image Generation](#image-generation)
-  - [Vision](#vision)
-  - [OCR](#ocr)
-  - [Embeddings](#embeddings)
   - [Anonymizer](#anonymizer)
   - [Decisions](#decisions)
+  - [Embeddings](#embeddings)
+  - [Image Generation](#image-generation)
+  - [OCR](#ocr)
+  - [Speech Generation](#speech-generation)
+  - [Transcription](#transcription)
+  - [Vision](#vision)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -41,7 +41,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: transcription, speech, image generation, vision, OCR, embeddings, anonymizer and decisions |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1264,212 +1264,16 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 
 | Service | Interface | Entry point |
 | --- | --- | --- |
-| [Transcription](#transcription) | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
-| [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
-| [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
-| [Vision](#vision) | `IVisionClient` | `client.GetVisionClient()` |
-| [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
-| [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
 | [Anonymizer](#anonymizer) | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
 | [Decisions](#decisions) | `IDecisionClient` | `client.GetDecisionClient()` |
+| [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
+| [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
+| [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
+| [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
+| [Transcription](#transcription) | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
+| [Vision](#vision) | `IVisionClient` | `client.GetVisionClient()` |
 
 Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
-
-### Transcription
-
-Convert audio and video files into text. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
-
-> To send audio to an agent instead, see [Audio Input for Agents](#audio-input-for-agents).
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Client;
-using SerenityStar.Models.Transcription;
-
-SerenityClient client = SerenityClient.Create("your-api-key");
-ITranscriptionClient transcription = client.GetTranscriptionClient();
-
-using FileStream audioFile = File.OpenRead("interview.wav");
-TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
-{
-    FileStream = audioFile,
-    FileName = "interview.wav",
-    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
-    Prompt = "Interview about artificial intelligence and machine learning", // Optional: guide terminology
-    UserIdentifier = "user-123",             // Optional: for tracking
-    Channel = "web-app"                      // Optional: execution channel
-});
-
-Console.WriteLine(result.Transcript);
-Console.WriteLine($"Language: {result.Metadata?.Language}, duration: {result.Metadata?.Duration}");
-Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
-
-// Or transcribe a file previously uploaded to Serenity Star
-TranscribeResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
-{
-    FileId = Guid.Parse("uploaded-file-id")
-});
-```
-
-### Speech Generation
-
-Generate speech (text-to-speech) from text. A model is required: set `AIModelId`, or both `ModelCode` and `Vendor`.
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Models.SpeechGeneration;
-
-ISpeechGenerationClient speech = client.GetSpeechGenerationClient();
-
-GenerateSpeechReq request = new()
-{
-    ModelCode = "tts-1",
-    Vendor = "OpenAI",
-    Text = "Welcome to Serenity Star!",
-    Voice = "alloy",   // Optional: vendor default voice when not set
-    Speed = 1.2f       // Optional
-};
-
-// Get a public URL to the generated audio
-SpeechGenerationResult result = await speech.GenerateAsync(request);
-Console.WriteLine(result.AudioUrl);
-
-// Or stream the audio in chunks as it is generated
-using FileStream output = File.Create("welcome.mp3");
-await foreach (StreamingSpeechGenerationMessage message in speech.StreamAsync(request))
-{
-    switch (message)
-    {
-        case StreamingSpeechGenerationMessageStart start:
-            Console.WriteLine($"Format: {start.MimeType}");
-            break;
-        case StreamingSpeechGenerationMessageAudio audio:
-            byte[] bytes = audio.GetAudioBytes();
-            await output.WriteAsync(bytes, 0, bytes.Length);
-            break;
-        case StreamingSpeechGenerationMessageStop stop:
-            Console.WriteLine($"Done: {stop.AudioUrl}");
-            break;
-        case StreamingSpeechGenerationMessageError error:
-            Console.WriteLine($"Error: {error.Message}");
-            break;
-    }
-}
-```
-
-### Image Generation
-
-Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats: jpg, jpeg, png, gif, webp. Maximum size per file: 20 MB. Only models that accept source images support them.
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Models.AIServices;
-using SerenityStar.Models.ImageGeneration;
-
-IImageGenerationClient images = client.GetImageGenerationClient();
-
-ImageGenerationResult result = await images.GenerateAsync(new GenerateImageReq
-{
-    Prompt = "A watercolor painting of a lighthouse at sunset"
-});
-Console.WriteLine(result.ImageUrl);
-
-// Based on source images uploaded directly (the streams are disposed when the request completes)
-using FileStream photo = File.OpenRead("photo.png");
-ImageGenerationResult edited = await images.GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
-{
-    Prompt = "Make it look like a night scene",
-    Files = { new AIServiceFile { FileStream = photo, FileName = "photo.png" } }
-});
-
-// Or based on source images previously uploaded to Serenity Star
-ImageGenerationResult editedById = await images.GenerateByFileIdAsync(new GenerateImageByFileIdReq
-{
-    Prompt = "Make it look like a night scene",
-    FileIds = { Guid.Parse("uploaded-file-id") }
-});
-```
-
-### Vision
-
-Analyze images. Supported formats: jpg, jpeg, png, gif, webp. Maximum file size: 20 MB. The model is optional.
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Models.Vision;
-
-IVisionClient vision = client.GetVisionClient();
-
-using FileStream image = File.OpenRead("receipt.png");
-VisionResult result = await vision.AnalyzeAsync(new AnalyzeImageReq
-{
-    FileStream = image,
-    FileName = "receipt.png",
-    Prompt = "What is the total amount of this receipt?"
-});
-Console.WriteLine(result.Response);
-
-// Or analyze a file previously uploaded to Serenity Star
-VisionResult byId = await vision.AnalyzeByFileIdAsync(new AnalyzeImageByFileIdReq
-{
-    FileId = Guid.Parse("uploaded-file-id"),
-    Prompt = "Describe this image"
-});
-```
-
-### OCR
-
-Extract text, tables and images from documents. Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB. Documents can be uploaded directly, sent as base64, referenced by URL, or by the id of a file previously uploaded to Serenity Star. A failure on one document does not abort the others.
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Models.AIServices;
-using SerenityStar.Models.Ocr;
-
-IOcrClient ocr = client.GetOcrClient();
-
-using FileStream invoice = File.OpenRead("invoice.pdf");
-OcrExecutionResult result = await ocr.ExtractAsync(new OcrReq
-{
-    Files = { new AIServiceFile { FileStream = invoice, FileName = "invoice.pdf" } },
-    Instructions = "Keep the table layout"   // Optional
-});
-
-foreach (OcrFileResult file in result.Files)
-{
-    if (file.Success)
-        Console.WriteLine(file.Result!.Markdown);
-    else
-        Console.WriteLine($"{file.Source} failed: {file.Error}");
-}
-
-// Other sources
-await ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "https://example.com/contract.pdf" } });
-await ocr.ExtractFromBase64Async(new OcrBase64Req
-{
-    Base64Files = { new OcrBase64File { ContentBase64 = base64Content, MimeType = "application/pdf" } }
-});
-await ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Parse("uploaded-file-id") } });
-```
-
-### Embeddings
-
-Generate vector embeddings for one or more texts.
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Models.Embeddings;
-
-IEmbeddingClient embeddings = client.GetEmbeddingClient();
-
-EmbeddingsResult result = await embeddings.GenerateAsync(new GenerateEmbeddingsReq
-{
-    Content = { "First text", "Second text" }
-});
-
-foreach (EmbeddingData item in result.Data)
-    Console.WriteLine($"#{item.Index}: {item.Embedding.Length} dimensions");
-```
 
 ### Anonymizer
 
@@ -1546,6 +1350,227 @@ foreach (DecisionAnswer answer in result.Answers)
             break;
     }
 }
+```
+
+The input can also be an ordered list of messages, function calls and function call outputs, such as an agent trace, to evaluate how an agent behaved. User messages and function call outputs can include images, sent as base64 data URLs (HTTP(S) image URLs are not supported). Function calls are evidence only: they are never executed.
+
+```csharp
+DecisionResult traceResult = await decisions.EvaluateAsync(new DecisionReq
+{
+    ModelCode = "your-decision-model-code",
+    Vendor = "OpenAI",
+    Input = DecisionInput.FromItems(
+        DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
+            DecisionInputPart.InputText("This is the product I received. Where is my order 42?"),
+            DecisionInputPart.InputImage(File.ReadAllBytes("product.jpg"), "image/jpeg"))),
+        DecisionInputItem.FunctionCall("call_1", "get_order", """{"orderId":42}"""),
+        DecisionInputItem.FunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
+        DecisionInputItem.Message(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
+    Questions =
+    {
+        new DecisionQuestion
+        {
+            Type = DecisionQuestionType.Predicate, Name = "grounded",
+            Instructions = "Is the assistant's answer supported by the tool output?"
+        }
+    }
+});
+```
+
+### Embeddings
+
+Generate vector embeddings for one or more texts.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Embeddings;
+
+IEmbeddingClient embeddings = client.GetEmbeddingClient();
+
+EmbeddingsResult result = await embeddings.GenerateAsync(new GenerateEmbeddingsReq
+{
+    Content = { "First text", "Second text" }
+});
+
+foreach (EmbeddingData item in result.Data)
+    Console.WriteLine($"#{item.Index}: {item.Embedding.Length} dimensions");
+```
+
+### Image Generation
+
+Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats: jpg, jpeg, png, gif, webp. Maximum size per file: 20 MB. Up to 16 source images per request; only models that accept source images support them, each up to its own number of images.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.AIServices;
+using SerenityStar.Models.ImageGeneration;
+
+IImageGenerationClient images = client.GetImageGenerationClient();
+
+ImageGenerationResult result = await images.GenerateAsync(new GenerateImageReq
+{
+    Prompt = "A watercolor painting of a lighthouse at sunset"
+});
+Console.WriteLine(result.ImageUrl);
+
+// Based on source images uploaded directly (the streams are disposed when the request completes)
+using FileStream photo = File.OpenRead("photo.png");
+ImageGenerationResult edited = await images.GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
+{
+    Prompt = "Make it look like a night scene",
+    Files = { new AIServiceFile { FileStream = photo, FileName = "photo.png" } }
+});
+
+// Or based on source images previously uploaded to Serenity Star
+ImageGenerationResult editedById = await images.GenerateByFileIdAsync(new GenerateImageByFileIdReq
+{
+    Prompt = "Make it look like a night scene",
+    FileIds = { Guid.Parse("uploaded-file-id") }
+});
+```
+
+### OCR
+
+Extract text, tables and images from documents. Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB. Documents can be uploaded directly, sent as base64, referenced by URL, or by the id of a file previously uploaded to Serenity Star. A failure on one document does not abort the others.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.AIServices;
+using SerenityStar.Models.Ocr;
+
+IOcrClient ocr = client.GetOcrClient();
+
+using FileStream invoice = File.OpenRead("invoice.pdf");
+OcrExecutionResult result = await ocr.ExtractAsync(new OcrReq
+{
+    Files = { new AIServiceFile { FileStream = invoice, FileName = "invoice.pdf" } },
+    Instructions = "Keep the table layout"   // Optional
+});
+
+foreach (OcrFileResult file in result.Files)
+{
+    if (file.Success)
+        Console.WriteLine(file.Result!.Markdown);
+    else
+        Console.WriteLine($"{file.Source} failed: {file.Error}");
+}
+
+// Other sources
+await ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "https://example.com/contract.pdf" } });
+await ocr.ExtractFromBase64Async(new OcrBase64Req
+{
+    Base64Files = { new OcrBase64File { ContentBase64 = base64Content, MimeType = "application/pdf" } }
+});
+await ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Parse("uploaded-file-id") } });
+```
+
+### Speech Generation
+
+Generate speech (text-to-speech) from text. A model is required: set `AIModelId`, or both `ModelCode` and `Vendor`.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.SpeechGeneration;
+
+ISpeechGenerationClient speech = client.GetSpeechGenerationClient();
+
+GenerateSpeechReq request = new()
+{
+    ModelCode = "tts-1",
+    Vendor = "OpenAI",
+    Text = "Welcome to Serenity Star!",
+    Voice = "alloy",   // Optional: vendor default voice when not set
+    Speed = 1.2f       // Optional
+};
+
+// Get a public URL to the generated audio
+SpeechGenerationResult result = await speech.GenerateAsync(request);
+Console.WriteLine(result.AudioUrl);
+
+// Or stream the audio in chunks as it is generated
+using FileStream output = File.Create("welcome.mp3");
+await foreach (StreamingSpeechGenerationMessage message in speech.StreamAsync(request))
+{
+    switch (message)
+    {
+        case StreamingSpeechGenerationMessageStart start:
+            Console.WriteLine($"Format: {start.MimeType}");
+            break;
+        case StreamingSpeechGenerationMessageAudio audio:
+            byte[] bytes = audio.GetAudioBytes();
+            await output.WriteAsync(bytes, 0, bytes.Length);
+            break;
+        case StreamingSpeechGenerationMessageStop stop:
+            Console.WriteLine($"Done: {stop.AudioUrl}");
+            break;
+        case StreamingSpeechGenerationMessageError error:
+            Console.WriteLine($"Error: {error.Message}");
+            break;
+    }
+}
+```
+
+### Transcription
+
+Convert audio and video files into text. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
+
+> To send audio to an agent instead, see [Audio Input for Agents](#audio-input-for-agents).
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Client;
+using SerenityStar.Models.Transcription;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+ITranscriptionClient transcription = client.GetTranscriptionClient();
+
+using FileStream audioFile = File.OpenRead("interview.wav");
+TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
+{
+    FileStream = audioFile,
+    FileName = "interview.wav",
+    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
+    Prompt = "Interview about artificial intelligence and machine learning", // Optional: guide terminology
+    UserIdentifier = "user-123",             // Optional: for tracking
+    Channel = "web-app"                      // Optional: execution channel
+});
+
+Console.WriteLine(result.Transcript);
+Console.WriteLine($"Language: {result.Metadata?.Language}, duration: {result.Metadata?.Duration}");
+Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
+
+// Or transcribe a file previously uploaded to Serenity Star
+TranscribeResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
+{
+    FileId = Guid.Parse("uploaded-file-id")
+});
+```
+
+### Vision
+
+Analyze images. Supported formats: jpg, jpeg, png, gif, webp. Maximum file size: 20 MB. The model is optional.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Vision;
+
+IVisionClient vision = client.GetVisionClient();
+
+using FileStream image = File.OpenRead("receipt.png");
+VisionResult result = await vision.AnalyzeAsync(new AnalyzeImageReq
+{
+    FileStream = image,
+    FileName = "receipt.png",
+    Prompt = "What is the total amount of this receipt?"
+});
+Console.WriteLine(result.Response);
+
+// Or analyze a file previously uploaded to Serenity Star
+VisionResult byId = await vision.AnalyzeByFileIdAsync(new AnalyzeImageByFileIdReq
+{
+    FileId = Guid.Parse("uploaded-file-id"),
+    Prompt = "Describe this image"
+});
 ```
 
 ## Error handling
