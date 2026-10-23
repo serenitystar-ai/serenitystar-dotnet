@@ -45,15 +45,6 @@ namespace SerenityStar.Client
         public static IImageGenerationClient GetImageGenerationClient(this SerenityClient client)
             => new ImageGenerationClient(GetApiClient(client));
 
-        /// <summary>
-        /// Gets a client to extract text, tables and images from documents (OCR).
-        /// </summary>
-        /// <param name="client">The Serenity Star client.</param>
-        /// <returns>An <see cref="IOcrClient"/>.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
-        public static IOcrClient GetOcrClient(this SerenityClient client)
-            => new OcrClient(GetApiClient(client));
-
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)
