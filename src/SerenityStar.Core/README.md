@@ -7,7 +7,7 @@ You normally don't install this package directly. Install the feature packages y
 | Package | Features |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR and speech generation |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation and OCR |
 
 All packages are always published together and must be used with the same version.
 

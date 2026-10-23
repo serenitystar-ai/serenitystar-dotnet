@@ -11,7 +11,6 @@ using SerenityStar.Models.Decisions;
 using SerenityStar.Models.Embeddings;
 using SerenityStar.Models.ImageGeneration;
 using SerenityStar.Models.Ocr;
-using SerenityStar.Models.SpeechGeneration;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -395,95 +394,6 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
-        #region Speech generation
-        [Fact]
-        public async Task SpeechGeneration_Generate_SendsJsonWithStreamFalse()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","audioUrl":"https://files/audio.mp3","cost":{"amount":0.5,"currency":"USD"}}""");
-            Guid modelId = Guid.NewGuid();
-
-            SpeechGenerationResult result = await CreateClient(handler).GetSpeechGenerationClient().GenerateAsync(new GenerateSpeechReq
-            {
-                AIModelId = modelId,
-                Text = "Hello",
-                Speed = 1.5f
-            });
-
-            AssertPost(handler, "/api/v2/audio/generate");
-            JsonElement body = handler.JsonBody!.Value;
-            Assert.Equal(modelId, body.GetProperty("aiModelId").GetGuid());
-            Assert.Equal("Hello", body.GetProperty("text").GetString());
-            Assert.Equal(1.5, body.GetProperty("speed").GetDouble());
-            Assert.False(body.GetProperty("stream").GetBoolean());
-            Assert.False(body.TryGetProperty("voice", out _));
-
-            Assert.Equal("https://files/audio.mp3", result.AudioUrl);
-            Assert.Equal(0.5, result.Cost!.Amount);
-        }
-
-        [Fact]
-        public async Task SpeechGeneration_Stream_ParsesEveryEventType()
-        {
-            string sse = string.Join("\n",
-                "event: start",
-                """data: {"type":"start","instance_id":"11111111-1111-1111-1111-111111111111","model":"tts-1","mime_type":"audio/mpeg"}""",
-                "",
-                "event: audio",
-                $$"""data: {"type":"audio","index":0,"data":"{{Convert.ToBase64String(new byte[] { 1, 2, 3 })}}"}""",
-                "",
-                """data: {"type":"ping"}""",
-                "",
-                """data: {"type":"something_new","foo":1}""",
-                "",
-                "event: stop",
-                """data: {"type":"stop","instance_id":"11111111-1111-1111-1111-111111111111","audio_url":"https://files/a.mp3","usage":{"inputUnit":"characters","input":5},"cost":{"amount":0.1,"currency":"USD"}}""",
-                "");
-            CapturingHandler handler = new(sse, "text/event-stream");
-
-            List<StreamingSpeechGenerationMessage> messages = new();
-            await foreach (StreamingSpeechGenerationMessage message in CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq { ModelCode = "tts-1", Vendor = "OpenAI", Text = "Hello" }))
-                messages.Add(message);
-
-            AssertPost(handler, "/api/v2/audio/generate");
-            Assert.True(handler.JsonBody!.Value.GetProperty("stream").GetBoolean());
-
-            Assert.Collection(messages,
-                m => Assert.Equal("audio/mpeg", Assert.IsType<StreamingSpeechGenerationMessageStart>(m).MimeType),
-                m => Assert.Equal(new byte[] { 1, 2, 3 }, Assert.IsType<StreamingSpeechGenerationMessageAudio>(m).GetAudioBytes()),
-                m => Assert.IsType<StreamingSpeechGenerationMessagePing>(m),
-                m => Assert.Equal("something_new", Assert.IsType<StreamingSpeechGenerationMessageUnsupported>(m).OriginalType),
-                m =>
-                {
-                    StreamingSpeechGenerationMessageStop stop = Assert.IsType<StreamingSpeechGenerationMessageStop>(m);
-                    Assert.Equal("https://files/a.mp3", stop.AudioUrl);
-                    Assert.Equal("characters", stop.Usage!.InputUnit);
-                    Assert.Equal(0.1, stop.Cost!.Amount);
-                });
-        }
-
-        [Fact]
-        public async Task SpeechGeneration_Stream_ThrowsSerenityApiException_WhenRejectedBeforeStreaming()
-        {
-            CapturingHandler handler = new("""{"message":"Validation failed"}""", statusCode: HttpStatusCode.BadRequest);
-
-            await Assert.ThrowsAsync<SerenityApiException>(async () =>
-            {
-                await foreach (StreamingSpeechGenerationMessage _ in CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq { Text = "Hello" }))
-                {
-                }
-            });
-        }
-
-        [Fact]
-        public void SpeechGeneration_Stream_ValidatesEagerly()
-        {
-            CapturingHandler handler = new("{}");
-
-            Assert.Throws<ArgumentNullException>(() => CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq()));
-            Assert.Equal(0, handler.RequestCount);
-        }
-        #endregion
-
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -507,7 +417,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetEmbeddingClient());
             Assert.Throws<ArgumentNullException>(() => client.GetImageGenerationClient());
             Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
-            Assert.Throws<ArgumentNullException>(() => client.GetSpeechGenerationClient());
         }
 
         [Fact]
@@ -527,7 +436,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.NotNull(provider.GetRequiredService<IEmbeddingClient>());
             Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
             Assert.NotNull(provider.GetRequiredService<IOcrClient>());
-            Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 

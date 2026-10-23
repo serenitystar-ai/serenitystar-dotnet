@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace SerenityStar.Models.AIServices
 {
     /// <summary>
@@ -11,8 +9,6 @@ namespace SerenityStar.Models.AIServices
         /// <summary>
         /// The unit of the input quantity (e.g. "tokens", "characters").
         /// </summary>
-        // Explicit names: the API fixes these names even in snake_case payloads (speech generation stream).
-        [JsonPropertyName("inputUnit")]
         public string? InputUnit { get; set; }
 
         /// <summary>
@@ -23,7 +19,6 @@ namespace SerenityStar.Models.AIServices
         /// <summary>
         /// The unit of the output quantity (e.g. "tokens", "images").
         /// </summary>
-        [JsonPropertyName("outputUnit")]
         public string? OutputUnit { get; set; }
 
         /// <summary>

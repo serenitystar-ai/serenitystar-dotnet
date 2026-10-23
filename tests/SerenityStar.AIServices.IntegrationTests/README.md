@@ -9,7 +9,7 @@ This project has two kinds of tests:
 
 Create an `appsettings.Development.json` file in this directory (it is git-ignored) and set every value marked `replace-me` in `appsettings.json`. Empty values and `replace-me` are treated as not configured; a test that needs a missing value fails with a message naming the setting.
 
-Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the services that support it: decisions, OCR and speech generation. Both values must be set together. The vendor is the name of a Serenity Star vendor, e.g. `OpenAI`, `Anthropic`, `Google` or `ElevenLabs`. Embeddings and image generation only accept a model id (`*ModelId`).
+Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the services that support it: decisions and OCR. Both values must be set together. The vendor is the name of a Serenity Star vendor, e.g. `OpenAI`, `Anthropic`, `Google` or `Mistral`. Embeddings and image generation only accept a model id (`*ModelId`).
 
 ```json
 {
@@ -20,9 +20,7 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
     "ImageFilePath": "C:\test-files\image.png",
     "ImageGenerationWithSourceImagesModelId": "00000000-0000-0000-0000-000000000000",
     "OcrFilePath": "C:\test-files\document.pdf",
-    "OcrUrl": "https://example.com/document.pdf",
-    "SpeechGenerationModelCode": "tts-1",
-    "SpeechGenerationVendor": "OpenAI"
+    "OcrUrl": "https://example.com/document.pdf"
   }
 }
 ```
@@ -41,9 +39,6 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
 | `OcrModelCode` | No | Code of an OCR model. Uses the default model when empty. |
 | `OcrUrl` | Yes | Public http(s) URL of a document with text for OCR. |
 | `OcrVendor` | No | Vendor of the OCR model. Required when `OcrModelCode` is set. |
-| `SpeechGenerationModelCode` | Yes | Code of a speech generation (text-to-speech) model. |
-| `SpeechGenerationVendor` | Yes | Vendor of the speech generation model. |
-| `SpeechGenerationVoice` | No | Voice name. Uses the vendor's default voice when empty. |
 
 Settings can also be provided as environment variables, e.g. `SerenityStar__ApiKey`.
 
