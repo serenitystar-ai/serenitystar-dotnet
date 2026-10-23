@@ -1,6 +1,6 @@
 # SubgenAI.SerenityStar.AIServices
 
-Serenity Star AI services for .NET: transcription, speech, image generation, vision, OCR, embeddings, anonymizer and decisions.
+Serenity Star AI services for .NET: anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision.
 
 This package depends only on `SubgenAI.SerenityStar.Core`, so you don't need the agents package (`SubgenAI.SerenityStar.SDK`). All Serenity Star packages are published together and must be used with the same version.
 
@@ -31,14 +31,14 @@ TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudi
 
 | Service | Interface | Entry point |
 | --- | --- | --- |
-| Transcription | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
-| Speech generation (text-to-speech) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
-| Image generation | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
-| Vision | `IVisionClient` | `client.GetVisionClient()` |
-| OCR | `IOcrClient` | `client.GetOcrClient()` |
-| Embeddings | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
 | Anonymizer | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
 | Decisions | `IDecisionClient` | `client.GetDecisionClient()` |
+| Embeddings | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
+| Image generation | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
+| OCR | `IOcrClient` | `client.GetOcrClient()` |
+| Speech generation (text-to-speech) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
+| Transcription | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
+| Vision | `IVisionClient` | `client.GetVisionClient()` |
 
 ## Dependency injection
 

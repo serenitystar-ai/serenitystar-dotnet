@@ -17,7 +17,7 @@ namespace SerenityStar.Models.ImageGeneration
         public Guid? ModelId { get; set; }
 
         /// <summary>
-        /// The source images, in the order the prompt refers to them. At least one is required.
+        /// The source images, in the order the prompt refers to them. At least one and at most 16 (models may accept fewer).
         /// Supported formats: jpg, jpeg, png, gif, webp. Maximum size per file: 20 MB.
         /// The source images are not stored.
         /// </summary>

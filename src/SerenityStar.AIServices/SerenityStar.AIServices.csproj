@@ -3,9 +3,9 @@
     <PackageId>SubgenAI.SerenityStar.AIServices</PackageId>
     <AssemblyName>SerenityStar.AIServices</AssemblyName>
     <RootNamespace>SerenityStar</RootNamespace>
-    <Description>Serenity Star AI services for .NET: transcription, speech, image generation, vision, OCR, embeddings, anonymizer and decisions. Does not require the agents package.</Description>
+    <Description>Serenity Star AI services for .NET: anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision. Does not require the agents package.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>ai;sdk;serenity;serenitystar;transcription;speech;tts;image-generation;vision;ocr;embeddings;anonymizer</PackageTags>
+    <PackageTags>ai;sdk;serenity;serenitystar;anonymizer;decisions;embeddings;image-generation;ocr;speech;transcription;tts;vision</PackageTags>
     <PackageReleaseNotes>
       Version 3.0.0-beta2 - AI Services Package Release
 
@@ -13,15 +13,19 @@
       - New standalone package for Serenity Star AI services. It depends only on SubgenAI.SerenityStar.Core,
         so the agents package (SubgenAI.SerenityStar.SDK) is not required.
       - One interface per AI service, obtained from SerenityClient:
-        * ITranscriptionClient - client.GetTranscriptionClient()
-        * ISpeechGenerationClient - client.GetSpeechGenerationClient()
-        * IImageGenerationClient - client.GetImageGenerationClient()
-        * IVisionClient - client.GetVisionClient()
-        * IOcrClient - client.GetOcrClient()
-        * IEmbeddingClient - client.GetEmbeddingClient()
         * IAnonymizerClient - client.GetAnonymizerClient()
         * IDecisionClient - client.GetDecisionClient()
+        * IEmbeddingClient - client.GetEmbeddingClient()
+        * IImageGenerationClient - client.GetImageGenerationClient()
+        * IOcrClient - client.GetOcrClient()
+        * ISpeechGenerationClient - client.GetSpeechGenerationClient()
+        * ITranscriptionClient - client.GetTranscriptionClient()
+        * IVisionClient - client.GetVisionClient()
       - Dependency injection: services.AddSerenityStar(apiKey).AddSerenityStarAIServices() registers every interface.
+      - Decisions accept a text or an ordered list of messages, function calls and function call outputs (e.g. an
+        agent trace) as input, including images: DecisionInput.FromItems(...).
+      - Image generation from source images (up to 16), uploaded directly (GenerateWithSourceImagesAsync) or by
+        file id (GenerateByFileIdAsync).
 
       BREAKING CHANGES:
       - Replaces client.AIServices.Transcription (previously in SubgenAI.SerenityStar.SDK):

@@ -27,9 +27,11 @@ namespace SerenityStar.Models.Decisions
         public string? Vendor { get; set; }
 
         /// <summary>
-        /// The input to evaluate.
+        /// What the questions are evaluated against: a text (a string converts implicitly), or an ordered list of
+        /// messages, function calls and function call outputs, such as an agent trace, created with
+        /// <see cref="DecisionInput.FromItems"/>. User messages can include images.
         /// </summary>
-        public string Input { get; set; } = null!;
+        public DecisionInput Input { get; set; } = null!;
 
         /// <summary>
         /// The questions to answer about the input. At least one is required and names must be unique.
@@ -49,12 +51,15 @@ namespace SerenityStar.Models.Decisions
         /// <summary>
         /// Validates the request parameters.
         /// </summary>
-        /// <exception cref="ArgumentNullException">Thrown when Input is null or empty.</exception>
-        /// <exception cref="ArgumentException">Thrown when no questions are provided or any is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when Input is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when Input is empty or contains null items, or no questions are provided or any is null.</exception>
         public void Validate()
         {
-            if (string.IsNullOrEmpty(Input))
+            if (Input is null)
                 throw new ArgumentNullException(nameof(Input), "Input is required for a decision.");
+
+            Input.Validate();
+
             if (Questions is null || Questions.Count == 0 || Questions.Contains(null!))
                 throw new ArgumentException("At least one non-null question is required for a decision.", nameof(Questions));
         }
