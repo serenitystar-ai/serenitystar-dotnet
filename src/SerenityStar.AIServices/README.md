@@ -1,6 +1,6 @@
 # SubgenAI.SerenityStar.AIServices
 
-Serenity Star AI services for .NET: anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision.
+Serenity Star AI services for .NET: anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription.
 
 This package depends only on `SubgenAI.SerenityStar.Core`, so you don't need the agents package (`SubgenAI.SerenityStar.SDK`). All Serenity Star packages are published together and must be used with the same version.
 
@@ -36,7 +36,6 @@ AnonymizerResult result = await anonymizer.ObfuscateAsync(new AnonymizerReq
 | OCR | `IOcrClient` | `client.GetOcrClient()` |
 | Speech generation (text-to-speech) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
 | Transcription | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
-| Vision | `IVisionClient` | `client.GetVisionClient()` |
 
 ## Dependency injection
 

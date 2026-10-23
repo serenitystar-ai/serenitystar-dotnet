@@ -13,7 +13,6 @@ using SerenityStar.Models.ImageGeneration;
 using SerenityStar.Models.Ocr;
 using SerenityStar.Models.SpeechGeneration;
 using SerenityStar.Models.Transcription;
-using SerenityStar.Models.Vision;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -532,46 +531,6 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
-        #region Vision
-        [Fact]
-        public async Task Vision_Analyze_SendsMultipartAndParsesResult()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","response":"A dog","tokenUsage":{"promptTokens":10,"completionTokens":2,"totalTokens":12},"cost":{"prompt":0.1,"completion":0.1,"total":0.2,"currency":"USD"}}""");
-
-            VisionResult result = await CreateClient(handler).GetVisionClient().AnalyzeAsync(new AnalyzeImageReq
-            {
-                FileStream = FileStreamOf("img"),
-                FileName = "photo.JPG",
-                ModelCode = "gpt-4o",
-                Vendor = "OpenAI",
-                Prompt = "Describe"
-            });
-
-            AssertPost(handler, "/api/v2/image/vision");
-            Assert.Contains(handler.FormParts, p => p.Name == "File" && p.FileName == "photo.JPG" && p.MediaType == "image/jpeg");
-            Assert.Equal("gpt-4o", handler.FormValue("ModelCode"));
-            Assert.Equal("OpenAI", handler.FormValue("Vendor"));
-            Assert.Equal("Describe", handler.FormValue("Prompt"));
-            Assert.DoesNotContain(handler.FormParts, p => p.Name == "AIModelId");
-
-            Assert.Equal("A dog", result.Response);
-            Assert.Equal(12, result.TokenUsage!.TotalTokens);
-            Assert.Equal(0.2, result.Cost!.Total);
-        }
-
-        [Fact]
-        public async Task Vision_AnalyzeByFileId_SendsJson()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","response":"ok"}""");
-            Guid fileId = Guid.NewGuid();
-
-            await CreateClient(handler).GetVisionClient().AnalyzeByFileIdAsync(new AnalyzeImageByFileIdReq { FileId = fileId });
-
-            AssertPost(handler, "/api/v2/image/vision/file");
-            Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
-        }
-        #endregion
-
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -597,7 +556,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
             Assert.Throws<ArgumentNullException>(() => client.GetSpeechGenerationClient());
             Assert.Throws<ArgumentNullException>(() => client.GetTranscriptionClient());
-            Assert.Throws<ArgumentNullException>(() => client.GetVisionClient());
         }
 
         [Fact]
@@ -619,7 +577,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.NotNull(provider.GetRequiredService<IOcrClient>());
             Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
             Assert.NotNull(provider.GetRequiredService<ITranscriptionClient>());
-            Assert.NotNull(provider.GetRequiredService<IVisionClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 

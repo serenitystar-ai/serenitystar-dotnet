@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -29,7 +29,6 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
   - [OCR](#ocr)
   - [Speech Generation](#speech-generation)
   - [Transcription](#transcription)
-  - [Vision](#vision)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -41,7 +40,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1271,7 +1270,6 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
 | [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
 | [Transcription](#transcription) | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
-| [Vision](#vision) | `IVisionClient` | `client.GetVisionClient()` |
 
 Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
 
@@ -1543,33 +1541,6 @@ Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
 TranscribeResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
 {
     FileId = Guid.Parse("uploaded-file-id")
-});
-```
-
-### Vision
-
-Analyze images. Supported formats: jpg, jpeg, png, gif, webp. Maximum file size: 20 MB. The model is optional.
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Models.Vision;
-
-IVisionClient vision = client.GetVisionClient();
-
-using FileStream image = File.OpenRead("receipt.png");
-VisionResult result = await vision.AnalyzeAsync(new AnalyzeImageReq
-{
-    FileStream = image,
-    FileName = "receipt.png",
-    Prompt = "What is the total amount of this receipt?"
-});
-Console.WriteLine(result.Response);
-
-// Or analyze a file previously uploaded to Serenity Star
-VisionResult byId = await vision.AnalyzeByFileIdAsync(new AnalyzeImageByFileIdReq
-{
-    FileId = Guid.Parse("uploaded-file-id"),
-    Prompt = "Describe this image"
 });
 ```
 
