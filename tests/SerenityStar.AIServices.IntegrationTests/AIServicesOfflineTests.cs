@@ -8,7 +8,6 @@ using SerenityStar.Extensions;
 using SerenityStar.Models.AIServices;
 using SerenityStar.Models.Anonymizer;
 using SerenityStar.Models.Decisions;
-using SerenityStar.Models.Embeddings;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -231,22 +230,6 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
-        #region Embeddings
-        [Fact]
-        public async Task Embeddings_Generate_SendsContentAndParsesVectors()
-        {
-            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3}}""");
-
-            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { Content = { "hello" } });
-
-            AssertPost(handler, "/api/v2/embeddings/generate");
-            Assert.Equal("hello", handler.JsonBody!.Value.GetProperty("content")[0].GetString());
-            Assert.Equal(new[] { 0.1f, -0.2f, 0.3f }, result.Data[0].Embedding);
-            Assert.Equal(3, result.TokenUsage!.TotalTokens);
-            Assert.Equal(0.001, result.Cost!.Total);
-        }
-        #endregion
-
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -267,7 +250,6 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             Assert.Throws<ArgumentNullException>(() => client.GetAnonymizerClient());
             Assert.Throws<ArgumentNullException>(() => client.GetDecisionClient());
-            Assert.Throws<ArgumentNullException>(() => client.GetEmbeddingClient());
         }
 
         [Fact]
@@ -284,7 +266,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             using ServiceProvider provider = services.BuildServiceProvider();
 
             Assert.NotNull(provider.GetRequiredService<IDecisionClient>());
-            Assert.NotNull(provider.GetRequiredService<IEmbeddingClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 
