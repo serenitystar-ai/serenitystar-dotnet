@@ -3,9 +3,9 @@
     <PackageId>SubgenAI.SerenityStar.AIServices</PackageId>
     <AssemblyName>SerenityStar.AIServices</AssemblyName>
     <RootNamespace>SerenityStar</RootNamespace>
-    <Description>Serenity Star AI services for .NET: anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription. Does not require the agents package.</Description>
+    <Description>Serenity Star AI services for .NET: anonymizer, decisions, embeddings, image generation, OCR and speech generation. Does not require the agents package.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>ai;sdk;serenity;serenitystar;anonymizer;decisions;embeddings;image-generation;ocr;speech;transcription;tts</PackageTags>
+    <PackageTags>ai;sdk;serenity;serenitystar;anonymizer;decisions;embeddings;image-generation;ocr;speech;tts</PackageTags>
     <PackageReleaseNotes>
       Version 3.0.0-beta2 - AI Services Package Release
 
@@ -19,16 +19,11 @@
         * IImageGenerationClient - client.GetImageGenerationClient()
         * IOcrClient - client.GetOcrClient()
         * ISpeechGenerationClient - client.GetSpeechGenerationClient()
-        * ITranscriptionClient - client.GetTranscriptionClient()
       - Dependency injection: services.AddSerenityStar(apiKey).AddSerenityStarAIServices() registers every interface.
       - Decisions accept a text or an ordered list of messages, function calls and function call outputs (e.g. an
         agent trace) as input, including images: DecisionInput.FromItems(...).
       - Image generation from source images (up to 16), uploaded directly (GenerateWithSourceImagesAsync) or by
         file id (GenerateByFileIdAsync).
-
-      BREAKING CHANGES:
-      - Replaces client.AIServices.Transcription (previously in SubgenAI.SerenityStar.SDK):
-        use client.GetTranscriptionClient().TranscribeAsync(...). Request and result models are unchanged.
     </PackageReleaseNotes>
   </PropertyGroup>
 

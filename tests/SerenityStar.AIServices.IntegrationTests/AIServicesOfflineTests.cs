@@ -12,7 +12,6 @@ using SerenityStar.Models.Embeddings;
 using SerenityStar.Models.ImageGeneration;
 using SerenityStar.Models.Ocr;
 using SerenityStar.Models.SpeechGeneration;
-using SerenityStar.Models.Transcription;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -485,52 +484,6 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
-        #region Transcription
-        [Fact]
-        public async Task Transcription_Transcribe_SendsMultipartAndParsesResult()
-        {
-            CapturingHandler handler = new(
-                """{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hello","metadata":{"language":"en","duration":"00:00:05"},"usage":{"inputUnit":"seconds","input":5},"cost":{"prompt":0.1,"completion":0.2,"total":0.3,"currency":"USD"}}""");
-            Guid modelId = Guid.NewGuid();
-
-            TranscribeResult result = await CreateClient(handler).GetTranscriptionClient().TranscribeAsync(new TranscribeAudioReq
-            {
-                FileStream = FileStreamOf("audio"),
-                FileName = "meeting.mp3",
-                ModelId = modelId,
-                Prompt = "context",
-                Channel = "web"
-            });
-
-            AssertPost(handler, "/api/v2/audio/transcribe");
-            Assert.Equal("multipart/form-data", handler.ContentMediaType);
-            Assert.Contains(handler.FormParts, p => p.Name == "File" && p.FileName == "meeting.mp3" && p.MediaType == "audio/mpeg");
-            Assert.Equal(modelId.ToString(), handler.FormValue("ModelId"));
-            Assert.Equal("context", handler.FormValue("Prompt"));
-            Assert.Equal("web", handler.FormValue("Channel"));
-            Assert.DoesNotContain(handler.FormParts, p => p.Name == "UserIdentifier");
-
-            Assert.Equal("hello", result.Transcript);
-            Assert.Equal(TimeSpan.FromSeconds(5), result.Metadata!.Duration);
-            Assert.Equal("seconds", result.Usage!.InputUnit);
-            Assert.Equal(0.3, result.Cost!.Total);
-        }
-
-        [Fact]
-        public async Task Transcription_TranscribeByFileId_SendsJson()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hi"}""");
-            Guid fileId = Guid.NewGuid();
-
-            await CreateClient(handler).GetTranscriptionClient().TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq { FileId = fileId });
-
-            AssertPost(handler, "/api/v2/audio/transcribe/file");
-            Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
-            // Nulls are omitted so the server applies its defaults.
-            Assert.False(handler.JsonBody.Value.TryGetProperty("modelId", out _));
-        }
-        #endregion
-
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -555,7 +508,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetImageGenerationClient());
             Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
             Assert.Throws<ArgumentNullException>(() => client.GetSpeechGenerationClient());
-            Assert.Throws<ArgumentNullException>(() => client.GetTranscriptionClient());
         }
 
         [Fact]
@@ -576,7 +528,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
             Assert.NotNull(provider.GetRequiredService<IOcrClient>());
             Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
-            Assert.NotNull(provider.GetRequiredService<ITranscriptionClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 

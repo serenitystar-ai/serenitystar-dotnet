@@ -22,8 +22,6 @@ public class TestFixture : IDisposable
     public IServiceProvider ServiceProvider { get; }
     public IConfiguration Configuration { get; }
     public bool HasValidApiKey { get; }
-    public Guid? TranscriptionModelId { get; }
-    public string? AudioFilePath { get; }
 
     public TestFixture()
     {
@@ -38,8 +36,6 @@ public class TestFixture : IDisposable
 
         string? apiKey = GetSetting("ApiKey");
 
-        TranscriptionModelId = GetOptionalGuid("TranscriptionModelId");
-        AudioFilePath = GetSetting("AudioFilePath");
 
         // Check if we have a valid API key (not null, empty or a placeholder)
         HasValidApiKey = apiKey != null && apiKey != "your-api-key-here";

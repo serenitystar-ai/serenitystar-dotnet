@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation, OCR and speech generation.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -28,7 +28,6 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
   - [Image Generation](#image-generation)
   - [OCR](#ocr)
   - [Speech Generation](#speech-generation)
-  - [Transcription](#transcription)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -40,7 +39,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR and speech generation |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1269,7 +1268,6 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
 | [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
 | [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
-| [Transcription](#transcription) | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
 
 Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
 
@@ -1508,42 +1506,6 @@ await foreach (StreamingSpeechGenerationMessage message in speech.StreamAsync(re
 }
 ```
 
-### Transcription
-
-Convert audio and video files into text. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
-
-> To send audio to an agent instead, see [Audio Input for Agents](#audio-input-for-agents).
-
-```csharp
-using SerenityStar.AIServices;
-using SerenityStar.Client;
-using SerenityStar.Models.Transcription;
-
-SerenityClient client = SerenityClient.Create("your-api-key");
-ITranscriptionClient transcription = client.GetTranscriptionClient();
-
-using FileStream audioFile = File.OpenRead("interview.wav");
-TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
-{
-    FileStream = audioFile,
-    FileName = "interview.wav",
-    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
-    Prompt = "Interview about artificial intelligence and machine learning", // Optional: guide terminology
-    UserIdentifier = "user-123",             // Optional: for tracking
-    Channel = "web-app"                      // Optional: execution channel
-});
-
-Console.WriteLine(result.Transcript);
-Console.WriteLine($"Language: {result.Metadata?.Language}, duration: {result.Metadata?.Duration}");
-Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
-
-// Or transcribe a file previously uploaded to Serenity Star
-TranscribeResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
-{
-    FileId = Guid.Parse("uploaded-file-id")
-});
-```
-
 ## Error handling
 
 When the API returns an unsuccessful HTTP response, the SDK throws a `SerenityApiException`. It derives from `HttpRequestException`, so existing `catch (HttpRequestException)` handlers keep working, and it also exposes the response details:
@@ -1576,7 +1538,6 @@ Namespaces and models are unchanged, so most code only needs the new entry point
 | Before | After |
 | --- | --- |
 | `client.Agents.Activities.Create(...)` | `client.GetAgents().Activities.Create(...)` |
-| `client.AIServices.Transcription.TranscribeAsync(...)` | `client.GetTranscriptionClient().TranscribeAsync(...)` (install `SubgenAI.SerenityStar.AIServices`) |
 | Inject `ISerenityClient` | Inject `SerenityClient`, or `AgentsScope` / an AI service interface after `AddSerenityStarAgents()` / `AddSerenityStarAIServices()` |
 | `services.AddHttpClient<ISerenityClient, SerenityClient>()` | `services.AddHttpClient<SerenityClient>()` |
 
