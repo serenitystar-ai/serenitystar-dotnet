@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Extensions;
 using Xunit;
@@ -77,7 +78,7 @@ namespace SerenityStar.IntegrationTests
                 .WithHttpClient(customHttpClient)
                 .Build();
 
-            await client.Agents.Activities.Create("marketing-campaign").ExecuteAsync();
+            await client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync();
 
             // The API key is attached to the request...
             Assert.Equal(new[] { "test-key" }, handler.LastApiKeyValues);
@@ -103,7 +104,7 @@ namespace SerenityStar.IntegrationTests
                 .WithHttpClient(customHttpClient)
                 .Build();
 
-            await client.Agents.Activities.Create("marketing-campaign").ExecuteAsync();
+            await client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync();
 
             // The caller's default headers ride along on the outgoing request...
             Assert.Equal(new[] { "custom-value" }, handler.LastRequestHeaders!.GetValues("X-Custom-Header"));
@@ -128,7 +129,7 @@ namespace SerenityStar.IntegrationTests
                 .WithHttpClient(customHttpClient)
                 .Build();
 
-            await client.Agents.Activities.Create("marketing-campaign").ExecuteAsync();
+            await client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync();
 
             Assert.Equal("https://custom.example.com/api/v2/agent/marketing-campaign/execute", handler.LastRequestUri!.AbsoluteUri);
         }
@@ -153,13 +154,13 @@ namespace SerenityStar.IntegrationTests
 
             // Each request carries exactly its own client's key - assert right after each send,
             // before the next request overwrites the captured values.
-            await first.Agents.Activities.Create("agent-a").ExecuteAsync();
+            await first.GetAgents().Activities.Create("agent-a").ExecuteAsync();
             Assert.Equal(new[] { "key-1" }, handler.LastApiKeyValues);
 
-            await second.Agents.Activities.Create("agent-b").ExecuteAsync();
+            await second.GetAgents().Activities.Create("agent-b").ExecuteAsync();
             Assert.Equal(new[] { "key-2" }, handler.LastApiKeyValues);
 
-            await first.Agents.Activities.Create("agent-a").ExecuteAsync();
+            await first.GetAgents().Activities.Create("agent-a").ExecuteAsync();
             Assert.Equal(new[] { "key-1" }, handler.LastApiKeyValues);
 
             Assert.Equal(3, handler.RequestCount);
@@ -174,19 +175,40 @@ namespace SerenityStar.IntegrationTests
             ServiceCollection services = new ServiceCollection();
             services.AddSerenityStar("di-key");
             // Route the factory-managed HttpClient through our capturing handler.
-            services.AddHttpClient<ISerenityClient, SerenityClient>()
+            services.AddHttpClient<SerenityClient>()
                 .ConfigurePrimaryHttpMessageHandler(() => handler);
 
             using ServiceProvider provider = services.BuildServiceProvider();
-            ISerenityClient client = provider.GetRequiredService<ISerenityClient>();
+            SerenityClient client = provider.GetRequiredService<SerenityClient>();
 
             // Execute twice: IHttpClientFactory pools/reuses the handler, which must not throw.
-            await client.Agents.Activities.Create("marketing-campaign").ExecuteAsync();
-            await client.Agents.Activities.Create("marketing-campaign").ExecuteAsync();
+            await client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync();
+            await client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync();
 
             Assert.Equal(2, handler.RequestCount);
             Assert.Equal(new[] { "di-key" }, handler.LastApiKeyValues);
             Assert.Equal($"{BaseUrl}/api/v2/agent/marketing-campaign/execute", handler.LastRequestUri!.AbsoluteUri);
+        }
+
+        // Approach 5: AgentsScope injected directly after AddSerenityStarAgents.
+        [Fact]
+        public async Task DependencyInjection_AddSerenityStarAgents_InjectsAgentsScope()
+        {
+            CapturingHandler handler = new CapturingHandler();
+
+            ServiceCollection services = new ServiceCollection();
+            services.AddSerenityStar("di-key", baseUrl: "https://custom.example.com")
+                    .AddSerenityStarAgents();
+            services.AddHttpClient<SerenityClient>()
+                .ConfigurePrimaryHttpMessageHandler(() => handler);
+
+            using ServiceProvider provider = services.BuildServiceProvider();
+            AgentsScope agents = provider.GetRequiredService<AgentsScope>();
+
+            await agents.Activities.Create("marketing-campaign").ExecuteAsync();
+
+            Assert.Equal(new[] { "di-key" }, handler.LastApiKeyValues);
+            Assert.Equal("https://custom.example.com/api/v2/agent/marketing-campaign/execute", handler.LastRequestUri!.AbsoluteUri);
         }
     }
 }

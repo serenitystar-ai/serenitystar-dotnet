@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
@@ -11,12 +12,12 @@ namespace SerenityStar.IntegrationTests;
 public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
 
     public ChatCompletionIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             Message = "Hello, how are you?"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -54,7 +55,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -75,7 +76,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             UserIdentifier = "test-user-123"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -101,7 +102,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -121,7 +122,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             Message = "Hello"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, 2, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, 2, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -149,7 +150,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             UserIdentifier = "learner-001"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -169,7 +170,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             Message = "Tell me a short story"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -197,7 +198,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -219,7 +220,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             Message = "What is cloud computing?"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -254,7 +255,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
                 Message = question
             };
 
-            ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+            ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
             AgentResult result = await chatCompletion.ExecuteAsync();
 
             Assert.NotNull(result);
@@ -292,7 +293,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, 2, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, 2, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -317,7 +318,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -356,7 +357,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             AudioFileName = "invalid.txt"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
@@ -375,7 +376,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             AudioFileName = Path.GetFileName(audioPath)
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();
@@ -405,7 +406,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
             UserIdentifier = "audio-test-user"
         };
 
-        ChatCompletion chatCompletion = _client.Agents.ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
+        ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act
         AgentResult result = await chatCompletion.ExecuteAsync();

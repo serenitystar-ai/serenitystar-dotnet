@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as transcription, speech, image generation, vision, OCR, embeddings, anonymizer and decisions.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -19,17 +19,45 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Activities](#activities)
 - [AI Proxy](#ai-proxy)
 - [Chat Completions](#chat-completions)
-- [Transcription](#transcription)
 - [Audio Input for Agents](#audio-input-for-agents)
 - [Volatile Knowledge](#volatile-knowledge)
+- [AI Services](#ai-services)
+  - [Transcription](#transcription)
+  - [Speech Generation](#speech-generation)
+  - [Image Generation](#image-generation)
+  - [Vision](#vision)
+  - [OCR](#ocr)
+  - [Embeddings](#embeddings)
+  - [Anonymizer](#anonymizer)
+  - [Decisions](#decisions)
 - [Error handling](#error-handling)
+- [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
 
 ## 🚀 Installation
 
+The SDK is split into packages, so you only install what you use:
+
+| Package | Contents |
+| --- | --- |
+| `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
+| `SubgenAI.SerenityStar.AIServices` | AI services: transcription, speech, image generation, vision, OCR, embeddings, anonymizer and decisions |
+| `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
+
 ```bash
+# Agents
 dotnet add package SubgenAI.SerenityStar.SDK
+
+# AI services (does not require the agents package)
+dotnet add package SubgenAI.SerenityStar.AIServices
 ```
+
+> **Note:** All packages are published together and must be used with the same version. NuGet enforces it:
+> each package depends on the exact same version of `SubgenAI.SerenityStar.Core`.
+
+Every feature is obtained from a single `SerenityClient`: `client.GetAgents()` for agents and
+`client.Get<Service>Client()` (e.g. `client.GetTranscriptionClient()`) for each AI service. These methods are
+in the `SerenityStar.Client` namespace, next to `SerenityClient`.
 
 ## 🔧 Usage
 
@@ -42,7 +70,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create and execute an activity agent
-Activity activity = client.Agents.Activities.Create("marketing-campaign");
+Activity activity = client.GetAgents().Activities.Create("marketing-campaign");
 AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
@@ -60,7 +88,7 @@ SerenityClient client = new SerenityClientBuilder()
     .Build();
 
 // Create and execute an activity agent
-Activity activity = client.Agents.Activities.Create("marketing-campaign");
+Activity activity = client.GetAgents().Activities.Create("marketing-campaign");
 AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
@@ -81,7 +109,7 @@ SerenityClient client = new SerenityClientBuilder()
     .Build();
 
 // Create and execute an activity agent
-Activity activity = client.Agents.Activities.Create("marketing-campaign");
+Activity activity = client.GetAgents().Activities.Create("marketing-campaign");
 AgentResult response = await activity.ExecuteAsync();
 Console.WriteLine(response.Content);
 ```
@@ -96,7 +124,9 @@ Console.WriteLine(response.Content);
 ```csharp
 // In your startup/program.cs
 using SerenityStar.Extensions;
-services.AddSerenityStar("your-api-key");
+services.AddSerenityStar("your-api-key")   // Registers SerenityClient
+        .AddSerenityStarAgents()           // Optional: registers AgentsScope (SubgenAI.SerenityStar.SDK)
+        .AddSerenityStarAIServices();      // Optional: registers every AI service interface (SubgenAI.SerenityStar.AIServices)
 
 // With custom base URL and timeout
 services.AddSerenityStar(
@@ -106,20 +136,25 @@ services.AddSerenityStar(
 );
 
 // In your service/controller
+using SerenityStar.Agents;
 using SerenityStar.Agents.System;
+using SerenityStar.AIServices;
 
 public class YourService
 {
-    private readonly ISerenityClient _client;
+    private readonly AgentsScope _agents;
+    private readonly ITranscriptionClient _transcription;
 
-    public YourService(ISerenityClient client)
+    // Inject SerenityClient, AgentsScope or any AI service interface
+    public YourService(AgentsScope agents, ITranscriptionClient transcription)
     {
-        _client = client;
+        _agents = agents;
+        _transcription = transcription;
     }
 
     public async Task DoSomething()
     {
-        Activity activity = _client.Agents.Activities.Create("marketing-campaign");
+        Activity activity = _agents.Activities.Create("marketing-campaign");
         AgentResult response = await activity.ExecuteAsync();
         Console.WriteLine(response.Content);
     }
@@ -136,10 +171,10 @@ Assistants and Copilots are conversational agents that maintain context across m
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Using Assistants
-Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("chef-assistant");
 
 // Or using Copilots (same functionality)
-Conversation copilotConversation = client.Agents.Copilots.CreateConversation("chef-assistant");
+Conversation copilotConversation = client.GetAgents().Copilots.CreateConversation("chef-assistant");
 
 // First message - creates the conversation in Serenity Star automatically
 AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
@@ -157,13 +192,13 @@ Use this when you don't already have a Conversation instance in memory, for exam
 
 ```csharp
 // Resume a conversation using an existing conversation ID with Assistants
-Conversation existingConversation = client.Agents.Assistants.CreateConversation(
+Conversation existingConversation = client.GetAgents().Assistants.CreateConversation(
     "chef-assistant",
     conversationId: "existing-conversation-id"
 );
 
 // Or with Copilots
-Conversation existingCopilot = client.Agents.Copilots.CreateConversation(
+Conversation existingCopilot = client.GetAgents().Copilots.CreateConversation(
     "chef-assistant",
     conversationId: "existing-conversation-id"
 );
@@ -181,8 +216,8 @@ using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
 
 // Get basic agent information by code (works with both Assistants and Copilots)
-ConversationInfoResult agentInfo = await client.Agents.Assistants.GetInfoByCodeAsync("chef-assistant");
-// Or: ConversationInfoResult agentInfo = await client.Agents.Copilots.GetInfoByCodeAsync("chef-assistant");
+ConversationInfoResult agentInfo = await client.GetAgents().Assistants.GetInfoByCodeAsync("chef-assistant");
+// Or: ConversationInfoResult agentInfo = await client.GetAgents().Copilots.GetInfoByCodeAsync("chef-assistant");
 
 Console.WriteLine($"Initial Message: {agentInfo.Conversation.InitialMessage}"); // "Hello! I'm your personal chef assistant..."
 Console.WriteLine($"Starters: {string.Join(", ", agentInfo.Conversation.Starters)}"); // ["What's for dinner tonight?", "Help me plan a meal", ...]
@@ -195,7 +230,7 @@ Console.WriteLine($"Image ID: {agentInfo.Agent.ImageId}"); // Agent's profile im
 
 
 // Get information about an assistant agent conversation (advanced example with specific version)
-ConversationInfoResult agentInfoAdvanced = await client.Agents.Assistants.GetInfoByCodeAsync(
+ConversationInfoResult agentInfoAdvanced = await client.GetAgents().Assistants.GetInfoByCodeAsync(
     "chef-assistant",
     2, // Target specific version of the agent
     new AgentExecutionReq
@@ -226,7 +261,7 @@ using SerenityStar.Models.Conversation;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Get conversation by id (basic example)
-ConversationRes conversation = await client.Agents.Assistants.GetConversationByIdAsync(
+ConversationRes conversation = await client.GetAgents().Assistants.GetConversationByIdAsync(
     "chef-assistant",
     "conversation-id-here"
 );
@@ -240,7 +275,7 @@ foreach (ConversationMessage message in conversation.Messages)
     Console.WriteLine($"{message.Role}: {message.Content}");
 
 // Get conversation by id with executor task logs
-ConversationRes conversationWithLogs = await client.Agents.Assistants.GetConversationByIdAsync(
+ConversationRes conversationWithLogs = await client.GetAgents().Assistants.GetConversationByIdAsync(
     "chef-assistant",
     "conversation-id-here",
     new GetConversationOptions
@@ -263,7 +298,7 @@ using SerenityStar.Models.Streaming;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create a conversation with an assistant
-Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("chef-assistant");
 
 // Stream a message - get updates as they arrive
 await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Tell me a quick recipe"))
@@ -346,7 +381,7 @@ You can customize the streaming behaviour with execution options:
 
 ```csharp
 // Create conversation with specific version and options
-Conversation conversation = client.Agents.Assistants.CreateConversation(
+Conversation conversation = client.GetAgents().Assistants.CreateConversation(
     "chef-assistant",
     2, // Target specific version of the agent
     options: new AgentExecutionReq
@@ -384,7 +419,7 @@ using SerenityStar.Models.MessageFeedback;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create conversation with an assistant
-Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("chef-assistant");
 
 // Send a message
 AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
@@ -435,7 +470,7 @@ using SerenityStar.Models.MessageFeedback;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create conversation with an assistant
-Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("chef-assistant");
 
 // Send a message
 AgentResult response = await conversation.SendMessageAsync("I would like to get a recipe for parmesan chicken");
@@ -468,7 +503,7 @@ using SerenityStar.Models.MessageFeedback;
 SerenityClient client = SerenityClient.Create("your-audit-api-key");
 
 // Most recent feedback first (default page size is 20)
-MessageFeedbackPage page = await client.Agents.Assistants.GetMessageFeedbackAsync("chef-assistant");
+MessageFeedbackPage page = await client.GetAgents().Assistants.GetMessageFeedbackAsync("chef-assistant");
 
 Console.WriteLine($"{page.Total} feedback entries in total");
 
@@ -482,7 +517,7 @@ foreach (MessageFeedbackRes feedback in page.Items)
 Filter by date, page size and sort direction:
 
 ```csharp
-MessageFeedbackPage negativeLastWeek = await client.Agents.Assistants.GetMessageFeedbackAsync(
+MessageFeedbackPage negativeLastWeek = await client.GetAgents().Assistants.GetMessageFeedbackAsync(
     "chef-assistant",
     new GetMessageFeedbackReq
     {
@@ -497,7 +532,7 @@ MessageFeedbackPage negativeLastWeek = await client.Agents.Assistants.GetMessage
 The same operation is available on Copilots:
 
 ```csharp
-MessageFeedbackPage page = await client.Agents.Copilots.GetMessageFeedbackAsync("support-copilot");
+MessageFeedbackPage page = await client.GetAgents().Copilots.GetMessageFeedbackAsync("support-copilot");
 ```
 
 Notes:
@@ -520,7 +555,7 @@ using SerenityStar.Models.Execute;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create conversation with an assistant
-Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("chef-assistant");
 
 // Send a message that might require a connector
 AgentResult response = await conversation.SendMessageAsync("I need a summary of my latest meeting notes stored in google drive");
@@ -572,13 +607,13 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create and execute activity (basic example)
-Activity activity = client.Agents.Activities.Create("translator-activity");
+Activity activity = client.GetAgents().Activities.Create("translator-activity");
 AgentResult response = await activity.ExecuteAsync();
 
 Console.WriteLine(response.Content);
 
 // Create and execute activity (advanced example)
-Activity activityAdvanced = client.Agents.Activities.Create(
+Activity activityAdvanced = client.GetAgents().Activities.Create(
     "translator-activity",
     new AgentExecutionReq
     {
@@ -612,7 +647,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create an activity with options
-Activity activity = client.Agents.Activities.Create(
+Activity activity = client.GetAgents().Activities.Create(
     "translator-activity",
     new AgentExecutionReq
     {
@@ -677,7 +712,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create and execute a proxy agent
-Proxy proxy = client.Agents.AIProxy.Create(
+Proxy proxy = client.GetAgents().AIProxy.Create(
     "proxy-agent",
     new ProxyExecutionReq
     {
@@ -731,7 +766,7 @@ ProxyExecutionReq options = new()
     MaxTokens = 200
 };
 
-Proxy proxy = client.Agents.AIProxy.Create("openai-proxy", options);
+Proxy proxy = client.GetAgents().AIProxy.Create("openai-proxy", options);
 
 // Stream the response
 Console.WriteLine("Poem: ");
@@ -785,7 +820,7 @@ using SerenityStar.Agents.System;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-Proxy proxy = client.Agents.AIProxy.Create(
+Proxy proxy = client.GetAgents().AIProxy.Create(
     "proxy-agent",
     new ProxyExecutionReq
     {
@@ -841,7 +876,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create and execute chat completion (basic example)
-ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create("AgentCreator", new ChatCompletionReq
+ChatCompletion chatCompletion = client.GetAgents().ChatCompletions.Create("AgentCreator", new ChatCompletionReq
 {
     Message = "Hello!!!"
 });
@@ -852,7 +887,7 @@ Console.WriteLine(response.Content); // AI-generated response
 Console.WriteLine($"Completion Usage: {response.CompletionUsage?.TotalTokens}"); // { completion_tokens: 200, prompt_tokens: 30, total_tokens: 230 }
 
 // Create and execute chat completion (advanced example with specific version)
-ChatCompletion chatCompletionAdvanced = client.Agents.ChatCompletions.Create("Health-Coach", 2, new ChatCompletionReq
+ChatCompletion chatCompletionAdvanced = client.GetAgents().ChatCompletions.Create("Health-Coach", 2, new ChatCompletionReq
 {
     UserIdentifier = "user-123",
     Channel = "web",
@@ -887,7 +922,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create a chat completion for streaming
-ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create(
+ChatCompletion chatCompletion = client.GetAgents().ChatCompletions.Create(
     "assistant-chat",
     new ChatCompletionReq
     {
@@ -940,74 +975,6 @@ await foreach (StreamingAgentMessage message in chatCompletion.StreamAsync())
 }
 ```
 
-## Transcription
-
-Transcription allows you to convert audio and video files into text using AI-powered speech-to-text models. There are two ways to use transcription:
-
-1. **Direct AI Service**: Upload an audio file directly to get a transcription result.
-2. **Agent Audio Input**: Send an audio file stream to conversational or activity agents, which automatically upload, transcribe, and use the result as input.
-
-### Transcribe an audio file
-
-Upload an audio file directly for transcription. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
-
-```csharp
-using SerenityStar.Client;
-using SerenityStar.Models.Transcription;
-
-SerenityClient client = SerenityClient.Create("your-api-key");
-
-// Transcribe an audio file
-using FileStream audioFile = File.OpenRead("meeting-recording.mp3");
-TranscribeAudioReq request = new()
-{
-    FileStream = audioFile,
-    FileName = "meeting-recording.mp3"
-};
-
-TranscribeResult result = await client.AIServices.Transcription.TranscribeAsync(request);
-
-Console.WriteLine(result.Transcript);                       // "Hello everyone, welcome to the meeting..."
-Console.WriteLine($"Instance ID: {result.InstanceId}");
-
-if (result.Metadata != null)
-{
-    Console.WriteLine($"Language: {result.Metadata.Language}");  // "en"
-    Console.WriteLine($"Duration: {result.Metadata.Duration}"); // 00:05:23
-}
-
-if (result.TokenUsage != null)
-    Console.WriteLine($"Tokens: {result.TokenUsage.TotalTokens}");
-
-if (result.Cost != null)
-    Console.WriteLine($"Cost: {result.Cost.Total} {result.Cost.Currency}");
-```
-
-### Transcribe with options
-
-You can provide additional options to guide the transcription, specify a model, or track usage.
-
-```csharp
-using SerenityStar.Client;
-using SerenityStar.Models.Transcription;
-
-SerenityClient client = SerenityClient.Create("your-api-key");
-
-using FileStream audioFile = File.OpenRead("interview.wav");
-TranscribeAudioReq request = new()
-{
-    FileStream = audioFile,
-    FileName = "interview.wav",
-    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
-    Prompt = "Interview about artificial intelligence and machine learning", // Guide terminology
-    UserIdentifier = "user-123",             // For tracking
-    Channel = "web-app"                      // Execution channel
-};
-
-TranscribeResult result = await client.AIServices.Transcription.TranscribeAsync(request);
-Console.WriteLine(result.Transcript);
-```
-
 ## Audio Input for Agents
 
 Agents that have audio input support enabled can receive audio file streams. The SDK handles the file upload internally and passes the resulting file ID to the agent, which automatically transcribes the audio and uses the result as input.
@@ -1023,7 +990,7 @@ using SerenityStar.Agents.Conversational;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create a conversation with an audio-enabled agent
-Conversation conversation = client.Agents.Assistants.CreateConversation("voice-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("voice-assistant");
 
 // Send audio — uses the audio overload (separate from the text overload)
 using FileStream audioStream = File.OpenRead("recording.wav");
@@ -1044,7 +1011,7 @@ using SerenityStar.Agents.Conversational;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
 
-Conversation conversation = client.Agents.Assistants.CreateConversation("voice-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("voice-assistant");
 
 using FileStream audioStream = File.OpenRead("recording.wav");
 
@@ -1076,7 +1043,7 @@ SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Create an activity with audio input
 using FileStream audioStream = File.OpenRead("recording.wav");
-Activity activity = client.Agents.Activities.Create(
+Activity activity = client.GetAgents().Activities.Create(
     "audio-analyzer",
     new AgentExecutionReq
     {
@@ -1107,7 +1074,7 @@ using SerenityStar.Agents.System;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 using FileStream audioStream = File.OpenRead("recording.wav");
-ChatCompletion chatCompletion = client.Agents.ChatCompletions.Create(
+ChatCompletion chatCompletion = client.GetAgents().ChatCompletions.Create(
     "voice-chat",
     new ChatCompletionReq
     {
@@ -1134,7 +1101,7 @@ using SerenityStar.Models.VolatileKnowledge;
 SerenityClient client = SerenityClient.Create("your-api-key");
 
 // Step 1: Create a conversation
-Conversation conversation = client.Agents.Assistants.CreateConversation("chef-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("chef-assistant");
 
 // Step 2: Upload volatile knowledge to the conversation
 using FileStream fileStream = File.OpenRead("document.pdf");
@@ -1173,7 +1140,7 @@ else
 ### Upload Volatile Knowledge with Text Content
 
 ```csharp
-Conversation conversation = client.Agents.Assistants.CreateConversation("research-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("research-assistant");
 
 UploadVolatileKnowledgeReq uploadRequest = new()
 {
@@ -1187,7 +1154,7 @@ Console.WriteLine($"Uploaded knowledge ID: {knowledge.Id}, Status: {knowledge.St
 ### Upload with Custom Parameters
 
 ```csharp
-Conversation conversation = client.Agents.Assistants.CreateConversation("data-analyst");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("data-analyst");
 
 using FileStream fileStream = File.OpenRead("document.pdf");
 UploadVolatileKnowledgeReq uploadRequest = new()
@@ -1214,7 +1181,7 @@ if (knowledge.ExpirationDate.HasValue)
 using SerenityStar.Agents.System;
 
 // Create an activity
-Activity activity = client.Agents.Activities.Create("document-analyzer");
+Activity activity = client.GetAgents().Activities.Create("document-analyzer");
 
 // Upload volatile knowledge to the activity
 using FileStream fileStream = File.OpenRead("report.pdf");
@@ -1248,7 +1215,7 @@ if (response.Status == "success")
 You can upload multiple documents to the same conversation or activity. All uploaded documents will be included in the next message and then automatically cleared.
 
 ```csharp
-Conversation conversation = client.Agents.Assistants.CreateConversation("multi-doc-assistant");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("multi-doc-assistant");
 
 // Upload first document
 using (FileStream file1 = File.OpenRead("doc1.pdf"))
@@ -1285,6 +1252,302 @@ Console.WriteLine(result.Content);
 // Both documents are cleared after the message is sent
 ```
 
+## AI Services
+
+AI services are available in the `SubgenAI.SerenityStar.AIServices` package, which does not require the agents package:
+
+```bash
+dotnet add package SubgenAI.SerenityStar.AIServices
+```
+
+Each AI service has its own interface, obtained from `SerenityClient`. The interfaces live in the `SerenityStar.AIServices` namespace, so they can be injected (see [Using Dependency Injection](#using-dependency-injection)) and mocked in tests.
+
+| Service | Interface | Entry point |
+| --- | --- | --- |
+| [Transcription](#transcription) | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
+| [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
+| [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
+| [Vision](#vision) | `IVisionClient` | `client.GetVisionClient()` |
+| [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
+| [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
+| [Anonymizer](#anonymizer) | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
+| [Decisions](#decisions) | `IDecisionClient` | `client.GetDecisionClient()` |
+
+Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
+
+### Transcription
+
+Convert audio and video files into text. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
+
+> To send audio to an agent instead, see [Audio Input for Agents](#audio-input-for-agents).
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Client;
+using SerenityStar.Models.Transcription;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+ITranscriptionClient transcription = client.GetTranscriptionClient();
+
+using FileStream audioFile = File.OpenRead("interview.wav");
+TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
+{
+    FileStream = audioFile,
+    FileName = "interview.wav",
+    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
+    Prompt = "Interview about artificial intelligence and machine learning", // Optional: guide terminology
+    UserIdentifier = "user-123",             // Optional: for tracking
+    Channel = "web-app"                      // Optional: execution channel
+});
+
+Console.WriteLine(result.Transcript);
+Console.WriteLine($"Language: {result.Metadata?.Language}, duration: {result.Metadata?.Duration}");
+Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
+
+// Or transcribe a file previously uploaded to Serenity Star
+TranscribeResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
+{
+    FileId = Guid.Parse("uploaded-file-id")
+});
+```
+
+### Speech Generation
+
+Generate speech (text-to-speech) from text. A model is required: set `AIModelId`, or both `ModelCode` and `Vendor`.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.SpeechGeneration;
+
+ISpeechGenerationClient speech = client.GetSpeechGenerationClient();
+
+GenerateSpeechReq request = new()
+{
+    ModelCode = "tts-1",
+    Vendor = "OpenAI",
+    Text = "Welcome to Serenity Star!",
+    Voice = "alloy",   // Optional: vendor default voice when not set
+    Speed = 1.2f       // Optional
+};
+
+// Get a public URL to the generated audio
+SpeechGenerationResult result = await speech.GenerateAsync(request);
+Console.WriteLine(result.AudioUrl);
+
+// Or stream the audio in chunks as it is generated
+using FileStream output = File.Create("welcome.mp3");
+await foreach (StreamingSpeechGenerationMessage message in speech.StreamAsync(request))
+{
+    switch (message)
+    {
+        case StreamingSpeechGenerationMessageStart start:
+            Console.WriteLine($"Format: {start.MimeType}");
+            break;
+        case StreamingSpeechGenerationMessageAudio audio:
+            byte[] bytes = audio.GetAudioBytes();
+            await output.WriteAsync(bytes, 0, bytes.Length);
+            break;
+        case StreamingSpeechGenerationMessageStop stop:
+            Console.WriteLine($"Done: {stop.AudioUrl}");
+            break;
+        case StreamingSpeechGenerationMessageError error:
+            Console.WriteLine($"Error: {error.Message}");
+            break;
+    }
+}
+```
+
+### Image Generation
+
+Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats: jpg, jpeg, png, gif, webp. Maximum size per file: 20 MB. Only models that accept source images support them.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.AIServices;
+using SerenityStar.Models.ImageGeneration;
+
+IImageGenerationClient images = client.GetImageGenerationClient();
+
+ImageGenerationResult result = await images.GenerateAsync(new GenerateImageReq
+{
+    Prompt = "A watercolor painting of a lighthouse at sunset"
+});
+Console.WriteLine(result.ImageUrl);
+
+// Based on source images uploaded directly (the streams are disposed when the request completes)
+using FileStream photo = File.OpenRead("photo.png");
+ImageGenerationResult edited = await images.GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
+{
+    Prompt = "Make it look like a night scene",
+    Files = { new AIServiceFile { FileStream = photo, FileName = "photo.png" } }
+});
+
+// Or based on source images previously uploaded to Serenity Star
+ImageGenerationResult editedById = await images.GenerateByFileIdAsync(new GenerateImageByFileIdReq
+{
+    Prompt = "Make it look like a night scene",
+    FileIds = { Guid.Parse("uploaded-file-id") }
+});
+```
+
+### Vision
+
+Analyze images. Supported formats: jpg, jpeg, png, gif, webp. Maximum file size: 20 MB. The model is optional.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Vision;
+
+IVisionClient vision = client.GetVisionClient();
+
+using FileStream image = File.OpenRead("receipt.png");
+VisionResult result = await vision.AnalyzeAsync(new AnalyzeImageReq
+{
+    FileStream = image,
+    FileName = "receipt.png",
+    Prompt = "What is the total amount of this receipt?"
+});
+Console.WriteLine(result.Response);
+
+// Or analyze a file previously uploaded to Serenity Star
+VisionResult byId = await vision.AnalyzeByFileIdAsync(new AnalyzeImageByFileIdReq
+{
+    FileId = Guid.Parse("uploaded-file-id"),
+    Prompt = "Describe this image"
+});
+```
+
+### OCR
+
+Extract text, tables and images from documents. Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB. Documents can be uploaded directly, sent as base64, referenced by URL, or by the id of a file previously uploaded to Serenity Star. A failure on one document does not abort the others.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.AIServices;
+using SerenityStar.Models.Ocr;
+
+IOcrClient ocr = client.GetOcrClient();
+
+using FileStream invoice = File.OpenRead("invoice.pdf");
+OcrExecutionResult result = await ocr.ExtractAsync(new OcrReq
+{
+    Files = { new AIServiceFile { FileStream = invoice, FileName = "invoice.pdf" } },
+    Instructions = "Keep the table layout"   // Optional
+});
+
+foreach (OcrFileResult file in result.Files)
+{
+    if (file.Success)
+        Console.WriteLine(file.Result!.Markdown);
+    else
+        Console.WriteLine($"{file.Source} failed: {file.Error}");
+}
+
+// Other sources
+await ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "https://example.com/contract.pdf" } });
+await ocr.ExtractFromBase64Async(new OcrBase64Req
+{
+    Base64Files = { new OcrBase64File { ContentBase64 = base64Content, MimeType = "application/pdf" } }
+});
+await ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Parse("uploaded-file-id") } });
+```
+
+### Embeddings
+
+Generate vector embeddings for one or more texts.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Embeddings;
+
+IEmbeddingClient embeddings = client.GetEmbeddingClient();
+
+EmbeddingsResult result = await embeddings.GenerateAsync(new GenerateEmbeddingsReq
+{
+    Content = { "First text", "Second text" }
+});
+
+foreach (EmbeddingData item in result.Data)
+    Console.WriteLine($"#{item.Index}: {item.Embedding.Length} dimensions");
+```
+
+### Anonymizer
+
+Detect and obfuscate sensitive data (PII) in a text. Each detected entity is replaced with a placeholder.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Anonymizer;
+
+IAnonymizerClient anonymizer = client.GetAnonymizerClient();
+
+AnonymizerResult result = await anonymizer.ObfuscateAsync(new AnonymizerReq
+{
+    Inputs = "My name is John Smith and my email is john@example.com",
+    Categories = new List<string> { "private_person", "private_email" },  // Optional: all categories when empty
+    CategoryOptions = new List<AnonymizerCategoryOption>
+    {
+        new() { Category = "private_person", Key = "Person", Threshold = 0.8 }  // Optional
+    }
+});
+
+Console.WriteLine(result.Text);  // "My name is Person-1 and my email is ..."
+foreach (AnonymizerSpan span in result.Spans)
+    Console.WriteLine($"{span.EntityGroup}: '{span.Word}' -> {span.Placeholder}");
+```
+
+> **Note:** The detected spans include the original sensitive values (`Word`). Avoid logging them.
+
+### Decisions
+
+Evaluate an input against one or more questions: predicates (yes/no), choices (closed set of options) or scores (ordered levels). A model is required: set `AIModelId`, or both `ModelCode` and `Vendor`.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Decisions;
+
+IDecisionClient decisions = client.GetDecisionClient();
+
+DecisionResult result = await decisions.EvaluateAsync(new DecisionReq
+{
+    AIModelId = Guid.Parse("your-decision-model-id"),
+    Input = "My invoice was charged twice and nobody answers my emails!",
+    Questions =
+    {
+        new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "is_complaint", Instructions = "Is the customer complaining?" },
+        new DecisionQuestion
+        {
+            Type = DecisionQuestionType.Choice, Name = "topic", Instructions = "What is the message about?",
+            Choices = new List<DecisionChoice> { new() { Value = "billing" }, new() { Value = "support" }, new() { Value = "other" } }
+        },
+        new DecisionQuestion
+        {
+            Type = DecisionQuestionType.Score, Name = "urgency", Instructions = "How urgent is it?",
+            Levels = new List<DecisionScoreLevel> { new() { Label = "low" }, new() { Label = "medium" }, new() { Label = "high" } }
+        }
+    }
+});
+
+foreach (DecisionAnswer answer in result.Answers)
+{
+    switch (answer)
+    {
+        case PredicateDecisionAnswer predicate:
+            Console.WriteLine($"{predicate.Name}: {predicate.Probability:P0}");
+            break;
+        case ChoiceDecisionAnswer choice:
+            Console.WriteLine($"{choice.Name}: {choice.Choice} (confidence {choice.Confidence:P0})");
+            break;
+        case ScoreDecisionAnswer score:
+            Console.WriteLine($"{score.Name}: {score.Score}");
+            break;
+        case RefusalDecisionAnswer refusal:
+            Console.WriteLine($"{refusal.Name}: the model declined to answer");
+            break;
+    }
+}
+```
+
 ## Error handling
 
 When the API returns an unsuccessful HTTP response, the SDK throws a `SerenityApiException`. It derives from `HttpRequestException`, so existing `catch (HttpRequestException)` handlers keep working, and it also exposes the response details:
@@ -1298,7 +1561,7 @@ using SerenityStar.Exceptions;
 
 try
 {
-    var result = await client.Agents.Activities
+    var result = await client.GetAgents().Activities
         .Create("marketing-campaign")
         .ExecuteAsync();
 }
@@ -1309,6 +1572,17 @@ catch (SerenityApiException ex)
         Console.WriteLine(ex.ResponseJson.Value.GetRawText());
 }
 ```
+
+## Migrating to 3.0
+
+Namespaces and models are unchanged, so most code only needs the new entry points:
+
+| Before | After |
+| --- | --- |
+| `client.Agents.Activities.Create(...)` | `client.GetAgents().Activities.Create(...)` |
+| `client.AIServices.Transcription.TranscribeAsync(...)` | `client.GetTranscriptionClient().TranscribeAsync(...)` (install `SubgenAI.SerenityStar.AIServices`) |
+| Inject `ISerenityClient` | Inject `SerenityClient`, or `AgentsScope` / an AI service interface after `AddSerenityStarAgents()` / `AddSerenityStarAIServices()` |
+| `services.AddHttpClient<ISerenityClient, SerenityClient>()` | `services.AddHttpClient<SerenityClient>()` |
 
 ## 🤝 Contributing
 

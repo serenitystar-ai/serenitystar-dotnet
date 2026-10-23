@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
@@ -16,13 +17,13 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     private const string TestFileName = "test-document.txt";
 
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
     private readonly string _testFilePath;
 
     public AgentVolatileKnowledgeTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
         string baseDirectory = AppContext.BaseDirectory;
         string projectRoot = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", ".."));
         _testFilePath = Path.Combine(projectRoot, TestFileName);
@@ -39,7 +40,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         EnsureTestFileExists();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq request = new()
@@ -61,7 +62,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task UploadForAgent_WithContent_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         UploadVolatileKnowledgeReq request = new()
         {
             Content = "https://serenitystar.ai"
@@ -79,7 +80,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task UploadFromBase64ForAgent_WithValidContent_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes("Sample volatile knowledge content for base64 upload.");
         UploadVolatileKnowledgeFromBase64Req request = new()
         {
@@ -101,7 +102,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange - first upload a file to obtain a file id
         EnsureTestFileExists();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         Guid fileId;
         using (FileStream fileStream = File.OpenRead(_testFilePath))
@@ -133,7 +134,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task GetAllowedMimeTypes_ShouldReturnNonEmptyList()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act
         IReadOnlyList<string> mimeTypes = await conversation.VolatileKnowledge.GetAllowedMimeTypesAsync();
@@ -147,7 +148,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task UploadForAgent_WithUnsupportedFileType_ShouldThrowWithBackendError()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         byte[] bytes = { 0x00, 0x01, 0x02, 0x03 };
         using MemoryStream stream = new(bytes);
         UploadVolatileKnowledgeReq request = new()
@@ -168,7 +169,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange - upload knowledge through the agent-scoped endpoint
         EnsureTestFileExists();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq uploadRequest = new()
@@ -211,7 +212,7 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task UploadForAgent_WithInvalidAgentCode_ShouldThrowNotFound()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("non-existent-agent-code-xyz");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("non-existent-agent-code-xyz");
         UploadVolatileKnowledgeReq request = new()
         {
             Content = "https://serenitystar.ai"

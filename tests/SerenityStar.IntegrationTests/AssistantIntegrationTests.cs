@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
@@ -12,19 +13,19 @@ namespace SerenityStar.IntegrationTests;
 public class AssistantIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
 
     public AssistantIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
     }
 
     [Fact]
     public async Task SendMessage_WithInvalidAgent_ShouldFail()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("invalid-agent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("invalid-agent");
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
@@ -35,7 +36,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_ShouldReturnValidInstance()
     {
         // Arrange & Act
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Assert
         Assert.NotNull(conversation);
@@ -47,7 +48,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange
         const string testConversationId = "test-conv-id-12345";
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
             conversationId: testConversationId
         );
@@ -61,7 +62,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task SendMultipleMessages_ShouldSucceed()
     {
         // Arrange - Create a conversation
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act - First message creates conversation automatically
         AgentResult firstResult = await conversation.SendMessageAsync("Hello, how are you?");
@@ -91,7 +92,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task FullConversationFlow_ShouldSucceed()
     {
         // Arrange - Create a conversation
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act & Assert - Send multiple messages
         string[] messages =
@@ -130,7 +131,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamMessage_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         List<StreamingAgentMessage> messages = [];
 
         // Act - Stream first message (creates conversation automatically)
@@ -151,7 +152,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamMessage_AllMessageTypes_ShouldBeRecognized()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -188,7 +189,7 @@ if (citation.Source is null)
     public async Task StreamMessage_MultipleMessages_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act - First stream (creates conversation)
         List<StreamingAgentMessage> firstMessages = new();
@@ -220,7 +221,7 @@ if (citation.Source is null)
     public async Task StreamMessage_WithExecutionOptions_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
             options: new AgentExecutionReq
             {
@@ -244,7 +245,7 @@ if (citation.Source is null)
     public async Task GetConversationInfo_ShouldSucceed()
     {
         // Act
-        ConversationInfoResult info = await _client.Agents.Assistants.GetInfoByCodeAsync(_fixture.AssistantAgent);
+        ConversationInfoResult info = await _client.GetAgents().Assistants.GetInfoByCodeAsync(_fixture.AssistantAgent);
 
         // Assert
         Assert.NotNull(info);
@@ -263,7 +264,7 @@ if (citation.Source is null)
         };
 
         // Act
-        ConversationInfoResult info = await _client.Agents.Assistants.GetInfoByCodeAsync(
+        ConversationInfoResult info = await _client.GetAgents().Assistants.GetInfoByCodeAsync(
             _fixture.AssistantAgent,
             options
         );
@@ -277,7 +278,7 @@ if (citation.Source is null)
     public async Task CreateConversation_WithVersion_ShouldSucceed()
     {
         // Arrange - Create conversation with specific version
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
             44 // Specific version
         );
@@ -302,7 +303,7 @@ if (citation.Source is null)
             Channel = "web"
         };
 
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
             44, // Specific version
             options: options
@@ -321,7 +322,7 @@ if (citation.Source is null)
     public async Task GetConversationInfo_WithVersion_ShouldSucceed()
     {
         // Act
-        ConversationInfoResult info = await _client.Agents.Assistants.GetInfoByCodeAsync(
+        ConversationInfoResult info = await _client.GetAgents().Assistants.GetInfoByCodeAsync(
             _fixture.AssistantAgent,
             44 // Specific version
         );
@@ -336,7 +337,7 @@ if (citation.Source is null)
     public async Task StreamMessage_WithVersion_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
             44 // Specific version
         );
@@ -373,7 +374,7 @@ if (citation.Source is null)
     {
         // Arrange
         string audioPath = GetRequiredAudioFilePath();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         using FileStream audioStream = File.OpenRead(audioPath);
 
@@ -393,7 +394,7 @@ if (citation.Source is null)
     {
         // Arrange
         string audioPath = GetRequiredAudioFilePath();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         List<StreamingAgentMessage> messages = [];
 
         using FileStream audioStream = File.OpenRead(audioPath);
@@ -415,7 +416,7 @@ if (citation.Source is null)
     {
         // Arrange
         string audioPath = GetRequiredAudioFilePath();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         using FileStream audioStream = File.OpenRead(audioPath);
 
