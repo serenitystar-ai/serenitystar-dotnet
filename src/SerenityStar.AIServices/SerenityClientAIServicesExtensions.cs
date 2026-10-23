@@ -36,15 +36,6 @@ namespace SerenityStar.Client
         public static IEmbeddingClient GetEmbeddingClient(this SerenityClient client)
             => new EmbeddingClient(GetApiClient(client));
 
-        /// <summary>
-        /// Gets a client to generate images from text prompts.
-        /// </summary>
-        /// <param name="client">The Serenity Star client.</param>
-        /// <returns>An <see cref="IImageGenerationClient"/>.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
-        public static IImageGenerationClient GetImageGenerationClient(this SerenityClient client)
-            => new ImageGenerationClient(GetApiClient(client));
-
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)

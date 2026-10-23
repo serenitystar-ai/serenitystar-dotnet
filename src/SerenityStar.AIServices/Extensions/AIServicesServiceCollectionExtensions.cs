@@ -11,8 +11,8 @@ namespace SerenityStar.Extensions
     public static class AIServicesServiceCollectionExtensions
     {
         /// <summary>
-        /// Registers every AI service interface (<see cref="IAnonymizerClient"/>, <see cref="IDecisionClient"/>,
-        /// <see cref="IEmbeddingClient"/> and <see cref="IImageGenerationClient"/>)
+        /// Registers every AI service interface (<see cref="IAnonymizerClient"/>, <see cref="IDecisionClient"/>
+        /// and <see cref="IEmbeddingClient"/>)
         /// so they can be injected directly.
         /// Requires <see cref="ServiceCollectionExtensions.AddSerenityStar"/> to be called first.
         /// </summary>
@@ -27,7 +27,6 @@ namespace SerenityStar.Extensions
             services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetAnonymizerClient());
             services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetDecisionClient());
             services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetEmbeddingClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetImageGenerationClient());
 
             return services;
         }

@@ -9,7 +9,6 @@ using SerenityStar.Models.AIServices;
 using SerenityStar.Models.Anonymizer;
 using SerenityStar.Models.Decisions;
 using SerenityStar.Models.Embeddings;
-using SerenityStar.Models.ImageGeneration;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -248,70 +247,6 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
-        #region Image generation
-        [Fact]
-        public async Task ImageGeneration_Generate_SendsJsonAndParsesResult()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","imageUrl":"https://files/img.png","usage":{"outputUnit":"images","output":1}}""");
-
-            ImageGenerationResult result = await CreateClient(handler).GetImageGenerationClient().GenerateAsync(new GenerateImageReq { Prompt = "A cat" });
-
-            AssertPost(handler, "/api/v2/image/generate");
-            Assert.Equal("application/json", handler.ContentMediaType);
-            Assert.Equal("A cat", handler.JsonBody!.Value.GetProperty("prompt").GetString());
-            Assert.Equal("https://files/img.png", result.ImageUrl);
-            Assert.Equal(1, result.Usage!.Output);
-        }
-
-        [Fact]
-        public async Task ImageGeneration_GenerateByFileId_SendsFileIds()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","imageUrl":"u"}""");
-            Guid fileId = Guid.NewGuid();
-
-            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "Edit", FileIds = { fileId } });
-
-            AssertPost(handler, "/api/v2/image/generate/file");
-            Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileIds")[0].GetGuid());
-        }
-
-        [Fact]
-        public async Task ImageGeneration_GenerateWithSourceImages_SendsMultipartOnGenerateRoute()
-        {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","imageUrl":"https://files/img.png"}""");
-            Guid modelId = Guid.NewGuid();
-
-            ImageGenerationResult result = await CreateClient(handler).GetImageGenerationClient().GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
-            {
-                ModelId = modelId,
-                Prompt = "Combine them",
-                Files =
-                {
-                    new AIServiceFile { FileStream = FileStreamOf("a"), FileName = "a.png" },
-                    new AIServiceFile { FileStream = FileStreamOf("b"), FileName = "b.webp" }
-                }
-            });
-
-            AssertPost(handler, "/api/v2/image/generate");
-            Assert.Equal("multipart/form-data", handler.ContentMediaType);
-            Assert.Contains(handler.FormParts, p => p.Name == "Files" && p.FileName == "a.png" && p.MediaType == "image/png");
-            Assert.Contains(handler.FormParts, p => p.Name == "Files" && p.FileName == "b.webp" && p.MediaType == "image/webp");
-            Assert.Equal(modelId.ToString(), handler.FormValue("ModelId"));
-            Assert.Equal("Combine them", handler.FormValue("Prompt"));
-            Assert.Equal("https://files/img.png", result.ImageUrl);
-        }
-
-        [Fact]
-        public async Task ImageGeneration_GenerateWithSourceImages_RequiresAtLeastOneFile()
-        {
-            CapturingHandler handler = new("{}");
-
-            await Assert.ThrowsAsync<ArgumentException>(() => CreateClient(handler).GetImageGenerationClient()
-                .GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq { Prompt = "Edit" }));
-            Assert.Equal(0, handler.RequestCount);
-        }
-        #endregion
-
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -333,7 +268,6 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetAnonymizerClient());
             Assert.Throws<ArgumentNullException>(() => client.GetDecisionClient());
             Assert.Throws<ArgumentNullException>(() => client.GetEmbeddingClient());
-            Assert.Throws<ArgumentNullException>(() => client.GetImageGenerationClient());
         }
 
         [Fact]
@@ -351,7 +285,6 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             Assert.NotNull(provider.GetRequiredService<IDecisionClient>());
             Assert.NotNull(provider.GetRequiredService<IEmbeddingClient>());
-            Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 
