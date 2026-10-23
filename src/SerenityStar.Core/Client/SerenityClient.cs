@@ -14,7 +14,7 @@ namespace SerenityStar.Client
     /// Features are obtained from this client through extension methods provided by each package:
     /// <list type="bullet">
     /// <item><description>Agents (SubgenAI.SerenityStar.SDK): <c>client.GetAgents()</c></description></item>
-    /// <item><description>AI services (SubgenAI.SerenityStar.AIServices): <c>client.GetAnonymizerClient()</c>, <c>client.GetDecisionClient()</c>, etc.</description></item>
+    /// <item><description>AI services (SubgenAI.SerenityStar.AIServices): <c>client.GetAnonymizerClient()</c>, etc.</description></item>
     /// </list>
     /// </remarks>
     public sealed class SerenityClient

@@ -9,15 +9,10 @@ This project has two kinds of tests:
 
 Create an `appsettings.Development.json` file in this directory (it is git-ignored) and set every value marked `replace-me` in `appsettings.json`. Empty values and `replace-me` are treated as not configured; a test that needs a missing value fails with a message naming the setting.
 
-Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the services that support it: decisions. Both values must be set together. The vendor is the name of a Serenity Star vendor, e.g. `OpenAI`, `Anthropic`, `Google` or `Mistral`.
-
 ```json
 {
   "SerenityStar": {
-    "ApiKey": "your-api-key",
-    "DecisionModelCode": "your-decision-model-code",
-    "DecisionVendor": "OpenAI",
-    "ImageFilePath": "C:\test-files\image.png"
+    "ApiKey": "your-api-key"
   }
 }
 ```
@@ -26,8 +21,5 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
 | --- | --- | --- |
 | `ApiKey` | Yes | API key with permission to execute AI services. |
 | `BaseUrl` | No | API URL. Leave empty to run against production (`https://api.serenitystar.ai`). |
-| `DecisionModelCode` | Yes | Code of a decision model. |
-| `DecisionVendor` | Yes | Vendor of the decision model. |
-| `ImageFilePath` | Yes | Image for the decisions image input (jpg, jpeg, png, gif, webp; max 20 MB). |
 
 Settings can also be provided as environment variables, e.g. `SerenityStar__ApiKey`.
