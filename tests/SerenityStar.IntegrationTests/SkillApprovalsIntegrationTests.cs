@@ -184,7 +184,10 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
     [Fact]
     public async Task Assistant_SendMessage_WithAutoMode_ShouldNotPauseForApproval()
     {
-        // Arrange
+        // Arrange - Without auto mode the same message pauses, so the assertion below can't pass vacuously.
+        (_, _) = await StartConversationAwaitingApprovalAsync(_client.GetAgents().Assistants, _fixture.AssistantAgent);
+        await Task.Delay(1000);
+
         Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
             options: new AgentExecutionReq { Skills = new SkillsOptions { AutoMode = true } });
@@ -195,6 +198,45 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         // Assert
         Assert.Empty(result.PendingActions.OfType<ApprovalPendingAction>());
         Assert.NotEmpty(result.Content);
+    }
+
+    [Fact]
+    public async Task Assistant_StreamMessage_WithAutoMode_ShouldRunSkillWithoutRequestingApproval()
+    {
+        // Arrange
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
+            _fixture.AssistantAgent,
+            options: new AgentExecutionReq { Skills = new SkillsOptions { AutoMode = true } });
+
+        List<StreamingAgentMessage> messages = new();
+
+        // Act
+        await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync(_fixture.ApprovalMessage))
+            messages.Add(message);
+
+        // Assert
+        List<StreamingAgentMessageTaskStop> taskStops = messages.OfType<StreamingAgentMessageTaskStop>().ToList();
+        Assert.DoesNotContain(taskStops, t => t.TaskKey == StreamingTaskKeys.ApprovalRequest);
+        Assert.Contains(taskStops, t => t.TaskKey.StartsWith("skills_") && t.TaskKey.EndsWith("_execute"));
+
+        StreamingAgentMessageStop stop = Assert.Single(messages.OfType<StreamingAgentMessageStop>());
+        Assert.NotNull(stop.Result);
+        Assert.Empty(stop.Result!.PendingActions.OfType<ApprovalPendingAction>());
+    }
+
+    [Fact]
+    public async Task Assistant_SendMessage_WithAutoModeDisabled_ShouldPauseForApproval()
+    {
+        // Arrange - Auto mode is opt-in: sending it as false behaves like not sending it.
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
+            _fixture.AssistantAgent,
+            options: new AgentExecutionReq { Skills = new SkillsOptions { AutoMode = false } });
+
+        // Act
+        AgentResult result = await conversation.SendMessageAsync(_fixture.ApprovalMessage);
+
+        // Assert
+        AssertApprovalsRequested(result);
     }
     #endregion
 
