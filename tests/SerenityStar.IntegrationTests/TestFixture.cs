@@ -14,6 +14,8 @@ public class TestFixture : IDisposable
     public string ActivityAgent { get; }
     public string ProxyAgent { get; }
     public string ChatCompletionAgent { get; }
+    public string ApprovalProxyAgent { get; }
+    public string ApprovalMessage { get; }
     public Guid? TranscriptionModelId { get; }
     public string? AudioFilePath { get; }
 
@@ -34,6 +36,11 @@ public class TestFixture : IDisposable
         ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
         ProxyAgent = Configuration["SerenityStar:ProxyAgent"] ?? "proxyagent";
         ChatCompletionAgent = Configuration["SerenityStar:ChatCompletionAgent"] ?? "chatcompletionagent";
+
+        // The skill approval tests use AssistantAgent and this proxy, both with at least one skill that requires
+        // approval, and a message that makes them invoke it.
+        ApprovalProxyAgent = Configuration["SerenityStar:ApprovalProxyAgent"] ?? "aiproxyagenttester";
+        ApprovalMessage = Configuration["SerenityStar:ApprovalMessage"] ?? "Generate an image of a red apple on a white table.";
 
         string? transcriptionModelId = Configuration["SerenityStar:TranscriptionModelId"];
         if (!string.IsNullOrEmpty(transcriptionModelId) && Guid.TryParse(transcriptionModelId, out Guid modelId))

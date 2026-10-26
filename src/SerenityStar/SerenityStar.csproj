@@ -9,6 +9,27 @@
     <PackageReleaseNotes>
       Version 3.0.0-beta2 - Package Split Release
 
+      NEW FEATURES:
+      - Skill Approvals: agents pause when a skill that requires approval is invoked, and the SDK can now answer them
+        * New ApprovalPendingAction ("approval") in AgentResult.PendingActions with RequestId, CallId, SkillCode, SkillType, Tool and Arguments
+        * ApprovalPendingAction.Approve(reason) / Reject(reason) create the ApprovalDecision to send back
+        * Assistants and Copilots: conversation.SendApprovalsAsync(decisions, message) and StreamApprovalsAsync(decisions, message)
+          answer the pending approvals and continue the execution
+        * AI Proxy: ProxyExecutionReq.AddApprovalDecision(approval, decision) echoes the request and the decision in the
+          client-side history (ProxyExecutionMessage.ToolApprovalRequest / ToolApprovalResponse)
+        * AI Proxy skills: ProxyExecutionReq.Skills enables web search, image generation, speech generation and workbench
+          per request, each with its own RequiresApproval setting
+        * Streaming: StreamingAgentMessageTaskStop.TryGetApprovalRequest surfaces the approval as soon as it is requested,
+          and StreamingTaskKeys exposes the approval task keys
+        * Unanswered approvals: StreamingAgentMessageError.PendingActions and SerenityApiException.GetPendingActions()
+          return the approvals still pending
+        * Auto mode: AgentExecutionReq.Skills = new SkillsOptions { AutoMode = true } approves every skill invocation
+          without pausing (Assistants and Copilots). Opt-in only: it bypasses the human review
+
+      FIXES:
+      - Pending actions are now resolved by their "type": responses with pending actions no longer fail to deserialize,
+        and unknown pending action types are surfaced as UnsupportedPendingAction instead of failing
+
       BREAKING CHANGES:
       - The SDK is now split into packages that are always published together with the same version:
         * SubgenAI.SerenityStar.Core: SerenityClient, SerenityClientBuilder, SerenityApiException and AddSerenityStar
