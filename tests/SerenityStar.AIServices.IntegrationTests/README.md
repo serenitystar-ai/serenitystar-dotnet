@@ -17,7 +17,7 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
     "ApiKey": "your-api-key",
     "DecisionModelCode": "your-decision-model-code",
     "DecisionVendor": "OpenAI",
-    "ImageFilePath": "C:\test-files\image.png"
+    "ImageFilePath": "C:\\test-files\\image.png"
   }
 }
 ```
