@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SerenityStar.Models.Execute;
 
 namespace SerenityStar.Models.AIProxy
@@ -100,6 +101,48 @@ namespace SerenityStar.Models.AIProxy
 
             Messages.Add(new ProxyExecutionMessage { Role = "assistant", ToolApprovalRequest = approval });
             Messages.Add(new ProxyExecutionMessage { Role = "user", ToolApprovalResponse = decision });
+        }
+
+        /// <summary>
+        /// Appends the questions the agent asked and the user's answers to <see cref="Messages"/>, so the next execution
+        /// continues with them.
+        /// </summary>
+        /// <remarks>
+        /// AI Proxy keeps the chat history on the client, so the questions are echoed back as an assistant message
+        /// followed by a user message carrying the answers and the optional text message. The questions left unanswered
+        /// stay in the history as context.
+        /// </remarks>
+        /// <param name="userChoice">The questions the agent asked, from the previous execution's pending actions.</param>
+        /// <param name="answers">
+        /// The answers to all, some or none of the questions, created with <see cref="UserChoiceQuestion.Select"/>,
+        /// <see cref="UserChoiceQuestion.Answer"/> or <see cref="UserChoiceQuestion.AnswerOther"/>.
+        /// </param>
+        /// <param name="message">Optional text message sent along with the answers. Required when no answers are provided.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the user choice or the answers are null.</exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when neither answers nor a message are provided, or an answer doesn't belong to one of the questions.
+        /// </exception>
+        public void AddUserChoiceAnswers(UserChoicePendingAction userChoice, IEnumerable<UserChoiceAnswer> answers, string? message = null)
+        {
+            if (userChoice == null)
+                throw new ArgumentNullException(nameof(userChoice));
+            if (answers == null)
+                throw new ArgumentNullException(nameof(answers));
+
+            List<UserChoiceAnswer> userChoiceAnswers = answers.ToList();
+            if (userChoiceAnswers.Count == 0 && string.IsNullOrWhiteSpace(message))
+                throw new ArgumentException("At least one answer or a message is required.", nameof(answers));
+
+            if (userChoiceAnswers.Any(a => a == null || !userChoice.Questions.Any(q => string.Equals(q.Id, a.QuestionId, StringComparison.Ordinal))))
+                throw new ArgumentException("Every answer must respond to one of the given questions.", nameof(answers));
+
+            Messages.Add(new ProxyExecutionMessage { Role = "assistant", UserChoiceRequest = userChoice });
+            Messages.Add(new ProxyExecutionMessage
+            {
+                Role = "user",
+                Content = message ?? string.Empty,
+                UserChoiceResponse = userChoiceAnswers.Count > 0 ? userChoiceAnswers : null
+            });
         }
     }
 }

@@ -100,7 +100,7 @@ public class SkillApprovalsOfflineTests
             {"content":"","instanceId":"{{{ConversationId}}}","pendingActions":[
               {"type":"connection","url":"https://connect","connectorId":"22222222-2222-2222-2222-222222222222","connectorName":"Drive","connectorImgUrl":"https://img"},
               {"type":"approval","requestId":"req-1","callId":"call-1","skillCode":"send_email","skillType":"HttpRequest","tool":"send","arguments":{"to":"john@example.com"}},
-              {"type":"user_choice","questions":[]}]}
+              {"type":"future_action","payload":{"value":1}}]}
             """);
 
         Conversation conversation = CreateClient(handler).GetAgents().Assistants.CreateConversation("assistant");
@@ -120,8 +120,8 @@ public class SkillApprovalsOfflineTests
         Assert.Equal("john@example.com", ((JsonElement)approval.Arguments["to"]).GetString());
 
         UnsupportedPendingAction unsupported = Assert.IsType<UnsupportedPendingAction>(result.PendingActions[2]);
-        Assert.Equal("user_choice", unsupported.OriginalType);
-        Assert.True(unsupported.RawData!.Value.TryGetProperty("questions", out _));
+        Assert.Equal("future_action", unsupported.OriginalType);
+        Assert.True(unsupported.RawData!.Value.TryGetProperty("payload", out _));
     }
 
     [Fact]

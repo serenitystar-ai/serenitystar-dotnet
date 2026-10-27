@@ -129,6 +129,32 @@ namespace SerenityStar.Agents.System
                 };
             }
 
+            if (message.UserChoiceRequest != null)
+                body["user_choice_request"] = new
+                {
+                    questions = message.UserChoiceRequest.Questions.Select(question => new
+                    {
+                        id = question.Id,
+                        header = question.Header,
+                        text = question.Text,
+                        is_multiselect = question.IsMultiselect,
+                        options = question.Options.Select(option => new
+                        {
+                            id = option.Id,
+                            title = option.Title,
+                            description = option.Description
+                        }).ToList()
+                    }).ToList()
+                };
+
+            if (message.UserChoiceResponse != null)
+                body["user_choice_response"] = message.UserChoiceResponse.Select(answer => new
+                {
+                    question_id = answer.QuestionId,
+                    selected_option_ids = answer.SelectedOptionIds,
+                    other = answer.Other
+                }).ToList();
+
             return body;
         }
 
@@ -184,6 +210,9 @@ namespace SerenityStar.Agents.System
                     requires_approval = skills.Workbench.RequiresApproval
                 };
             }
+
+            if (skills.UserChoice)
+                body["user_choice"] = true;
 
             return body;
         }

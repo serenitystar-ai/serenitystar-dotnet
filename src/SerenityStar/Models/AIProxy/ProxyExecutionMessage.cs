@@ -39,5 +39,21 @@ namespace SerenityStar.Models.AIProxy
         /// Use <see cref="ProxyExecutionReq.AddApprovalDecision"/> to add it along with the approval request.
         /// </remarks>
         public ApprovalDecision? ToolApprovalResponse { get; set; }
+
+        /// <summary>
+        /// On an assistant message, the questions the agent asked in a previous execution, echoed back as context.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="ProxyExecutionReq.AddUserChoiceAnswers"/> to add it along with the user's answers.
+        /// </remarks>
+        public UserChoicePendingAction? UserChoiceRequest { get; set; }
+
+        /// <summary>
+        /// On a user message, the answers the user gave to the questions asked by the preceding assistant message.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="ProxyExecutionReq.AddUserChoiceAnswers"/> to add it along with the questions.
+        /// </remarks>
+        public List<UserChoiceAnswer>? UserChoiceResponse { get; set; }
     }
 }

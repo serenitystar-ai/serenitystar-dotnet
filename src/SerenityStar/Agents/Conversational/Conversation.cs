@@ -112,7 +112,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The agent's response.</returns>
         public Task<AgentResult> SendMessageAsync(string message, CancellationToken cancellationToken = default)
-            => SendMessageCoreAsync(message, null, null, null, cancellationToken);
+            => SendMessageCoreAsync(message, null, null, null, null, cancellationToken);
 
         /// <summary>
         /// Sends an audio file in the conversation. The SDK uploads the file and the agent transcribes the audio internally.
@@ -124,7 +124,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The agent's response.</returns>
         public Task<AgentResult> SendMessageAsync(Stream audioStream, string audioFileName, CancellationToken cancellationToken = default)
-            => SendMessageCoreAsync(null, audioStream, audioFileName, null, cancellationToken);
+            => SendMessageCoreAsync(null, audioStream, audioFileName, null, null, cancellationToken);
 
         /// <summary>
         /// Answers the skill approvals the agent requested (<see cref="ApprovalPendingAction"/>) and continues the execution.
@@ -148,7 +148,34 @@ namespace SerenityStar.Agents.Conversational
             CancellationToken cancellationToken = default)
         {
             List<ApprovalDecision> approvals = ValidateApprovals(decisions);
-            return SendMessageCoreAsync(message, null, null, approvals, cancellationToken);
+            return SendMessageCoreAsync(message, null, null, approvals, null, cancellationToken);
+        }
+
+        /// <summary>
+        /// Answers the questions the agent asked (<see cref="UserChoicePendingAction"/>) and continues the conversation.
+        /// </summary>
+        /// <param name="answers">
+        /// The answers to all, some or none of the questions, created with <see cref="UserChoiceQuestion.Select"/>,
+        /// <see cref="UserChoiceQuestion.Answer"/> or <see cref="UserChoiceQuestion.AnswerOther"/>. The questions left
+        /// unanswered stay in the history as context.
+        /// </param>
+        /// <param name="message">
+        /// Optional text message sent along with the answers, in the same turn. Required when no answers are provided.
+        /// </param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The agent's response once the conversation continues.</returns>
+        /// <exception cref="ArgumentException">Thrown when neither answers nor a message are provided, or an answer has no question id.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
+        /// <remarks>
+        /// The answers, including the free-text ones, are stored in the conversation history.
+        /// </remarks>
+        public Task<AgentResult> SendUserChoicesAsync(
+            IEnumerable<UserChoiceAnswer> answers,
+            string? message = null,
+            CancellationToken cancellationToken = default)
+        {
+            List<UserChoiceAnswer> userChoiceAnswers = ValidateUserChoiceAnswers(answers, message);
+            return SendMessageCoreAsync(message, null, null, null, userChoiceAnswers, cancellationToken);
         }
 
         private async Task<AgentResult> SendMessageCoreAsync(
@@ -156,13 +183,14 @@ namespace SerenityStar.Agents.Conversational
             Stream? audioStream,
             string? audioFileName,
             List<ApprovalDecision>? approvals,
+            List<UserChoiceAnswer>? userChoiceAnswers,
             CancellationToken cancellationToken)
         {
             string url = _version.HasValue
                 ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
                 : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = await BuildParametersAsync(message, audioStream, audioFileName, approvals, isStream: false, cancellationToken);
+            List<object> parameters = await BuildParametersAsync(message, audioStream, audioFileName, approvals, userChoiceAnswers, isStream: false, cancellationToken);
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
@@ -192,7 +220,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An async enumerable of streaming messages.</returns>
         public IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(string message, CancellationToken cancellationToken = default)
-            => StreamMessageCoreAsync(message, null, null, null, cancellationToken);
+            => StreamMessageCoreAsync(message, null, null, null, null, cancellationToken);
 
         /// <summary>
         /// Streams an audio file in the conversation. The SDK uploads the file and the agent transcribes the audio internally.
@@ -204,7 +232,7 @@ namespace SerenityStar.Agents.Conversational
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An async enumerable of streaming messages.</returns>
         public IAsyncEnumerable<StreamingAgentMessage> StreamMessageAsync(Stream audioStream, string audioFileName, CancellationToken cancellationToken = default)
-            => StreamMessageCoreAsync(null, audioStream, audioFileName, null, cancellationToken);
+            => StreamMessageCoreAsync(null, audioStream, audioFileName, null, null, cancellationToken);
 
         /// <summary>
         /// Answers the skill approvals the agent requested (<see cref="ApprovalPendingAction"/>) and streams the
@@ -230,7 +258,33 @@ namespace SerenityStar.Agents.Conversational
         {
             // Validated here rather than in the iterator, so invalid input fails on the call instead of on enumeration.
             List<ApprovalDecision> approvals = ValidateApprovals(decisions);
-            return StreamMessageCoreAsync(message, null, null, approvals, cancellationToken);
+            return StreamMessageCoreAsync(message, null, null, approvals, null, cancellationToken);
+        }
+
+        /// <summary>
+        /// Answers the questions the agent asked (<see cref="UserChoicePendingAction"/>) and streams the continued
+        /// conversation.
+        /// </summary>
+        /// <param name="answers">
+        /// The answers to all, some or none of the questions, created with <see cref="UserChoiceQuestion.Select"/>,
+        /// <see cref="UserChoiceQuestion.Answer"/> or <see cref="UserChoiceQuestion.AnswerOther"/>. The questions left
+        /// unanswered stay in the history as context.
+        /// </param>
+        /// <param name="message">
+        /// Optional text message sent along with the answers, in the same turn. Required when no answers are provided.
+        /// </param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An async enumerable of streaming messages.</returns>
+        /// <exception cref="ArgumentException">Thrown when neither answers nor a message are provided, or an answer has no question id.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
+        public IAsyncEnumerable<StreamingAgentMessage> StreamUserChoicesAsync(
+            IEnumerable<UserChoiceAnswer> answers,
+            string? message = null,
+            CancellationToken cancellationToken = default)
+        {
+            // Validated here rather than in the iterator, so invalid input fails on the call instead of on enumeration.
+            List<UserChoiceAnswer> userChoiceAnswers = ValidateUserChoiceAnswers(answers, message);
+            return StreamMessageCoreAsync(message, null, null, null, userChoiceAnswers, cancellationToken);
         }
 
         private async IAsyncEnumerable<StreamingAgentMessage> StreamMessageCoreAsync(
@@ -238,13 +292,14 @@ namespace SerenityStar.Agents.Conversational
             Stream? audioStream,
             string? audioFileName,
             List<ApprovalDecision>? approvals,
+            List<UserChoiceAnswer>? userChoiceAnswers,
             [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             string url = _version.HasValue
                 ? $"/api/v2/agent/{_agentCode}/execute/{_version.Value}"
                 : $"/api/v2/agent/{_agentCode}/execute";
 
-            List<object> parameters = await BuildParametersAsync(message, audioStream, audioFileName, approvals, isStream: true, cancellationToken);
+            List<object> parameters = await BuildParametersAsync(message, audioStream, audioFileName, approvals, userChoiceAnswers, isStream: true, cancellationToken);
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
             {
@@ -311,11 +366,33 @@ namespace SerenityStar.Agents.Conversational
             return approvals;
         }
 
+        private List<UserChoiceAnswer> ValidateUserChoiceAnswers(IEnumerable<UserChoiceAnswer> answers, string? message)
+        {
+            if (answers == null)
+                throw new ArgumentNullException(nameof(answers));
+
+            List<UserChoiceAnswer> userChoiceAnswers = answers.ToList();
+
+            // Leaving every question unanswered is a regular message: the questions stay in the history as context.
+            if (userChoiceAnswers.Count == 0 && string.IsNullOrWhiteSpace(message))
+                throw new ArgumentException("At least one answer or a message is required.", nameof(answers));
+
+            if (userChoiceAnswers.Any(a => a == null || string.IsNullOrWhiteSpace(a.QuestionId)))
+                throw new ArgumentException("Every answer must have a question id.", nameof(answers));
+
+            // Answers can only respond to a previous turn of the same conversation.
+            if (string.IsNullOrEmpty(ConversationId))
+                throw new InvalidOperationException("Conversation not initialized");
+
+            return userChoiceAnswers;
+        }
+
         private async Task<List<object>> BuildParametersAsync(
             string? message,
             Stream? audioStream,
             string? audioFileName,
             List<ApprovalDecision>? approvals,
+            List<UserChoiceAnswer>? userChoiceAnswers,
             bool isStream,
             CancellationToken cancellationToken)
         {
@@ -335,6 +412,9 @@ namespace SerenityStar.Agents.Conversational
 
             if (approvals != null)
                 parameters.Add(new { Key = "toolApprovals", Value = approvals });
+
+            if (userChoiceAnswers?.Count > 0)
+                parameters.Add(new { Key = "userChoiceResponses", Value = userChoiceAnswers });
 
             // Add chatId only if we have it from a previous message
             if (!string.IsNullOrEmpty(_chatId))

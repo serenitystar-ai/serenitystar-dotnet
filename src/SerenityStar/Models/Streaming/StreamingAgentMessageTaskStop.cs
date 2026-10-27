@@ -68,5 +68,26 @@ namespace SerenityStar.Models.Streaming
             approval = output.Deserialize<ApprovalPendingAction>(StreamingAgentMessageJsonConverter.s_options);
             return approval != null;
         }
+
+        /// <summary>
+        /// Gets the questions the agent asked when this task is a user choice request
+        /// (<see cref="StreamingTaskKeys.UserChoiceRequest"/>).
+        /// </summary>
+        /// <remarks>
+        /// It lets the questions be shown as soon as they are asked. The same request is also listed in the
+        /// <see cref="StreamingAgentMessageStop.Result"/> pending actions once the stream ends.
+        /// </remarks>
+        /// <param name="userChoice">The requested user choice, or null when this task is not a user choice request.</param>
+        /// <returns>True when this task is a user choice request.</returns>
+        public bool TryGetUserChoiceRequest([NotNullWhen(true)] out UserChoicePendingAction? userChoice)
+        {
+            userChoice = null;
+
+            if (TaskKey != StreamingTaskKeys.UserChoiceRequest || !(Output is JsonElement { ValueKind: JsonValueKind.Object } output))
+                return false;
+
+            userChoice = output.Deserialize<UserChoicePendingAction>(StreamingAgentMessageJsonConverter.s_options);
+            return userChoice != null;
+        }
     }
 }
