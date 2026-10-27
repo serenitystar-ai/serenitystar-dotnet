@@ -38,6 +38,12 @@
           client-side history (ProxyExecutionMessage.UserChoiceRequest / UserChoiceResponse)
         * Streaming: StreamingAgentMessageTaskStop.TryGetUserChoiceRequest surfaces the questions as soon as they are
           asked, and StreamingTaskKeys.UserChoiceRequest exposes its task key
+      - Agent TODOs: agents with the skill enabled plan their own TODO list and keep iterating until it is done, and the
+        SDK now exposes its progress while streaming (Assistants and Copilots)
+        * StreamingAgentMessageTaskStop.TryGetAgentTodos returns the whole list (AgentTodoItem with Id, Description and
+          Status) from the TODO skill tasks and the agent iteration task
+        * AgentTodoStatus exposes the known statuses (Pending, Completed, Canceled), and StreamingTaskKeys.AgentTodoIterate
+          the iteration task key
 
       FIXES:
       - Pending actions are now resolved by their "type": responses with pending actions no longer fail to deserialize,
