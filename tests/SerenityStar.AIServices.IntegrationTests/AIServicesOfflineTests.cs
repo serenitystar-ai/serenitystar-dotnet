@@ -180,12 +180,12 @@ namespace SerenityStar.AIServices.IntegrationTests
                 ModelCode = "decision-model",
                 Vendor = "OpenAI",
                 Input = DecisionInput.FromItems(
-                    DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
-                        DecisionInputPart.InputText("Is this receipt paid?"),
-                        DecisionInputPart.InputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
-                    DecisionInputItem.FunctionCall("call_1", "get_order", """{"id":42}"""),
-                    DecisionInputItem.FunctionCallOutput("call_1", "Order 42 is paid."),
-                    DecisionInputItem.Message(DecisionMessageRole.Assistant, "Yes, it is paid.")),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+                        DecisionInputPart.CreateInputText("Is this receipt paid?"),
+                        DecisionInputPart.CreateInputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
+                    DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"id":42}"""),
+                    DecisionInputItem.CreateFunctionCallOutput("call_1", "Order 42 is paid."),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Yes, it is paid.")),
                 Questions = { new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "paid", Instructions = "Is it paid?" } }
             });
 
