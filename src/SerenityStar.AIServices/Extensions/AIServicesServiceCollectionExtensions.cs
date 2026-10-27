@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SerenityStar.AIServices;
 using SerenityStar.Client;
 using System;
@@ -24,10 +25,10 @@ namespace SerenityStar.Extensions
                 throw new ArgumentNullException(nameof(services));
 
             // Transient to match the lifetime of the typed SerenityClient registered by AddSerenityStar.
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetAnonymizerClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetDecisionClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetEmbeddingClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetImageGenerationClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetAnonymizerClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetDecisionClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetEmbeddingClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetImageGenerationClient());
 
             return services;
         }

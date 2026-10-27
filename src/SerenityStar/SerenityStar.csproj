@@ -20,6 +20,9 @@
         (in the SerenityStar.Client namespace). e.g. client.GetAgents().Activities.Create("agent-code")
       - ISerenityClient was removed. Inject SerenityClient (registered by AddSerenityStar), or AgentsScope after
         calling services.AddSerenityStar(apiKey).AddSerenityStarAgents()
+      - AddSerenityStar now throws ArgumentNullException at registration when the API key is null or empty,
+        instead of failing on the first request. Apps that register with an empty key (e.g. tests or
+        design-time tooling) now fail at startup.
 
       Version 3.0.0-beta1 - Per-Request Authentication Release
 

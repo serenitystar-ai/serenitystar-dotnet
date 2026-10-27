@@ -1352,12 +1352,12 @@ DecisionResult traceResult = await decisions.EvaluateAsync(new DecisionReq
     ModelCode = "your-decision-model-code",
     Vendor = "OpenAI",
     Input = DecisionInput.FromItems(
-        DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
-            DecisionInputPart.InputText("This is the product I received. Where is my order 42?"),
-            DecisionInputPart.InputImage(File.ReadAllBytes("product.jpg"), "image/jpeg"))),
-        DecisionInputItem.FunctionCall("call_1", "get_order", """{"orderId":42}"""),
-        DecisionInputItem.FunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
-        DecisionInputItem.Message(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
+        DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+            DecisionInputPart.CreateInputText("This is the product I received. Where is my order 42?"),
+            DecisionInputPart.CreateInputImage(File.ReadAllBytes("product.jpg"), "image/jpeg"))),
+        DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"orderId":42}"""),
+        DecisionInputItem.CreateFunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
+        DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
     Questions =
     {
         new DecisionQuestion
