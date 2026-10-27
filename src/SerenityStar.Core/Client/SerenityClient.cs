@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Options;
-using SerenityStar.Agents;
-using SerenityStar.AIServices;
 using SerenityStar.Constants;
 using SerenityStar.Models;
 using System;
@@ -8,21 +6,24 @@ using System.Net.Http;
 
 namespace SerenityStar.Client
 {
-    /// <inheritdoc />
-    public sealed class SerenityClient : ISerenityClient
+    /// <summary>
+    /// Entry point for interacting with Serenity Star. Holds the authenticated connection to the API and
+    /// is shared by every feature package.
+    /// </summary>
+    /// <remarks>
+    /// Features are obtained from this client through extension methods provided by each package:
+    /// <list type="bullet">
+    /// <item><description>Agents (SubgenAI.SerenityStar.SDK): <c>client.GetAgents()</c></description></item>
+    /// <item><description>AI services (SubgenAI.SerenityStar.AIServices): <c>client.GetAnonymizerClient()</c>, etc.</description></item>
+    /// </list>
+    /// </remarks>
+    public sealed class SerenityClient
     {
-        private readonly SerenityApiClient _apiClient;
-
         /// <summary>
-        /// Interact with the different agents available in Serenity Star.
-        /// You can choose between assistants, activities, AI proxy, and chat completions.
+        /// The authenticated API client. Internal so the API key is never exposed publicly; feature
+        /// packages access it through InternalsVisibleTo.
         /// </summary>
-        public AgentsScope Agents { get; }
-
-        /// <summary>
-        /// Access AI services such as transcription, speech, and image generation.
-        /// </summary>
-        public AIServicesScope AIServices { get; }
+        internal SerenityApiClient ApiClient { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SerenityClient"/> class for dependency injection.
@@ -39,9 +40,7 @@ namespace SerenityStar.Client
                 throw new ArgumentNullException(nameof(httpClient));
 
             // Auth is attached per-request by SerenityApiClient rather than mutating the HttpClient.
-            _apiClient = new SerenityApiClient(httpClient, apiKey, options.Value.BaseUrl);
-            Agents = new AgentsScope(_apiClient);
-            AIServices = new AIServicesScope(_apiClient);
+            ApiClient = new SerenityApiClient(httpClient, apiKey, options.Value.BaseUrl);
         }
 
         /// <summary>
@@ -69,9 +68,7 @@ namespace SerenityStar.Client
         /// <param name="apiClient">The configured API client.</param>
         internal SerenityClient(SerenityApiClient apiClient)
         {
-            _apiClient = apiClient;
-            Agents = new AgentsScope(_apiClient);
-            AIServices = new AIServicesScope(_apiClient);
+            ApiClient = apiClient;
         }
     }
 }

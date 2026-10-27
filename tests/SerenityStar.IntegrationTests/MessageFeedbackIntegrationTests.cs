@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Agents.Conversational;
@@ -10,19 +11,19 @@ namespace SerenityStar.IntegrationTests;
 public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
 
     public MessageFeedbackIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
     }
 
     [Fact]
     public async Task SubmitFeedback_WithPositiveFeedback_ShouldSucceed()
     {
         // Arrange - Create a conversation and send a message to get an agent message ID
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("Tell me a joke");
 
         Assert.NotNull(result.AgentMessageId);
@@ -45,7 +46,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithComment_ShouldSucceed()
     {
         // Arrange - Create a conversation and send a message
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("Give me a recipe for parmesan chicken");
 
         Assert.NotNull(result.AgentMessageId);
@@ -68,7 +69,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithCommentAtMaxLength_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("What is AI?");
 
         Assert.NotNull(result.AgentMessageId);
@@ -91,7 +92,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithCommentExceedingMaxLength_ShouldFail()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("What is AI?");
 
         Assert.NotNull(result.AgentMessageId);
@@ -113,7 +114,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithWhitespaceComment_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("Tell me a fun fact");
 
         Assert.NotNull(result.AgentMessageId);
@@ -136,7 +137,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_ResubmittedWithoutComment_ShouldClearTheComment()
     {
         // Arrange - Submit feedback with a comment
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("Explain quantum computing");
 
         Assert.NotNull(result.AgentMessageId);
@@ -161,7 +162,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         await Task.Delay(500);
 
         // Assert - Reading it back shows the comment was cleared
-        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(
+        MessageFeedbackPage page = await _client.GetAgents().Assistants.GetMessageFeedbackAsync(
             _fixture.AssistantAgent,
             new GetMessageFeedbackReq { PageSize = 100 });
 
@@ -176,7 +177,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithNegativeFeedback_ShouldSucceed()
     {
         // Arrange - Create a conversation and send a message
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("Explain quantum computing");
 
         Assert.NotNull(result.AgentMessageId);
@@ -199,7 +200,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task RemoveFeedback_ShouldSucceed()
     {
         // Arrange - Create a conversation, send a message, and submit feedback
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("What is AI?");
 
         Assert.NotNull(result.AgentMessageId);
@@ -232,7 +233,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_MultipleTimes_ShouldSucceed()
     {
         // Arrange - Create a conversation
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act - Send multiple messages and submit feedback for each
         string[] messages = ["Hello", "How are you?", "What can you do?"];
@@ -267,7 +268,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithInvalidAgentMessageId_ShouldFail()
     {
         // Arrange - Create a conversation and initialize it with a message
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         await conversation.SendMessageAsync("Initialize conversation");
 
         SubmitFeedbackReq feedbackOptions = new()
@@ -285,7 +286,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task RemoveFeedback_WithInvalidAgentMessageId_ShouldFail()
     {
         // Arrange - Create a conversation and initialize it with a message
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         await conversation.SendMessageAsync("Initialize conversation");
 
         RemoveFeedbackReq removeOptions = new()
@@ -302,7 +303,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_AlternateFeedback_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act - Send messages and alternate between positive and negative feedback
         bool[] feedbackValues = [true, false, true, false];
@@ -336,7 +337,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitAndRemoveFeedback_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("Test message");
 
         Assert.NotNull(result.AgentMessageId);
@@ -367,7 +368,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task SubmitFeedback_WithDifferentMessages_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         // Act - Send different types of messages and submit feedback
         string[] messageTypes = ["technical question", "creative request", "general inquiry"];
@@ -401,7 +402,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task GetAllFeedback_ShouldReturnSubmittedFeedbackWithComment()
     {
         // Arrange - Submit feedback with a known comment
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
         AgentResult result = await conversation.SendMessageAsync("How do I boil an egg?");
 
         Assert.NotNull(result.AgentMessageId);
@@ -418,7 +419,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         await Task.Delay(500);
 
         // Act
-        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(
+        MessageFeedbackPage page = await _client.GetAgents().Assistants.GetMessageFeedbackAsync(
             _fixture.AssistantAgent,
             new GetMessageFeedbackReq { PageSize = 100 });
 
@@ -441,7 +442,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task GetAllFeedback_WithDefaultOptions_ShouldUseApiDefaults()
     {
         // Act - No options means page 1 with the API default page size
-        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent);
+        MessageFeedbackPage page = await _client.GetAgents().Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent);
 
         // Assert
         Assert.Equal(1, page.Page);
@@ -457,7 +458,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         DateTime endDate = DateTime.UtcNow.AddMinutes(5);
 
         // Act
-        MessageFeedbackPage page = await _client.Agents.Assistants.GetMessageFeedbackAsync(
+        MessageFeedbackPage page = await _client.GetAgents().Assistants.GetMessageFeedbackAsync(
             _fixture.AssistantAgent,
             new GetMessageFeedbackReq
             {
@@ -483,7 +484,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Agents.Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
+            _client.GetAgents().Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
     }
 
     [Fact]
@@ -494,7 +495,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Agents.Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
+            _client.GetAgents().Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
     }
 
     [Fact]
@@ -502,7 +503,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     {
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            _client.Agents.Assistants.GetMessageFeedbackAsync("agent-that-does-not-exist"));
+            _client.GetAgents().Assistants.GetMessageFeedbackAsync("agent-that-does-not-exist"));
     }
 
     [Fact]
@@ -510,7 +511,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     {
         // Act & Assert - This one is validated locally, no request is issued
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _client.Agents.Assistants.GetMessageFeedbackAsync(string.Empty));
+            _client.GetAgents().Assistants.GetMessageFeedbackAsync(string.Empty));
     }
 
     [Fact]
@@ -518,7 +519,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     {
         // Feedback exists for both conversational agent types, so the operation is available
         // on Copilots too and not only on Assistants
-        MessageFeedbackPage page = await _client.Agents.Copilots.GetMessageFeedbackAsync(_fixture.CopilotAgent);
+        MessageFeedbackPage page = await _client.GetAgents().Copilots.GetMessageFeedbackAsync(_fixture.CopilotAgent);
 
         // Assert
         Assert.Equal(_fixture.CopilotAgent, page.AgentCode);

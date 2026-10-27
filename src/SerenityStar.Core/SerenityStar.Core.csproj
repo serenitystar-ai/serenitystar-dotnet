@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>SubgenAI.SerenityStar.Core</PackageId>
+    <AssemblyName>SerenityStar.Core</AssemblyName>
+    <RootNamespace>SerenityStar</RootNamespace>
+    <Description>Core client for the Serenity Star .NET SDK: authentication, error handling and file upload. Install SubgenAI.SerenityStar.SDK (agents) and/or SubgenAI.SerenityStar.AIServices instead of referencing this package directly.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>ai;sdk;serenity;serenitystar</PackageTags>
+    <PackageReleaseNotes>
+      Version 3.0.0 - Package split
+
+      NEW FEATURES:
+      - New package containing SerenityClient, SerenityClientBuilder, SerenityApiException and the
+        AddSerenityStar dependency injection registration shared by the agents and AI services packages.
+
+      BREAKING CHANGES:
+      - AddSerenityStar now throws ArgumentNullException at registration when the API key is null or empty,
+        instead of failing on the first request. Apps that register with an empty key (e.g. tests or
+        design-time tooling) now fail at startup.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Feature packages need the internal authenticated API client. Never add assemblies outside this solution. -->
+    <InternalsVisibleTo Include="SerenityStar" />
+    <InternalsVisibleTo Include="SerenityStar.AIServices" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>

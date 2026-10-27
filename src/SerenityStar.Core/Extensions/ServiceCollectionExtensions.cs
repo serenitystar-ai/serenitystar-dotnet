@@ -11,8 +11,12 @@ namespace SerenityStar.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds the Serenity Star client to the service collection.
+        /// Adds the Serenity Star client (<see cref="SerenityClient"/>) to the service collection.
         /// </summary>
+        /// <remarks>
+        /// Register the features you use on top of it, e.g. <c>AddSerenityStarAgents()</c>
+        /// (SubgenAI.SerenityStar.SDK) or <c>AddSerenityStarAIServices()</c> (SubgenAI.SerenityStar.AIServices).
+        /// </remarks>
         /// <param name="services">The service collection.</param>
         /// <param name="apiKey">The API key to use for authentication.</param>
         /// <param name="timeoutSeconds">The timeout in seconds.</param>
@@ -24,6 +28,12 @@ namespace SerenityStar.Extensions
             int timeoutSeconds = 30,
             string? baseUrl = null)
         {
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
+
+            if (string.IsNullOrEmpty(apiKey))
+                throw new ArgumentNullException(nameof(apiKey), "API key cannot be null or empty.");
+
             services.Configure<SerenityStarOptions>(options =>
             {
                 options.ApiKey = apiKey;
@@ -33,7 +43,7 @@ namespace SerenityStar.Extensions
 
             // Auth and base URL are applied per-request by SerenityApiClient (built inside
             // SerenityClient from the options), so only the timeout is configured on the client here.
-            services.AddHttpClient<ISerenityClient, SerenityClient>((_, client) =>
+            services.AddHttpClient<SerenityClient>((_, client) =>
             {
                 client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             });

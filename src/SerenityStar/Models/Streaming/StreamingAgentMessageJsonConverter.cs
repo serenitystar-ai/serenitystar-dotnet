@@ -9,6 +9,16 @@ namespace SerenityStar.Models.Streaming
     /// </summary>
     internal class StreamingAgentMessageJsonConverter : JsonConverter<StreamingAgentMessage>
     {
+        /// <summary>
+        /// Options with SnakeCaseLower naming policy for streaming messages with this converter.
+        /// </summary>
+        internal static readonly JsonSerializerOptions s_options = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            Converters = { new StreamingAgentMessageJsonConverter() }
+        };
+
         public override StreamingAgentMessage Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             using JsonDocument document = JsonDocument.ParseValue(ref reader);

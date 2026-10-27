@@ -1,22 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>SubgenAI.SerenityStar.SDK</PackageId>
     <AssemblyName>SerenityStar</AssemblyName>
     <RootNamespace>SerenityStar</RootNamespace>
-    <Authors>Serenity Star team</Authors>
-    <Company>Subgen AI</Company>
-    <Description>Official .NET SDK for Serenity Star API</Description>
-    <PackageProjectUrl>https://hub.serenitystar.ai/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/serenitystar-ai/serenity-dotnet</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>Official .NET SDK for Serenity Star API: agents (assistants, copilots, activities, AI proxies and chat completions). AI services are available in SubgenAI.SerenityStar.AIServices.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageIcon>icon.png</PackageIcon>
-    <Version>3.0.0-beta1</Version>
     <PackageReleaseNotes>
-      Version 3.0.0 - Per-Request Authentication Release
+      Version 3.0.0-beta2 - Package Split Release
+
+      BREAKING CHANGES:
+      - The SDK is now split into packages that are always published together with the same version:
+        * SubgenAI.SerenityStar.Core: SerenityClient, SerenityClientBuilder, SerenityApiException and AddSerenityStar
+        * SubgenAI.SerenityStar.SDK (this package): agents. Depends on Core
+        * SubgenAI.SerenityStar.AIServices: all AI services. Depends on Core only:
+          anonymizer
+        Namespaces are unchanged, so most code only needs the new entry points below.
+      - Agents are now obtained from SerenityClient: client.Agents becomes client.GetAgents()
+        (in the SerenityStar.Client namespace). e.g. client.GetAgents().Activities.Create("agent-code")
+      - ISerenityClient was removed. Inject SerenityClient (registered by AddSerenityStar), or AgentsScope after
+        calling services.AddSerenityStar(apiKey).AddSerenityStarAgents()
+      - AddSerenityStar now throws ArgumentNullException at registration when the API key is null or empty,
+        instead of failing on the first request. Apps that register with an empty key (e.g. tests or
+        design-time tooling) now fail at startup.
+
+      Version 3.0.0-beta1 - Per-Request Authentication Release
 
       NEW FEATURES:
       - Richer error information: failed API responses now throw SerenityApiException (in the
@@ -172,21 +180,13 @@
       - Step-by-step guides for volatile knowledge workflows
       - Connector integration patterns
     </PackageReleaseNotes>
-    <LangVersion>9.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="/" />
-    <None Include="..\..\icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <ProjectReference Include="..\SerenityStar.Core\SerenityStar.Core.csproj" />
   </ItemGroup>
 </Project>

@@ -76,13 +76,23 @@ namespace SerenityStar.Extensions
         /// Ensures the response indicates success and deserializes its JSON body into
         /// <typeparamref name="T"/> using the SDK's camelCase serializer options.
         /// </summary>
+        internal static Task<T> ReadSerenityJsonAsync<T>(
+            this HttpResponseMessage response,
+            CancellationToken cancellationToken = default)
+            => response.ReadSerenityJsonAsync<T>(JsonSerializerOptionsCache.s_camelCase, cancellationToken);
+
+        /// <summary>
+        /// Ensures the response indicates success and deserializes its JSON body into
+        /// <typeparamref name="T"/> using the given serializer options.
+        /// </summary>
         internal static async Task<T> ReadSerenityJsonAsync<T>(
             this HttpResponseMessage response,
+            JsonSerializerOptions options,
             CancellationToken cancellationToken = default)
         {
             await response.EnsureSerenitySuccessAsync();
 
-            return await response.Content.ReadFromJsonAsync<T>(JsonSerializerOptionsCache.s_camelCase, cancellationToken)
+            return await response.Content.ReadFromJsonAsync<T>(options, cancellationToken)
                    ?? throw new InvalidOperationException("Failed to deserialize response");
         }
     }

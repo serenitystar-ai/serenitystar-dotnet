@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Exceptions;
 using SerenityStar.Extensions;
@@ -64,7 +65,7 @@ namespace SerenityStar.IntegrationTests
 
             SerenityApiException ex =
                 await Assert.ThrowsAsync<SerenityApiException>(
-                    () => client.Agents.Activities.Create("marketing-campaign").ExecuteAsync());
+                    () => client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync());
 
             Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
             Assert.Equal("Bad Request", ex.ReasonPhrase);
@@ -89,7 +90,7 @@ namespace SerenityStar.IntegrationTests
 
             SerenityApiException ex =
                 await Assert.ThrowsAsync<SerenityApiException>(
-                    () => client.Agents.Activities.Create("marketing-campaign").ExecuteAsync());
+                    () => client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync());
 
             Assert.Equal((HttpStatusCode)429, ex.StatusCode);
             Assert.Null(ex.ResponseJson);
@@ -109,7 +110,7 @@ namespace SerenityStar.IntegrationTests
 
             SerenityApiException ex =
                 await Assert.ThrowsAsync<SerenityApiException>(
-                    () => client.Agents.Activities.Create("marketing-campaign").ExecuteAsync());
+                    () => client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync());
 
             Assert.Equal(HttpStatusCode.Forbidden, ex.StatusCode);
             Assert.NotNull(ex.ResponseJson);
@@ -131,7 +132,7 @@ namespace SerenityStar.IntegrationTests
 
             SerenityApiException ex =
                 await Assert.ThrowsAsync<SerenityApiException>(
-                    () => client.Agents.Activities.Create("marketing-campaign").ExecuteAsync());
+                    () => client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync());
 
             Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
             Assert.Null(ex.ResponseJson);
@@ -151,7 +152,7 @@ namespace SerenityStar.IntegrationTests
 
             SerenityApiException ex =
                 await Assert.ThrowsAsync<SerenityApiException>(
-                    () => client.Agents.Activities.Create("marketing-campaign").ExecuteAsync());
+                    () => client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync());
 
             Assert.Equal(HttpStatusCode.BadGateway, ex.StatusCode);
             Assert.Null(ex.ResponseJson);
@@ -172,7 +173,7 @@ namespace SerenityStar.IntegrationTests
 
             SerenityApiException ex =
                 await Assert.ThrowsAsync<SerenityApiException>(
-                    () => client.Agents.Activities.Create("marketing-campaign").ExecuteAsync());
+                    () => client.GetAgents().Activities.Create("marketing-campaign").ExecuteAsync());
 
             Assert.Contains("NotFound", ex.Message);
         }
