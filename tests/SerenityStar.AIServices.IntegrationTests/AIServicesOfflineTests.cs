@@ -235,14 +235,17 @@ namespace SerenityStar.AIServices.IntegrationTests
         [Fact]
         public async Task Embeddings_Generate_SendsContentAndParsesVectors()
         {
-            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3}}""");
+            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3},"usage":{"inputUnit":"tokens","input":3}}""");
+            Guid modelId = Guid.NewGuid();
 
-            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { Content = { "hello" } });
+            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { AIModelId = modelId, Content = { "hello" } });
 
             AssertPost(handler, "/api/v2/embeddings/generate");
             Assert.Equal("hello", handler.JsonBody!.Value.GetProperty("content")[0].GetString());
+            Assert.Equal(modelId, handler.JsonBody!.Value.GetProperty("modelId").GetGuid());
             Assert.Equal(new[] { 0.1f, -0.2f, 0.3f }, result.Data[0].Embedding);
-            Assert.Equal(3, result.TokenUsage!.TotalTokens);
+            Assert.Equal("tokens", result.Usage!.InputUnit);
+            Assert.Equal(3, result.Usage.Input);
             Assert.Equal(0.001, result.Cost!.Total);
         }
         #endregion
