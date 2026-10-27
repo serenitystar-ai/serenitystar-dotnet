@@ -18,6 +18,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Assistants / Copilots](#assistants--copilots)
 - [Skill Approvals](#skill-approvals)
 - [Request User Choice](#request-user-choice)
+- [Agent TODOs](#agent-todos)
 - [Activities](#activities)
 - [AI Proxy](#ai-proxy)
 - [Chat Completions](#chat-completions)
@@ -871,6 +872,35 @@ if (userChoice != null)
 }
 
 Console.WriteLine(response.Content);
+```
+
+## Agent TODOs
+
+When an agent has Agent TODOs enabled, it breaks complex requests into its own TODO list and keeps iterating until no item is left pending. It needs no answer from the user, but the progress of the list is reported while streaming (Assistants and Copilots).
+
+Every TODO skill invocation, and every new iteration of the agent (`StreamingTaskKeys.AgentTodoIterate`), ends with a `task_stop` event that carries the whole list. `TryGetAgentTodos` reads it, so the latest list received holds the current progress. Each `AgentTodoItem` has an `Id`, a `Description` and a `Status` (`AgentTodoStatus.Pending`, `Completed` or `Canceled`).
+
+See the [Agent TODOs documentation](https://docs.serenitystar.ai/docs/serenity-aihub/capabilities/agent-todos) for more details.
+
+```csharp
+using SerenityStar.Models.Streaming;
+
+IReadOnlyList<AgentTodoItem> todos = Array.Empty<AgentTodoItem>();
+
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Research three destinations and compare them"))
+{
+    switch (message)
+    {
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text);
+            break;
+        case StreamingAgentMessageTaskStop taskStop when taskStop.TryGetAgentTodos(out IReadOnlyList<AgentTodoItem>? current):
+            todos = current;
+            int resolved = todos.Count(t => t.Status != AgentTodoStatus.Pending);
+            Console.WriteLine($"Progress: {resolved}/{todos.Count}");
+            break;
+    }
+}
 ```
 
 ## Activities

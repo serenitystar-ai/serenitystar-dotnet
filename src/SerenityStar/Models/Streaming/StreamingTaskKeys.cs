@@ -22,5 +22,11 @@ namespace SerenityStar.Models.Streaming
         /// The task output is the requested <see cref="Execute.UserChoicePendingAction"/>.
         /// </summary>
         public const string UserChoiceRequest = "pending_actions_user_choice_request";
+
+        /// <summary>
+        /// The agent still had pending TODO items after a full run, so it was invoked again to keep working on them.
+        /// The task output is the current TODO list (see <see cref="StreamingAgentMessageTaskStop.TryGetAgentTodos"/>).
+        /// </summary>
+        public const string AgentTodoIterate = "agent_todo_iterate";
     }
 }
