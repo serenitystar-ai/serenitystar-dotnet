@@ -16,6 +16,9 @@ public class TestFixture : IDisposable
     public string ChatCompletionAgent { get; }
     public string ApprovalProxyAgent { get; }
     public string ApprovalMessage { get; }
+    public string UserChoiceAssistantAgent { get; }
+    public string UserChoiceProxyAgent { get; }
+    public string UserChoiceMessage { get; }
     public Guid? TranscriptionModelId { get; }
     public string? AudioFilePath { get; }
 
@@ -41,6 +44,13 @@ public class TestFixture : IDisposable
         // approval, and a message that makes them invoke it.
         ApprovalProxyAgent = Configuration["SerenityStar:ApprovalProxyAgent"] ?? "aiproxyagenttester";
         ApprovalMessage = Configuration["SerenityStar:ApprovalMessage"] ?? "Generate an image of a red apple on a white table.";
+
+        // The Request User Choice tests use an assistant agent with the skill enabled (the proxy enables it per
+        // request) and a message that makes them ask the user to choose.
+        UserChoiceAssistantAgent = Configuration["SerenityStar:UserChoiceAssistantAgent"] ?? AssistantAgent;
+        UserChoiceProxyAgent = Configuration["SerenityStar:UserChoiceProxyAgent"] ?? ApprovalProxyAgent;
+        UserChoiceMessage = Configuration["SerenityStar:UserChoiceMessage"]
+            ?? "I want to plan a trip. Before answering, use the request user choice skill to ask me which destination type I prefer (beach, mountain, city) and my budget range, giving me options.";
 
         string? transcriptionModelId = Configuration["SerenityStar:TranscriptionModelId"];
         if (!string.IsNullOrEmpty(transcriptionModelId) && Guid.TryParse(transcriptionModelId, out Guid modelId))

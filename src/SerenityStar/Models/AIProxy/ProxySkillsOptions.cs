@@ -27,6 +27,12 @@ namespace SerenityStar.Models.AIProxy
         public WorkbenchSkillOptions? Workbench { get; set; }
 
         /// <summary>
+        /// Enables the Request User Choice skill, so the model can pause and ask the user to choose from a set of
+        /// options (<see cref="Execute.UserChoicePendingAction"/>).
+        /// </summary>
+        public bool UserChoice { get; set; }
+
+        /// <summary>
         /// Options for the image generation skill.
         /// </summary>
         public sealed class ImageGenerationSkillOptions

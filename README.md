@@ -17,6 +17,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Usage](#-usage)
 - [Assistants / Copilots](#assistants--copilots)
 - [Skill Approvals](#skill-approvals)
+- [Request User Choice](#request-user-choice)
 - [Activities](#activities)
 - [AI Proxy](#ai-proxy)
 - [Chat Completions](#chat-completions)
@@ -737,6 +738,141 @@ Conversation conversation = client.GetAgents().Assistants.CreateConversation(
     });
 ```
 
+## Request User Choice
+
+When an agent has the Request User Choice skill enabled, it can pause and ask the user to choose from a set of options. The response then carries a `UserChoicePendingAction` in `PendingActions`, with one or more `Questions`. Each question has an `Id`, a short `Header`, the question `Text`, whether it `IsMultiselect`, and its `Options` (`Id`, `Title` and an optional `Description`).
+
+The user can answer all, some or none of the questions, picking options and/or writing a free-text answer when none of them fit. The agent continues with whatever it receives, and the unanswered questions stay in the history as context. Build each answer from its question:
+
+- `question.Select(optionIds)`: selects one option, or several on a multi-select question.
+- `question.AnswerOther(text)`: answers with free text only.
+- `question.Answer(optionIds, text)`: selects options and adds free text.
+
+These helpers validate the answer against the question: the options must belong to it, and a single-select question accepts only one option. The API doesn't validate answers, so an answer built by hand is passed to the agent as is.
+
+See the [Request User Choice documentation](https://docs.serenitystar.ai/docs/serenity-aihub/capabilities/human-in-the-loop/request-user-choice/) for more details.
+
+> [!NOTE]
+> The answers, including the free-text ones, are stored in the conversation history and can contain personal data. Avoid logging them.
+
+### Answer in a conversation (Assistants / Copilots)
+
+```csharp
+using SerenityStar.Agents.Conversational;
+using SerenityStar.Client;
+using SerenityStar.Models.Execute;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("travel-assistant");
+
+AgentResult response = await conversation.SendMessageAsync("Help me plan a trip");
+
+UserChoicePendingAction? userChoice = response.PendingActions.OfType<UserChoicePendingAction>().FirstOrDefault();
+if (userChoice != null)
+{
+    List<UserChoiceAnswer> answers = new();
+    foreach (UserChoiceQuestion question in userChoice.Questions)
+    {
+        Console.WriteLine(question.Text);
+        foreach (UserChoiceOption option in question.Options)
+            Console.WriteLine($"  [{option.Id}] {option.Title}");
+
+        // Your own selection logic. For example:
+        answers.Add(question.IsMultiselect
+            ? question.Select(question.Options[0].Id, question.Options[1].Id)
+            : question.Answer(new[] { question.Options[0].Id }, "Preferably in spring"));
+    }
+
+    // Continues the conversation. A message can optionally be sent in the same turn.
+    response = await conversation.SendUserChoicesAsync(answers);
+}
+
+Console.WriteLine(response.Content);
+```
+
+To answer only some of the questions, send just those answers, optionally with a message:
+
+```csharp
+UserChoiceQuestion destination = userChoice.Questions[0];
+response = await conversation.SendUserChoicesAsync(
+    new[] { destination.AnswerOther("Somewhere with snow") },
+    "Choose the rest for me");
+```
+
+To skip every question, send a regular message, or `SendUserChoicesAsync` with no answers and a message:
+
+```csharp
+response = await conversation.SendMessageAsync("I'd rather not choose, just give me a suggestion");
+```
+
+### Stream with user choices
+
+The questions are surfaced as soon as they are asked through a `task_stop` event, and they are also listed in the pending actions of the `stop` event result. Use `StreamUserChoicesAsync` to answer and stream the continued conversation.
+
+```csharp
+using SerenityStar.Models.Streaming;
+
+UserChoicePendingAction? userChoice = null;
+
+await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Help me plan a trip"))
+{
+    switch (message)
+    {
+        case StreamingAgentMessageContent content:
+            Console.Write(content.Text);
+            break;
+        case StreamingAgentMessageTaskStop taskStop when taskStop.TryGetUserChoiceRequest(out UserChoicePendingAction? requested):
+            userChoice = requested;
+            Console.WriteLine($"The agent asked {requested.Questions.Count} question(s)");
+            break;
+    }
+}
+
+if (userChoice != null)
+{
+    IEnumerable<UserChoiceAnswer> answers = userChoice.Questions.Select(q => q.Select(q.Options[0].Id));
+
+    await foreach (StreamingAgentMessage message in conversation.StreamUserChoicesAsync(answers))
+    {
+        if (message is StreamingAgentMessageContent content)
+            Console.Write(content.Text);
+    }
+}
+```
+
+### Answer in an AI Proxy
+
+AI Proxy enables the skill per request with `ProxySkillsOptions.UserChoice` and keeps the chat history on the client. `AddUserChoiceAnswers` echoes the questions and appends the answers, plus an optional message, to the messages. Then execute the proxy again with the same options.
+
+```csharp
+using SerenityStar.Agents.System;
+using SerenityStar.Models.AIProxy;
+
+ProxyExecutionReq options = new ProxyExecutionReq
+{
+    Model = "gpt-4o-mini-2024-07-18",
+    Messages = new List<ProxyExecutionMessage>
+    {
+        new ProxyExecutionMessage { Role = "user", Content = "Help me plan a trip" }
+    },
+    Skills = new ProxySkillsOptions { UserChoice = true }
+};
+
+Proxy proxy = client.GetAgents().AIProxies.Create("proxy-agent", options);
+AgentResult response = await proxy.ExecuteAsync();
+
+UserChoicePendingAction? userChoice = response.PendingActions.OfType<UserChoicePendingAction>().FirstOrDefault();
+if (userChoice != null)
+{
+    UserChoiceQuestion first = userChoice.Questions[0];
+    options.AddUserChoiceAnswers(userChoice, new[] { first.Select(first.Options[0].Id) }, "Choose the rest for me");
+
+    response = await proxy.ExecuteAsync();
+}
+
+Console.WriteLine(response.Content);
+```
+
 ## Activities
 
 Activities are single-execution agents designed for one-time tasks like translations, data processing, or content generation. Unlike assistants, they don't maintain conversation history.
@@ -1004,7 +1140,8 @@ Proxy proxy = client.GetAgents().AIProxies.Create(
         Skills = new ProxySkillsOptions
         {
             WebSearch = new ProxySkillsOptions.WebSearchSkillOptions(),
-            ImageGeneration = new ProxySkillsOptions.ImageGenerationSkillOptions { RequiresApproval = true }
+            ImageGeneration = new ProxySkillsOptions.ImageGenerationSkillOptions { RequiresApproval = true },
+            UserChoice = true        // Let the model ask the user to choose (see Request User Choice)
         }
     }
 );

@@ -25,10 +25,24 @@
           return the approvals still pending
         * Auto mode: AgentExecutionReq.Skills = new SkillsOptions { AutoMode = true } approves every skill invocation
           without pausing (Assistants and Copilots). Opt-in only: it bypasses the human review
+      - Request User Choice: agents with the skill enabled pause to ask the user to choose from a set of options, and the
+        SDK can now answer them
+        * New UserChoicePendingAction ("user_choice") in AgentResult.PendingActions with its Questions (Id, Header, Text,
+          IsMultiselect and Options with Id, Title and Description)
+        * UserChoiceQuestion.Select(optionIds), AnswerOther(text) and Answer(optionIds, text) create a UserChoiceAnswer
+          validated against the question
+        * Assistants and Copilots: conversation.SendUserChoicesAsync(answers, message) and StreamUserChoicesAsync(answers, message)
+          answer all, some or none of the questions and continue the conversation
+        * AI Proxy: ProxySkillsOptions.UserChoice enables the skill per request, and
+          ProxyExecutionReq.AddUserChoiceAnswers(userChoice, answers, message) echoes the questions and the answers in the
+          client-side history (ProxyExecutionMessage.UserChoiceRequest / UserChoiceResponse)
+        * Streaming: StreamingAgentMessageTaskStop.TryGetUserChoiceRequest surfaces the questions as soon as they are
+          asked, and StreamingTaskKeys.UserChoiceRequest exposes its task key
 
       FIXES:
       - Pending actions are now resolved by their "type": responses with pending actions no longer fail to deserialize,
         and unknown pending action types are surfaced as UnsupportedPendingAction instead of failing
+      - "user_choice" pending actions are now surfaced as UserChoicePendingAction instead of UnsupportedPendingAction
 
       BREAKING CHANGES:
       - The SDK is now split into packages that are always published together with the same version:
