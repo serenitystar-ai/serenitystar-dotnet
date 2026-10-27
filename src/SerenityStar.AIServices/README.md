@@ -1,6 +1,6 @@
 # SubgenAI.SerenityStar.AIServices
 
-Serenity Star AI services for .NET: anonymizer and decisions.
+Serenity Star AI services for .NET: anonymizer, decisions and embeddings.
 
 This package depends only on `SubgenAI.SerenityStar.Core`, so you don't need the agents package (`SubgenAI.SerenityStar.SDK`). All Serenity Star packages are published together and must be used with the same version.
 
@@ -31,6 +31,7 @@ AnonymizerResult result = await anonymizer.ObfuscateAsync(new AnonymizerReq
 | --- | --- | --- |
 | Anonymizer | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
 | Decisions | `IDecisionClient` | `client.GetDecisionClient()` |
+| Embeddings | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
 
 ## Dependency injection
 

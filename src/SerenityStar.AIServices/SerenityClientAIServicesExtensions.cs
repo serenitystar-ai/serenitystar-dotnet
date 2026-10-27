@@ -27,6 +27,15 @@ namespace SerenityStar.Client
         public static IDecisionClient GetDecisionClient(this SerenityClient client)
             => new DecisionClient(GetApiClient(client));
 
+        /// <summary>
+        /// Gets a client to generate vector embeddings for texts.
+        /// </summary>
+        /// <param name="client">The Serenity Star client.</param>
+        /// <returns>An <see cref="IEmbeddingClient"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
+        public static IEmbeddingClient GetEmbeddingClient(this SerenityClient client)
+            => new EmbeddingClient(GetApiClient(client));
+
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)

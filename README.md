@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer and decisions.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions and embeddings.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -24,6 +24,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [AI Services](#ai-services)
   - [Anonymizer](#anonymizer)
   - [Decisions](#decisions)
+  - [Embeddings](#embeddings)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -35,7 +36,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer and decisions |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions and embeddings |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1260,6 +1261,7 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | --- | --- | --- |
 | [Anonymizer](#anonymizer) | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
 | [Decisions](#decisions) | `IDecisionClient` | `client.GetDecisionClient()` |
+| [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
 
 Every result includes the instance id (when the service creates one), usage and cost.
 
@@ -1363,6 +1365,25 @@ DecisionResult traceResult = await decisions.EvaluateAsync(new DecisionReq
         }
     }
 });
+```
+
+### Embeddings
+
+Generate vector embeddings for one or more texts.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Embeddings;
+
+IEmbeddingClient embeddings = client.GetEmbeddingClient();
+
+EmbeddingsResult result = await embeddings.GenerateAsync(new GenerateEmbeddingsReq
+{
+    Content = { "First text", "Second text" }
+});
+
+foreach (EmbeddingData item in result.Data)
+    Console.WriteLine($"#{item.Index}: {item.Embedding.Length} dimensions");
 ```
 
 ## Error handling
