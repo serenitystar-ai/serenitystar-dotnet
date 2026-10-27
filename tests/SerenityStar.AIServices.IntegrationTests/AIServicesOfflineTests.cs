@@ -271,11 +271,13 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","imageUrl":"u"}""");
             Guid fileId = Guid.NewGuid();
+            Guid modelId = Guid.NewGuid();
 
-            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "Edit", FileIds = { fileId } });
+            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { AIModelId = modelId, Prompt = "Edit", FileIds = { fileId } });
 
             AssertPost(handler, "/api/v2/image/generate/file");
             Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileIds")[0].GetGuid());
+            Assert.Equal(modelId, handler.JsonBody!.Value.GetProperty("modelId").GetGuid());
         }
 
         [Fact]
@@ -286,7 +288,7 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             ImageGenerationResult result = await CreateClient(handler).GetImageGenerationClient().GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
             {
-                ModelId = modelId,
+                AIModelId = modelId,
                 Prompt = "Combine them",
                 Files =
                 {
@@ -311,6 +313,17 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             await Assert.ThrowsAsync<ArgumentException>(() => CreateClient(handler).GetImageGenerationClient()
                 .GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq { Prompt = "Edit" }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+
+        [Fact]
+        public async Task ImageGeneration_RejectsBlankPrompt()
+        {
+            CapturingHandler handler = new("{}");
+            IImageGenerationClient client = CreateClient(handler).GetImageGenerationClient();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GenerateAsync(new GenerateImageReq { Prompt = "   " }));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "", FileIds = { Guid.NewGuid() } }));
             Assert.Equal(0, handler.RequestCount);
         }
         #endregion

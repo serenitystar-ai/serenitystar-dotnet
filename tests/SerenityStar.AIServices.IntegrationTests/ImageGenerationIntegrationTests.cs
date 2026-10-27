@@ -26,7 +26,7 @@ public class ImageGenerationIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         GenerateImageReq request = new()
         {
-            ModelId = _fixture.GetOptionalGuid("ImageGenerationModelId"),
+            AIModelId = _fixture.GetOptionalGuid("ImageGenerationModelId"),
             Prompt = "A simple flat icon of a blue circle on a white background"
         };
 
@@ -46,7 +46,7 @@ public class ImageGenerationIntegrationTests : IClassFixture<TestFixture>
         using FileStream fileStream = File.OpenRead(imagePath);
         GenerateImageWithSourceImagesReq request = new()
         {
-            ModelId = _fixture.GetRequiredGuid("ImageGenerationWithSourceImagesModelId", SourceImagesModelDescription),
+            AIModelId = _fixture.GetRequiredGuid("ImageGenerationWithSourceImagesModelId", SourceImagesModelDescription),
             Prompt = "Turn this image into black and white",
             Files = { new AIServiceFile { FileStream = fileStream, FileName = Path.GetFileName(imagePath) } }
         };
@@ -66,7 +66,7 @@ public class ImageGenerationIntegrationTests : IClassFixture<TestFixture>
         Guid fileId = await _fixture.UploadFileAsync(GetImageFilePath());
         GenerateImageByFileIdReq request = new()
         {
-            ModelId = _fixture.GetRequiredGuid("ImageGenerationWithSourceImagesModelId", SourceImagesModelDescription),
+            AIModelId = _fixture.GetRequiredGuid("ImageGenerationWithSourceImagesModelId", SourceImagesModelDescription),
             Prompt = "Turn this image into black and white",
             FileIds = { fileId }
         };
