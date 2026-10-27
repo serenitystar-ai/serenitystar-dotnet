@@ -18,6 +18,15 @@ namespace SerenityStar.Client
         public static IAnonymizerClient GetAnonymizerClient(this SerenityClient client)
             => new AnonymizerClient(GetApiClient(client));
 
+        /// <summary>
+        /// Gets a client to evaluate inputs against predicate, choice and score questions.
+        /// </summary>
+        /// <param name="client">The Serenity Star client.</param>
+        /// <returns>An <see cref="IDecisionClient"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
+        public static IDecisionClient GetDecisionClient(this SerenityClient client)
+            => new DecisionClient(GetApiClient(client));
+
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)

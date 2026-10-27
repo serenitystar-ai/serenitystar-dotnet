@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer and decisions.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -23,6 +23,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Volatile Knowledge](#volatile-knowledge)
 - [AI Services](#ai-services)
   - [Anonymizer](#anonymizer)
+  - [Decisions](#decisions)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -34,7 +35,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer and decisions |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1258,6 +1259,9 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | Service | Interface | Entry point |
 | --- | --- | --- |
 | [Anonymizer](#anonymizer) | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
+| [Decisions](#decisions) | `IDecisionClient` | `client.GetDecisionClient()` |
+
+Every result includes the instance id (when the service creates one), usage and cost.
 
 ### Anonymizer
 
@@ -1285,6 +1289,81 @@ foreach (AnonymizerSpan span in result.Spans)
 ```
 
 > **Note:** The detected spans include the original sensitive values (`Word`). Avoid logging them.
+
+### Decisions
+
+Evaluate an input against one or more questions: predicates (yes/no), choices (closed set of options) or scores (ordered levels). A model is required: set `AIModelId`, or both `ModelCode` and `Vendor`.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.Decisions;
+
+IDecisionClient decisions = client.GetDecisionClient();
+
+DecisionResult result = await decisions.EvaluateAsync(new DecisionReq
+{
+    AIModelId = Guid.Parse("your-decision-model-id"),
+    Input = "My invoice was charged twice and nobody answers my emails!",
+    Questions =
+    {
+        new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "is_complaint", Instructions = "Is the customer complaining?" },
+        new DecisionQuestion
+        {
+            Type = DecisionQuestionType.Choice, Name = "topic", Instructions = "What is the message about?",
+            Choices = new List<DecisionChoice> { new() { Value = "billing" }, new() { Value = "support" }, new() { Value = "other" } }
+        },
+        new DecisionQuestion
+        {
+            Type = DecisionQuestionType.Score, Name = "urgency", Instructions = "How urgent is it?",
+            Levels = new List<DecisionScoreLevel> { new() { Label = "low" }, new() { Label = "medium" }, new() { Label = "high" } }
+        }
+    }
+});
+
+foreach (DecisionAnswer answer in result.Answers)
+{
+    switch (answer)
+    {
+        case PredicateDecisionAnswer predicate:
+            Console.WriteLine($"{predicate.Name}: {predicate.Probability:P0}");
+            break;
+        case ChoiceDecisionAnswer choice:
+            Console.WriteLine($"{choice.Name}: {choice.Choice} (confidence {choice.Confidence:P0})");
+            break;
+        case ScoreDecisionAnswer score:
+            Console.WriteLine($"{score.Name}: {score.Score}");
+            break;
+        case RefusalDecisionAnswer refusal:
+            Console.WriteLine($"{refusal.Name}: the model declined to answer");
+            break;
+    }
+}
+```
+
+The input can also be an ordered list of messages, function calls and function call outputs, such as an agent trace, to evaluate how an agent behaved. User messages and function call outputs can include images, sent as base64 data URLs (HTTP(S) image URLs are not supported). Function calls are evidence only: they are never executed.
+
+```csharp
+DecisionResult traceResult = await decisions.EvaluateAsync(new DecisionReq
+{
+    ModelCode = "your-decision-model-code",
+    Vendor = "OpenAI",
+    Input = DecisionInput.FromItems(
+        DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+            DecisionInputPart.CreateInputText("This is the product I received. Where is my order 42?"),
+            DecisionInputPart.CreateInputImage(File.ReadAllBytes("product.jpg"), "image/jpeg"))),
+        DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"orderId":42}"""),
+        DecisionInputItem.CreateFunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
+        DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
+    Questions =
+    {
+        new DecisionQuestion
+        {
+            Type = DecisionQuestionType.Predicate, Name = "grounded",
+            Instructions = "Is the assistant's answer supported by the tool output?"
+        }
+    }
+});
+```
 
 ## Error handling
 

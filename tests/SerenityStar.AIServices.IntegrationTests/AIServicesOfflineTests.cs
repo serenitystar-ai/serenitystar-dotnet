@@ -7,6 +7,7 @@ using SerenityStar.Exceptions;
 using SerenityStar.Extensions;
 using SerenityStar.Models.AIServices;
 using SerenityStar.Models.Anonymizer;
+using SerenityStar.Models.Decisions;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -121,6 +122,114 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
+        #region Decisions
+        [Fact]
+        public async Task Decisions_Evaluate_SendsQuestionsAndParsesPolymorphicAnswers()
+        {
+            CapturingHandler handler = new("""
+                {"instanceId":"11111111-1111-1111-1111-111111111111","answers":[
+                  {"type":"predicate","name":"is_complaint","probability":0.9},
+                  {"type":"choice","name":"topic","choice":"billing","probabilities":[{"value":"billing","probability":0.8},{"value":"other","probability":0.2}],"confidence":0.7},
+                  {"type":"score","name":"urgency","score":1.4,"probabilities":[{"value":0,"label":"low","probability":0.1}],"confidence":0.6},
+                  {"type":"refusal","name":"skipped"},
+                  {"type":"ranking","name":"future"}],
+                 "cost":{"amount":0.02,"currency":"USD"}}
+                """);
+
+            DecisionResult result = await CreateClient(handler).GetDecisionClient().EvaluateAsync(new DecisionReq
+            {
+                AIModelId = Guid.NewGuid(),
+                Input = "My invoice is wrong!",
+                Questions =
+                {
+                    new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "is_complaint", Instructions = "Is it a complaint?" },
+                    new DecisionQuestion
+                    {
+                        Type = DecisionQuestionType.Choice, Name = "topic", Instructions = "Topic",
+                        Choices = new List<DecisionChoice> { new() { Value = "billing" }, new() { Value = "other" } }
+                    }
+                }
+            });
+
+            AssertPost(handler, "/api/v2/decisions");
+            Assert.Equal("My invoice is wrong!", handler.JsonBody!.Value.GetProperty("input").GetString());
+            JsonElement questions = handler.JsonBody!.Value.GetProperty("questions");
+            Assert.Equal("predicate", questions[0].GetProperty("type").GetString());
+            Assert.False(questions[0].TryGetProperty("choices", out _));
+            Assert.Equal("billing", questions[1].GetProperty("choices")[0].GetProperty("value").GetString());
+
+            Assert.Equal(0.9, Assert.IsType<PredicateDecisionAnswer>(result.Answers[0]).Probability);
+            ChoiceDecisionAnswer choice = Assert.IsType<ChoiceDecisionAnswer>(result.Answers[1]);
+            Assert.Equal("billing", choice.Choice);
+            Assert.Equal(2, choice.Probabilities.Count);
+            Assert.Equal("low", Assert.IsType<ScoreDecisionAnswer>(result.Answers[2]).Probabilities[0].Label);
+            Assert.Equal("skipped", Assert.IsType<RefusalDecisionAnswer>(result.Answers[3]).Name);
+            UnsupportedDecisionAnswer unsupported = Assert.IsType<UnsupportedDecisionAnswer>(result.Answers[4]);
+            Assert.Equal("ranking", unsupported.OriginalType);
+            Assert.Equal("future", unsupported.Name);
+            Assert.Equal(0.02, result.Cost!.Amount);
+        }
+
+        [Fact]
+        public async Task Decisions_Evaluate_SendsItemsInputAsArrayWithImagesAndFunctionCalls()
+        {
+            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","answers":[]}""");
+
+            await CreateClient(handler).GetDecisionClient().EvaluateAsync(new DecisionReq
+            {
+                ModelCode = "decision-model",
+                Vendor = "OpenAI",
+                Input = DecisionInput.FromItems(
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+                        DecisionInputPart.CreateInputText("Is this receipt paid?"),
+                        DecisionInputPart.CreateInputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
+                    DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"id":42}"""),
+                    DecisionInputItem.CreateFunctionCallOutput("call_1", "Order 42 is paid."),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Yes, it is paid.")),
+                Questions = { new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "paid", Instructions = "Is it paid?" } }
+            });
+
+            JsonElement input = handler.JsonBody!.Value.GetProperty("input");
+            Assert.Equal(JsonValueKind.Array, input.ValueKind);
+            Assert.Equal(4, input.GetArrayLength());
+
+            JsonElement userMessage = input[0];
+            Assert.Equal("message", userMessage.GetProperty("type").GetString());
+            Assert.Equal("user", userMessage.GetProperty("role").GetString());
+            JsonElement parts = userMessage.GetProperty("content");
+            Assert.Equal("input_text", parts[0].GetProperty("type").GetString());
+            Assert.Equal("Is this receipt paid?", parts[0].GetProperty("text").GetString());
+            Assert.Equal("input_image", parts[1].GetProperty("type").GetString());
+            Assert.Equal("data:image/png;base64,AQID", parts[1].GetProperty("imageUrl").GetString());
+            Assert.Equal("low", parts[1].GetProperty("detail").GetString());
+            Assert.False(parts[1].TryGetProperty("text", out _));
+
+            Assert.Equal("function_call", input[1].GetProperty("type").GetString());
+            Assert.Equal("call_1", input[1].GetProperty("callId").GetString());
+            Assert.Equal("get_order", input[1].GetProperty("name").GetString());
+            Assert.Equal("""{"id":42}""", input[1].GetProperty("arguments").GetString());
+
+            Assert.Equal("function_call_output", input[2].GetProperty("type").GetString());
+            Assert.Equal("Order 42 is paid.", input[2].GetProperty("output").GetString());
+
+            Assert.Equal("assistant", input[3].GetProperty("role").GetString());
+            Assert.Equal("Yes, it is paid.", input[3].GetProperty("content").GetString());
+        }
+
+        [Fact]
+        public async Task Decisions_InvalidInput_ThrowsBeforeSending()
+        {
+            CapturingHandler handler = new("{}");
+            IDecisionClient client = CreateClient(handler).GetDecisionClient();
+            List<DecisionQuestion> questions = new() { new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "q", Instructions = "?" } };
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.EvaluateAsync(new DecisionReq { AIModelId = Guid.NewGuid(), Questions = questions }));
+            await Assert.ThrowsAsync<ArgumentException>(() => client.EvaluateAsync(new DecisionReq { AIModelId = Guid.NewGuid(), Input = "", Questions = questions }));
+            await Assert.ThrowsAsync<ArgumentException>(() => client.EvaluateAsync(new DecisionReq { AIModelId = Guid.NewGuid(), Input = DecisionInput.FromItems(), Questions = questions }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+        #endregion
+
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -140,6 +249,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             SerenityClient client = null!;
 
             Assert.Throws<ArgumentNullException>(() => client.GetAnonymizerClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetDecisionClient());
         }
 
         [Fact]
@@ -155,6 +265,7 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             using ServiceProvider provider = services.BuildServiceProvider();
 
+            Assert.NotNull(provider.GetRequiredService<IDecisionClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 
