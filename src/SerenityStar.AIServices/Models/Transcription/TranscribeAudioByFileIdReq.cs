@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace SerenityStar.Models.Transcription
 {
@@ -11,12 +12,11 @@ namespace SerenityStar.Models.Transcription
         /// The AI Model Id to use for transcription.
         /// If not provided, the default audio model will be used.
         /// </summary>
-        public Guid? ModelId { get; set; }
+        [JsonPropertyName("modelId")]
+        public Guid? AIModelId { get; set; }
 
         /// <summary>
         /// The id of the uploaded file to transcribe.
-        /// Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm.
-        /// Maximum file size: 25 MB.
         /// </summary>
         public Guid FileId { get; set; }
 

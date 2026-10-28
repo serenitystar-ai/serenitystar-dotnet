@@ -1510,7 +1510,7 @@ await foreach (StreamingSpeechGenerationMessage message in speech.StreamAsync(re
 
 ### Transcription
 
-Convert audio and video files into text. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm. Maximum file size: 25 MB.
+Convert audio and video files into text.
 
 > To send audio to an agent instead, see [Audio Input for Agents](#audio-input-for-agents).
 
@@ -1523,11 +1523,11 @@ SerenityClient client = SerenityClient.Create("your-api-key");
 ITranscriptionClient transcription = client.GetTranscriptionClient();
 
 using FileStream audioFile = File.OpenRead("interview.wav");
-TranscribeResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
+TranscriptionResult result = await transcription.TranscribeAsync(new TranscribeAudioReq
 {
     FileStream = audioFile,
     FileName = "interview.wav",
-    ModelId = Guid.Parse("your-model-id"),   // Optional: specific AI model
+    AIModelId = Guid.Parse("your-model-id"), // Optional: specific AI model
     Prompt = "Interview about artificial intelligence and machine learning", // Optional: guide terminology
     UserIdentifier = "user-123",             // Optional: for tracking
     Channel = "web-app"                      // Optional: execution channel
@@ -1538,7 +1538,7 @@ Console.WriteLine($"Language: {result.Metadata?.Language}, duration: {result.Met
 Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
 
 // Or transcribe a file previously uploaded to Serenity Star
-TranscribeResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
+TranscriptionResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
 {
     FileId = Guid.Parse("uploaded-file-id")
 });

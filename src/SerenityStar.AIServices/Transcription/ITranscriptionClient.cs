@@ -16,15 +16,13 @@ namespace SerenityStar.AIServices
         /// <summary>
         /// Transcribes an audio or video file by uploading it directly.
         /// The file stream is read from its current position and disposed when the request completes.
-        /// Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm.
-        /// Maximum file size: 25 MB.
         /// </summary>
         /// <param name="request">The transcription request containing the file stream, file name, and optional parameters.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The transcription result including the transcribed text, metadata, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request, file stream, or file name is null.</exception>
         /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
-        Task<TranscribeResult> TranscribeAsync(TranscribeAudioReq request, CancellationToken cancellationToken = default);
+        Task<TranscriptionResult> TranscribeAsync(TranscribeAudioReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Transcribes an audio or video file previously uploaded to Serenity Star.
@@ -35,6 +33,6 @@ namespace SerenityStar.AIServices
         /// <exception cref="System.ArgumentNullException">Thrown when the request is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when the file id is empty.</exception>
         /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
-        Task<TranscribeResult> TranscribeByFileIdAsync(TranscribeAudioByFileIdReq request, CancellationToken cancellationToken = default);
+        Task<TranscriptionResult> TranscribeByFileIdAsync(TranscribeAudioByFileIdReq request, CancellationToken cancellationToken = default);
     }
 }

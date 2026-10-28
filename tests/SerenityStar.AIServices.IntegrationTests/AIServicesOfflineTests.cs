@@ -514,11 +514,11 @@ namespace SerenityStar.AIServices.IntegrationTests
                 """{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hello","metadata":{"language":"en","duration":"00:00:05"},"usage":{"inputUnit":"seconds","input":5},"cost":{"prompt":0.1,"completion":0.2,"total":0.3,"currency":"USD"}}""");
             Guid modelId = Guid.NewGuid();
 
-            TranscribeResult result = await CreateClient(handler).GetTranscriptionClient().TranscribeAsync(new TranscribeAudioReq
+            TranscriptionResult result = await CreateClient(handler).GetTranscriptionClient().TranscribeAsync(new TranscribeAudioReq
             {
                 FileStream = FileStreamOf("audio"),
                 FileName = "meeting.mp3",
-                ModelId = modelId,
+                AIModelId = modelId,
                 Prompt = "context",
                 Channel = "web"
             });
@@ -549,6 +549,21 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
             // Nulls are omitted so the server applies its defaults.
             Assert.False(handler.JsonBody.Value.TryGetProperty("modelId", out _));
+
+            CapturingHandler modelHandler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hi"}""");
+            Guid modelId = Guid.NewGuid();
+            await CreateClient(modelHandler).GetTranscriptionClient().TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq { FileId = fileId, AIModelId = modelId });
+            Assert.Equal(modelId, modelHandler.JsonBody!.Value.GetProperty("modelId").GetGuid());
+        }
+
+        [Fact]
+        public async Task Transcription_RejectsBlankFileName()
+        {
+            CapturingHandler handler = new("{}");
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => CreateClient(handler).GetTranscriptionClient()
+                .TranscribeAsync(new TranscribeAudioReq { FileStream = FileStreamOf("audio"), FileName = "  " }));
+            Assert.Equal(0, handler.RequestCount);
         }
         #endregion
 
