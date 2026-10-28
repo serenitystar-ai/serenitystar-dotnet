@@ -1354,12 +1354,12 @@ DecisionResult traceResult = await decisions.EvaluateAsync(new DecisionReq
     ModelCode = "your-decision-model-code",
     Vendor = "OpenAI",
     Input = DecisionInput.FromItems(
-        DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
-            DecisionInputPart.InputText("This is the product I received. Where is my order 42?"),
-            DecisionInputPart.InputImage(File.ReadAllBytes("product.jpg"), "image/jpeg"))),
-        DecisionInputItem.FunctionCall("call_1", "get_order", """{"orderId":42}"""),
-        DecisionInputItem.FunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
-        DecisionInputItem.Message(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
+        DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+            DecisionInputPart.CreateInputText("This is the product I received. Where is my order 42?"),
+            DecisionInputPart.CreateInputImage(File.ReadAllBytes("product.jpg"), "image/jpeg"))),
+        DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"orderId":42}"""),
+        DecisionInputItem.CreateFunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
+        DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
     Questions =
     {
         new DecisionQuestion
@@ -1392,7 +1392,7 @@ foreach (EmbeddingData item in result.Data)
 
 ### Image Generation
 
-Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats: jpg, jpeg, png, gif, webp. Maximum size per file: 20 MB. Up to 16 source images per request; only models that accept source images support them, each up to its own number of images.
+Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats, sizes and number of source images depend on the selected model; only models that accept source images support them.
 
 ```csharp
 using SerenityStar.AIServices;
