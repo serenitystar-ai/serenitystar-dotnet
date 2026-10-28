@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings and image generation.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation and OCR.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -26,6 +26,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
   - [Decisions](#decisions)
   - [Embeddings](#embeddings)
   - [Image Generation](#image-generation)
+  - [OCR](#ocr)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -37,7 +38,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings and image generation |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation and OCR |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1264,6 +1265,7 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | [Decisions](#decisions) | `IDecisionClient` | `client.GetDecisionClient()` |
 | [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
 | [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
+| [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
 
 Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
 
@@ -1419,6 +1421,41 @@ ImageGenerationResult editedById = await images.GenerateByFileIdAsync(new Genera
     Prompt = "Make it look like a night scene",
     FileIds = { Guid.Parse("uploaded-file-id") }
 });
+```
+
+### OCR
+
+Extract text, tables and images from documents. Documents can be uploaded directly, sent as base64, referenced by URL, or by the id of a file previously uploaded to Serenity Star. A failure on one document does not abort the others.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.AIServices;
+using SerenityStar.Models.Ocr;
+
+IOcrClient ocr = client.GetOcrClient();
+
+using FileStream invoice = File.OpenRead("invoice.pdf");
+OcrResult result = await ocr.ExtractAsync(new OcrReq
+{
+    Files = { new AIServiceFile { FileStream = invoice, FileName = "invoice.pdf" } },
+    Instructions = "Keep the table layout"   // Optional
+});
+
+foreach (OcrFileResult file in result.Files)
+{
+    if (file.Success)
+        Console.WriteLine(file.Result!.Markdown);
+    else
+        Console.WriteLine($"{file.Source} failed: {file.Error}");
+}
+
+// Other sources
+await ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "https://example.com/contract.pdf" } });
+await ocr.ExtractFromBase64Async(new OcrBase64Req
+{
+    Base64Files = { new OcrBase64File { ContentBase64 = base64Content, MimeType = "application/pdf" } }
+});
+await ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Parse("uploaded-file-id") } });
 ```
 
 ## Error handling

@@ -10,6 +10,7 @@ using SerenityStar.Models.Anonymizer;
 using SerenityStar.Models.Decisions;
 using SerenityStar.Models.Embeddings;
 using SerenityStar.Models.ImageGeneration;
+using SerenityStar.Models.Ocr;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -328,6 +329,91 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
+        #region OCR
+        private const string OcrResponse = """
+            {"instanceId":"11111111-1111-1111-1111-111111111111","files":[
+              {"index":0,"source":"a.pdf","success":true,"result":{"model":"ocr","provider":"Mistral","markdown":"# Title","usage":{"inputTokenCount":5,"additionalCounts":{"pages":1}},
+                "pages":[{"index":0,"markdown":"# Title","tables":[{"content":"<table/>","format":0,"boundingBox":{"x":0.1,"y":0.2,"width":0.3,"height":0.4}}],"dimensions":{"width":800,"height":600}}]}},
+              {"index":1,"source":"b.png","success":false,"error":"Unreadable"}],
+             "usage":{"inputUnit":"pages","input":1},"cost":{"amount":0.01,"currency":"USD"}}
+            """;
+
+        [Fact]
+        public async Task Ocr_Extract_SendsEveryFileAndParsesResult()
+        {
+            CapturingHandler handler = new(OcrResponse);
+
+            OcrResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
+            {
+                Files =
+                {
+                    new AIServiceFile { FileStream = FileStreamOf("pdf"), FileName = "a.pdf" },
+                    new AIServiceFile { FileStream = FileStreamOf("png"), FileName = "b.png" }
+                },
+                Instructions = "Extract tables"
+            });
+
+            AssertPost(handler, "/api/v2/ocr");
+            Assert.Equal(2, handler.FormParts.Count(p => p.Name == "Files"));
+            Assert.Contains(handler.FormParts, p => p.Name == "Files" && p.FileName == "a.pdf" && p.MediaType == "application/pdf");
+            Assert.Equal("Extract tables", handler.FormValue("Instructions"));
+
+            OcrFileResult first = result.Files[0];
+            Assert.True(first.Success);
+            Assert.Equal("# Title", first.Result!.Markdown);
+            Assert.Equal(1, first.Result.Usage!.AdditionalCounts!["pages"]);
+            OcrTable table = first.Result.Pages![0].Tables[0];
+            Assert.Equal(OcrTableFormat.Html, table.Format);
+            Assert.Equal(0.4, table.BoundingBox!.Height);
+            Assert.Equal(800, first.Result.Pages[0].Dimensions!.Width);
+
+            Assert.False(result.Files[1].Success);
+            Assert.Equal("Unreadable", result.Files[1].Error);
+            Assert.Equal("pages", result.Usage!.InputUnit);
+            Assert.Equal(1, result.Usage.Input);
+            Assert.Equal(0.01, result.Cost!.Amount);
+        }
+
+        [Fact]
+        public async Task Ocr_JsonVariants_UseTheirRoutesAndDerivedFields()
+        {
+            CapturingHandler base64Handler = new(OcrResponse);
+            await CreateClient(base64Handler).GetOcrClient().ExtractFromBase64Async(new OcrBase64Req
+            {
+                Base64Files = { new OcrBase64File { ContentBase64 = "AAAA", MimeType = "application/pdf" } },
+                Instructions = "x"
+            });
+            AssertPost(base64Handler, "/api/v2/ocr/base64");
+            Assert.Equal("AAAA", base64Handler.JsonBody!.Value.GetProperty("base64Files")[0].GetProperty("contentBase64").GetString());
+            Assert.Equal("x", base64Handler.JsonBody.Value.GetProperty("instructions").GetString());
+
+            CapturingHandler urlHandler = new(OcrResponse);
+            await CreateClient(urlHandler).GetOcrClient().ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "https://example.com/a.pdf" } });
+            AssertPost(urlHandler, "/api/v2/ocr/url");
+            Assert.Equal("https://example.com/a.pdf", urlHandler.JsonBody!.Value.GetProperty("urls")[0].GetString());
+
+            CapturingHandler fileIdHandler = new(OcrResponse);
+            Guid fileId = Guid.NewGuid();
+            await CreateClient(fileIdHandler).GetOcrClient().ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { fileId } });
+            AssertPost(fileIdHandler, "/api/v2/ocr/file");
+            Assert.Equal(fileId, fileIdHandler.JsonBody!.Value.GetProperty("fileIds")[0].GetGuid());
+        }
+
+        [Fact]
+        public async Task Ocr_InvalidRequests_ThrowBeforeSending()
+        {
+            CapturingHandler handler = new(OcrResponse);
+            IOcrClient ocr = CreateClient(handler).GetOcrClient();
+
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractAsync(new OcrReq()));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "file:///etc/passwd" } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Empty } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromBase64Async(new OcrBase64Req { Base64Files = { new OcrBase64File { ContentBase64 = "   ", MimeType = "application/pdf" } } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "" } }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+        #endregion
+
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -350,6 +436,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetDecisionClient());
             Assert.Throws<ArgumentNullException>(() => client.GetEmbeddingClient());
             Assert.Throws<ArgumentNullException>(() => client.GetImageGenerationClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
         }
 
         [Fact]
@@ -368,6 +455,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.NotNull(provider.GetRequiredService<IDecisionClient>());
             Assert.NotNull(provider.GetRequiredService<IEmbeddingClient>());
             Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
+            Assert.NotNull(provider.GetRequiredService<IOcrClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 
