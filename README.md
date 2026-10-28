@@ -1435,7 +1435,7 @@ using SerenityStar.Models.Ocr;
 IOcrClient ocr = client.GetOcrClient();
 
 using FileStream invoice = File.OpenRead("invoice.pdf");
-OcrExecutionResult result = await ocr.ExtractAsync(new OcrReq
+OcrResult result = await ocr.ExtractAsync(new OcrReq
 {
     Files = { new AIServiceFile { FileStream = invoice, FileName = "invoice.pdf" } },
     Instructions = "Keep the table layout"   // Optional

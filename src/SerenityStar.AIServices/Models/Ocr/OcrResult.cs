@@ -8,7 +8,7 @@ namespace SerenityStar.Models.Ocr
     /// Represents the result of an OCR operation over one or more documents.
     /// A failure on one document does not abort the others: check <see cref="OcrFileResult.Success"/> per file.
     /// </summary>
-    public sealed class OcrExecutionResult
+    public sealed class OcrResult
     {
         /// <summary>
         /// The unique identifier of the OCR instance.

@@ -343,7 +343,7 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             CapturingHandler handler = new(OcrResponse);
 
-            OcrExecutionResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
+            OcrResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
             {
                 Files =
                 {
