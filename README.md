@@ -1425,7 +1425,7 @@ ImageGenerationResult editedById = await images.GenerateByFileIdAsync(new Genera
 
 ### OCR
 
-Extract text, tables and images from documents. Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB. Documents can be uploaded directly, sent as base64, referenced by URL, or by the id of a file previously uploaded to Serenity Star. A failure on one document does not abort the others.
+Extract text, tables and images from documents. Documents can be uploaded directly, sent as base64, referenced by URL, or by the id of a file previously uploaded to Serenity Star. A failure on one document does not abort the others.
 
 ```csharp
 using SerenityStar.AIServices;

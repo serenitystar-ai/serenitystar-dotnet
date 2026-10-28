@@ -16,7 +16,6 @@ namespace SerenityStar.AIServices
         /// <summary>
         /// Extracts content from documents by uploading them directly.
         /// The file streams are read from their current position and disposed when the request completes.
-        /// Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB.
         /// </summary>
         /// <param name="request">The OCR request containing the files and optional parameters.</param>
         /// <param name="cancellationToken">Cancellation token.</param>

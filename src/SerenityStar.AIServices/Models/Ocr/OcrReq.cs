@@ -33,7 +33,7 @@ namespace SerenityStar.Models.Ocr
         public string? Vendor { get; set; }
 
         /// <summary>
-        /// Optional instructions to guide the extraction. Maximum length: 4000 characters.
+        /// Optional instructions to guide the extraction.
         /// </summary>
         public string? Instructions { get; set; }
 
@@ -56,7 +56,6 @@ namespace SerenityStar.Models.Ocr
 
     /// <summary>
     /// Request for extracting text from documents by uploading them directly.
-    /// Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB.
     /// </summary>
     public sealed class OcrReq : OcrReqBase
     {
@@ -83,7 +82,6 @@ namespace SerenityStar.Models.Ocr
 
     /// <summary>
     /// Request for extracting text from base64-encoded documents.
-    /// Supported formats: png, jpg, jpeg, pdf. Maximum decoded size per file: 50 MB.
     /// </summary>
     public sealed class OcrBase64Req : OcrReqBase
     {
@@ -100,7 +98,7 @@ namespace SerenityStar.Models.Ocr
 
             foreach (OcrBase64File file in Base64Files)
             {
-                if (file is null || string.IsNullOrEmpty(file.ContentBase64) || string.IsNullOrEmpty(file.MimeType))
+                if (file is null || string.IsNullOrWhiteSpace(file.ContentBase64) || string.IsNullOrWhiteSpace(file.MimeType))
                     throw new ArgumentException("Every base64 file requires ContentBase64 and MimeType.", nameof(Base64Files));
             }
         }

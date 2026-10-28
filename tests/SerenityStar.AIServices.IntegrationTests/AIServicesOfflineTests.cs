@@ -369,6 +369,8 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             Assert.False(result.Files[1].Success);
             Assert.Equal("Unreadable", result.Files[1].Error);
+            Assert.Equal("pages", result.Usage!.InputUnit);
+            Assert.Equal(1, result.Usage.Input);
             Assert.Equal(0.01, result.Cost!.Amount);
         }
 
@@ -406,6 +408,8 @@ namespace SerenityStar.AIServices.IntegrationTests
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractAsync(new OcrReq()));
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "file:///etc/passwd" } }));
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Empty } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromBase64Async(new OcrBase64Req { Base64Files = { new OcrBase64File { ContentBase64 = "   ", MimeType = "application/pdf" } } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "" } }));
             Assert.Equal(0, handler.RequestCount);
         }
         #endregion
