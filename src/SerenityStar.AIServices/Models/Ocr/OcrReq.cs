@@ -141,11 +141,11 @@ namespace SerenityStar.Models.Ocr
             if (Urls is null || Urls.Count == 0)
                 throw new ArgumentException("At least one URL is required for OCR.", nameof(Urls));
 
-            foreach (string url in Urls)
+            for (int i = 0; i < Urls.Count; i++)
             {
-                if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri)
+                if (!Uri.TryCreate(Urls[i], UriKind.Absolute, out Uri? uri)
                     || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-                    throw new ArgumentException($"'{url}' is not an absolute http or https URL.", nameof(Urls));
+                    throw new ArgumentException($"{nameof(Urls)}[{i}] is not an absolute http or https URL.", nameof(Urls));
             }
         }
     }
