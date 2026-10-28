@@ -3,9 +3,9 @@
     <PackageId>SubgenAI.SerenityStar.AIServices</PackageId>
     <AssemblyName>SerenityStar.AIServices</AssemblyName>
     <RootNamespace>SerenityStar</RootNamespace>
-    <Description>Serenity Star AI services for .NET: anonymizer, decisions and embeddings. Does not require the agents package.</Description>
+    <Description>Serenity Star AI services for .NET: anonymizer, decisions, embeddings and image generation. Does not require the agents package.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>ai;sdk;serenity;serenitystar;anonymizer;decisions;embeddings</PackageTags>
+    <PackageTags>ai;sdk;serenity;serenitystar;anonymizer;decisions;embeddings;image-generation</PackageTags>
     <PackageReleaseNotes>
       Version 3.0.0-beta2 - AI Services Package Release
 
@@ -16,9 +16,12 @@
         * IAnonymizerClient - client.GetAnonymizerClient()
         * IDecisionClient - client.GetDecisionClient()
         * IEmbeddingClient - client.GetEmbeddingClient()
+        * IImageGenerationClient - client.GetImageGenerationClient()
       - Dependency injection: services.AddSerenityStar(apiKey).AddSerenityStarAIServices() registers every interface.
       - Decisions accept a text or an ordered list of messages, function calls and function call outputs (e.g. an
         agent trace) as input, including images: DecisionInput.FromItems(...).
+      - Image generation from source images (up to 16), uploaded directly (GenerateWithSourceImagesAsync) or by
+        file id (GenerateByFileIdAsync).
     </PackageReleaseNotes>
   </PropertyGroup>
 

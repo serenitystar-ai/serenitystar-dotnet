@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions and embeddings.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings and image generation.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -25,6 +25,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
   - [Anonymizer](#anonymizer)
   - [Decisions](#decisions)
   - [Embeddings](#embeddings)
+  - [Image Generation](#image-generation)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -36,7 +37,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions and embeddings |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings and image generation |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1262,8 +1263,9 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | [Anonymizer](#anonymizer) | `IAnonymizerClient` | `client.GetAnonymizerClient()` |
 | [Decisions](#decisions) | `IDecisionClient` | `client.GetDecisionClient()` |
 | [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
+| [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
 
-Every result includes the instance id (when the service creates one), usage and cost.
+Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
 
 ### Anonymizer
 
@@ -1384,6 +1386,39 @@ EmbeddingsResult result = await embeddings.GenerateAsync(new GenerateEmbeddingsR
 
 foreach (EmbeddingData item in result.Data)
     Console.WriteLine($"#{item.Index}: {item.Embedding.Length} dimensions");
+```
+
+### Image Generation
+
+Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats, sizes and number of source images depend on the selected model; only models that accept source images support them.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.AIServices;
+using SerenityStar.Models.ImageGeneration;
+
+IImageGenerationClient images = client.GetImageGenerationClient();
+
+ImageGenerationResult result = await images.GenerateAsync(new GenerateImageReq
+{
+    Prompt = "A watercolor painting of a lighthouse at sunset"
+});
+Console.WriteLine(result.ImageUrl);
+
+// Based on source images uploaded directly (the streams are disposed when the request completes)
+using FileStream photo = File.OpenRead("photo.png");
+ImageGenerationResult edited = await images.GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
+{
+    Prompt = "Make it look like a night scene",
+    Files = { new AIServiceFile { FileStream = photo, FileName = "photo.png" } }
+});
+
+// Or based on source images previously uploaded to Serenity Star
+ImageGenerationResult editedById = await images.GenerateByFileIdAsync(new GenerateImageByFileIdReq
+{
+    Prompt = "Make it look like a night scene",
+    FileIds = { Guid.Parse("uploaded-file-id") }
+});
 ```
 
 ## Error handling

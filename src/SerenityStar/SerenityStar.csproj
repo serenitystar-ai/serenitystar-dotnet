@@ -14,7 +14,7 @@
         * SubgenAI.SerenityStar.Core: SerenityClient, SerenityClientBuilder, SerenityApiException and AddSerenityStar
         * SubgenAI.SerenityStar.SDK (this package): agents. Depends on Core
         * SubgenAI.SerenityStar.AIServices: all AI services. Depends on Core only:
-          anonymizer, decisions and embeddings
+          anonymizer, decisions, embeddings and image generation
         Namespaces are unchanged, so most code only needs the new entry points below.
       - Agents are now obtained from SerenityClient: client.Agents becomes client.GetAgents()
         (in the SerenityStar.Client namespace). e.g. client.GetAgents().Activities.Create("agent-code")
