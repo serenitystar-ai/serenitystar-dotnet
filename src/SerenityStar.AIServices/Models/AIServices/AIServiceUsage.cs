@@ -11,7 +11,6 @@ namespace SerenityStar.Models.AIServices
         /// <summary>
         /// The unit of the input quantity (e.g. "tokens", "characters").
         /// </summary>
-        // Explicit names: the API fixes these names even in snake_case payloads (speech generation stream).
         [JsonPropertyName("inputUnit")]
         public string? InputUnit { get; set; }
 
