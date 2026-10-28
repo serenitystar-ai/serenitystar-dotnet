@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation and OCR.
+Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a comprehensive interface for interacting with Serenity's different types of agents, such as activities, assistants, proxies, and chat completions, and with Serenity's AI services, such as anonymizer, decisions, embeddings, image generation, OCR and speech generation.
 
 [![License: MIT](https://img.shields.io/github/license/serenitystar-ai/serenitystar-dotnet)](https://github.com/serenitystar-ai/serenitystar-dotnet/blob/main/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/SubgenAI.SerenityStar.SDK)](https://www.nuget.org/packages/SubgenAI.SerenityStar.SDK)
@@ -27,6 +27,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
   - [Embeddings](#embeddings)
   - [Image Generation](#image-generation)
   - [OCR](#ocr)
+  - [Speech Generation](#speech-generation)
 - [Error handling](#error-handling)
 - [Migrating to 3.0](#migrating-to-30)
 - [Documentation](#-documentation)
@@ -38,7 +39,7 @@ The SDK is split into packages, so you only install what you use:
 | Package | Contents |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation and OCR |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR and speech generation |
 | `SubgenAI.SerenityStar.Core` | `SerenityClient`, authentication and error handling. Installed automatically by the packages above |
 
 ```bash
@@ -1266,6 +1267,7 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | [Embeddings](#embeddings) | `IEmbeddingClient` | `client.GetEmbeddingClient()` |
 | [Image Generation](#image-generation) | `IImageGenerationClient` | `client.GetImageGenerationClient()` |
 | [OCR](#ocr) | `IOcrClient` | `client.GetOcrClient()` |
+| [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
 
 Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
 
@@ -1456,6 +1458,52 @@ await ocr.ExtractFromBase64Async(new OcrBase64Req
     Base64Files = { new OcrBase64File { ContentBase64 = base64Content, MimeType = "application/pdf" } }
 });
 await ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Parse("uploaded-file-id") } });
+```
+
+### Speech Generation
+
+Generate speech (text-to-speech) from text. A model is required: set `AIModelId`, or both `ModelCode` and `Vendor`.
+
+```csharp
+using SerenityStar.AIServices;
+using SerenityStar.Models.SpeechGeneration;
+
+ISpeechGenerationClient speech = client.GetSpeechGenerationClient();
+
+GenerateSpeechReq request = new()
+{
+    ModelCode = "tts-1",
+    Vendor = "OpenAI",
+    Text = "Welcome to Serenity Star!",
+    Voice = "alloy",   // Optional: vendor default voice when not set
+    Speed = 1.2f       // Optional
+};
+
+// Get a public URL to the generated audio
+SpeechGenerationResult result = await speech.GenerateAsync(request);
+Console.WriteLine(result.AudioUrl);
+
+// Or stream the audio in chunks as it is generated
+using FileStream output = File.Create("welcome.mp3");
+await foreach (StreamingSpeechGenerationMessage message in speech.StreamAsync(request))
+{
+    switch (message)
+    {
+        case StreamingSpeechGenerationMessageStart start:
+            Console.WriteLine($"Format: {start.MimeType}");
+            break;
+        case StreamingSpeechGenerationMessageAudio audio:
+            byte[] bytes = audio.GetAudioBytes();
+            await output.WriteAsync(bytes, 0, bytes.Length);
+            break;
+        case StreamingSpeechGenerationMessageStop stop:
+            Console.WriteLine($"Done: {stop.AudioUrl}");
+            break;
+        case StreamingSpeechGenerationMessageError error:
+            Console.WriteLine($"Error: {error.Message}");
+            break;
+    }
+}
 ```
 
 ## Error handling

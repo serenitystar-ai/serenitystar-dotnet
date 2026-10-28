@@ -54,6 +54,15 @@ namespace SerenityStar.Client
         public static IOcrClient GetOcrClient(this SerenityClient client)
             => new OcrClient(GetApiClient(client));
 
+        /// <summary>
+        /// Gets a client to generate speech (text-to-speech) from text.
+        /// </summary>
+        /// <param name="client">The Serenity Star client.</param>
+        /// <returns>An <see cref="ISpeechGenerationClient"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
+        public static ISpeechGenerationClient GetSpeechGenerationClient(this SerenityClient client)
+            => new SpeechGenerationClient(GetApiClient(client));
+
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)

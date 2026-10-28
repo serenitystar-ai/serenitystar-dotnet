@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace SerenityStar.Models.AIServices
 {
     /// <summary>
@@ -9,6 +11,7 @@ namespace SerenityStar.Models.AIServices
         /// <summary>
         /// The unit of the input quantity (e.g. "tokens", "characters").
         /// </summary>
+        [JsonPropertyName("inputUnit")]
         public string? InputUnit { get; set; }
 
         /// <summary>
@@ -19,6 +22,7 @@ namespace SerenityStar.Models.AIServices
         /// <summary>
         /// The unit of the output quantity (e.g. "tokens", "images").
         /// </summary>
+        [JsonPropertyName("outputUnit")]
         public string? OutputUnit { get; set; }
 
         /// <summary>
