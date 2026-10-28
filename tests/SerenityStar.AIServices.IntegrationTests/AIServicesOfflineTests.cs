@@ -184,12 +184,12 @@ namespace SerenityStar.AIServices.IntegrationTests
                 ModelCode = "decision-model",
                 Vendor = "OpenAI",
                 Input = DecisionInput.FromItems(
-                    DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
-                        DecisionInputPart.InputText("Is this receipt paid?"),
-                        DecisionInputPart.InputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
-                    DecisionInputItem.FunctionCall("call_1", "get_order", """{"id":42}"""),
-                    DecisionInputItem.FunctionCallOutput("call_1", "Order 42 is paid."),
-                    DecisionInputItem.Message(DecisionMessageRole.Assistant, "Yes, it is paid.")),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+                        DecisionInputPart.CreateInputText("Is this receipt paid?"),
+                        DecisionInputPart.CreateInputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
+                    DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"id":42}"""),
+                    DecisionInputItem.CreateFunctionCallOutput("call_1", "Order 42 is paid."),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Yes, it is paid.")),
                 Questions = { new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "paid", Instructions = "Is it paid?" } }
             });
 
@@ -238,14 +238,17 @@ namespace SerenityStar.AIServices.IntegrationTests
         [Fact]
         public async Task Embeddings_Generate_SendsContentAndParsesVectors()
         {
-            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3}}""");
+            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3},"usage":{"inputUnit":"tokens","input":3}}""");
+            Guid modelId = Guid.NewGuid();
 
-            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { Content = { "hello" } });
+            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { AIModelId = modelId, Content = { "hello" } });
 
             AssertPost(handler, "/api/v2/embeddings/generate");
             Assert.Equal("hello", handler.JsonBody!.Value.GetProperty("content")[0].GetString());
+            Assert.Equal(modelId, handler.JsonBody!.Value.GetProperty("modelId").GetGuid());
             Assert.Equal(new[] { 0.1f, -0.2f, 0.3f }, result.Data[0].Embedding);
-            Assert.Equal(3, result.TokenUsage!.TotalTokens);
+            Assert.Equal("tokens", result.Usage!.InputUnit);
+            Assert.Equal(3, result.Usage.Input);
             Assert.Equal(0.001, result.Cost!.Total);
         }
         #endregion
@@ -270,11 +273,13 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","imageUrl":"u"}""");
             Guid fileId = Guid.NewGuid();
+            Guid modelId = Guid.NewGuid();
 
-            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "Edit", FileIds = { fileId } });
+            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { AIModelId = modelId, Prompt = "Edit", FileIds = { fileId } });
 
             AssertPost(handler, "/api/v2/image/generate/file");
             Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileIds")[0].GetGuid());
+            Assert.Equal(modelId, handler.JsonBody!.Value.GetProperty("modelId").GetGuid());
         }
 
         [Fact]
@@ -285,7 +290,7 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             ImageGenerationResult result = await CreateClient(handler).GetImageGenerationClient().GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
             {
-                ModelId = modelId,
+                AIModelId = modelId,
                 Prompt = "Combine them",
                 Files =
                 {
@@ -312,6 +317,17 @@ namespace SerenityStar.AIServices.IntegrationTests
                 .GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq { Prompt = "Edit" }));
             Assert.Equal(0, handler.RequestCount);
         }
+
+        [Fact]
+        public async Task ImageGeneration_RejectsBlankPrompt()
+        {
+            CapturingHandler handler = new("{}");
+            IImageGenerationClient client = CreateClient(handler).GetImageGenerationClient();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GenerateAsync(new GenerateImageReq { Prompt = "   " }));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "", FileIds = { Guid.NewGuid() } }));
+            Assert.Equal(0, handler.RequestCount);
+        }
         #endregion
 
         #region OCR
@@ -328,7 +344,7 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             CapturingHandler handler = new(OcrResponse);
 
-            OcrExecutionResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
+            OcrResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
             {
                 Files =
                 {
@@ -354,6 +370,8 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             Assert.False(result.Files[1].Success);
             Assert.Equal("Unreadable", result.Files[1].Error);
+            Assert.Equal("pages", result.Usage!.InputUnit);
+            Assert.Equal(1, result.Usage.Input);
             Assert.Equal(0.01, result.Cost!.Amount);
         }
 
@@ -391,6 +409,8 @@ namespace SerenityStar.AIServices.IntegrationTests
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractAsync(new OcrReq()));
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "file:///etc/passwd" } }));
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Empty } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromBase64Async(new OcrBase64Req { Base64Files = { new OcrBase64File { ContentBase64 = "   ", MimeType = "application/pdf" } } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "" } }));
             Assert.Equal(0, handler.RequestCount);
         }
         #endregion

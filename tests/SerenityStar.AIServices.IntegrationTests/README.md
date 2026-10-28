@@ -17,9 +17,9 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
     "ApiKey": "your-api-key",
     "DecisionModelCode": "your-decision-model-code",
     "DecisionVendor": "OpenAI",
-    "ImageFilePath": "C:\test-files\image.png",
+    "ImageFilePath": "C:\\test-files\\image.png",
     "ImageGenerationWithSourceImagesModelId": "00000000-0000-0000-0000-000000000000",
-    "OcrFilePath": "C:\test-files\document.pdf",
+    "OcrFilePath": "C:\\test-files\\document.pdf",
     "OcrUrl": "https://example.com/document.pdf",
     "SpeechGenerationModelCode": "tts-1",
     "SpeechGenerationVendor": "OpenAI"

@@ -16,14 +16,13 @@ namespace SerenityStar.AIServices
         /// <summary>
         /// Extracts content from documents by uploading them directly.
         /// The file streams are read from their current position and disposed when the request completes.
-        /// Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB.
         /// </summary>
         /// <param name="request">The OCR request containing the files and optional parameters.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid files.</exception>
         /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
-        Task<OcrExecutionResult> ExtractAsync(OcrReq request, CancellationToken cancellationToken = default);
+        Task<OcrResult> ExtractAsync(OcrReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Extracts content from base64-encoded documents.
@@ -33,7 +32,7 @@ namespace SerenityStar.AIServices
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid files.</exception>
         /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
-        Task<OcrExecutionResult> ExtractFromBase64Async(OcrBase64Req request, CancellationToken cancellationToken = default);
+        Task<OcrResult> ExtractFromBase64Async(OcrBase64Req request, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Extracts content from documents available at public URLs.
@@ -43,7 +42,7 @@ namespace SerenityStar.AIServices
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid URLs.</exception>
         /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
-        Task<OcrExecutionResult> ExtractFromUrlsAsync(OcrUrlReq request, CancellationToken cancellationToken = default);
+        Task<OcrResult> ExtractFromUrlsAsync(OcrUrlReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Extracts content from documents previously uploaded to Serenity Star.
@@ -53,6 +52,6 @@ namespace SerenityStar.AIServices
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid file ids.</exception>
         /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
-        Task<OcrExecutionResult> ExtractByFileIdAsync(OcrByFileIdReq request, CancellationToken cancellationToken = default);
+        Task<OcrResult> ExtractByFileIdAsync(OcrByFileIdReq request, CancellationToken cancellationToken = default);
     }
 }
