@@ -500,6 +500,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             CapturingHandler handler = new("{}");
 
             Assert.Throws<ArgumentNullException>(() => CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq()));
+            Assert.Throws<ArgumentNullException>(() => CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq { Text = "   " }));
             Assert.Equal(0, handler.RequestCount);
         }
         #endregion
