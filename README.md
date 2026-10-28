@@ -1390,7 +1390,7 @@ foreach (EmbeddingData item in result.Data)
 
 ### Image Generation
 
-Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats: jpg, jpeg, png, gif, webp. Maximum size per file: 20 MB. Up to 16 source images per request; only models that accept source images support them, each up to its own number of images.
+Generate images from a text prompt, optionally based on source images (e.g. to edit one image or combine several). Source images can be uploaded directly or referenced by the id of a file previously uploaded to Serenity Star. Supported formats, sizes and number of source images depend on the selected model; only models that accept source images support them.
 
 ```csharp
 using SerenityStar.AIServices;

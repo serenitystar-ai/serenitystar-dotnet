@@ -16,7 +16,7 @@ namespace SerenityStar.Models.ImageGeneration
         public Guid? AIModelId { get; set; }
 
         /// <summary>
-        /// The description of the image to generate. Maximum length: 1000 characters.
+        /// The description of the image to generate.
         /// </summary>
         public string Prompt { get; set; } = null!;
 
