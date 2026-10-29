@@ -25,6 +25,10 @@
         design-time tooling) now fail at startup.
       - client.AIServices (transcription) was removed from this package. Install SubgenAI.SerenityStar.AIServices
         and use client.GetTranscriptionClient().TranscribeAsync(...)
+      - Audio input (conversations, activities and chat completions) is now uploaded as a private file, with its
+        content type inferred from the file extension. It was previously uploaded as a public file, which anyone
+        with the file id could download without authentication.
+      - To get a file id for UploadFromFileForAgentAsync, upload the file with client.GetFileClient().UploadAsync(...)
 
       Version 3.0.0-beta1 - Per-Request Authentication Release
 
