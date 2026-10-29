@@ -21,4 +21,28 @@ SerenityClient client = SerenityClient.Create("your-api-key");
 // client.GetAnonymizerClient()     (SubgenAI.SerenityStar.AIServices)
 ```
 
+## File upload
+
+Upload a file once and use its id later, e.g. in the AI services `*ByFileIdAsync` methods or in volatile knowledge `UploadFromFileForAgentAsync`:
+
+```csharp
+using SerenityStar.Files;
+using SerenityStar.Models.Files;
+
+using FileStream fileStream = File.OpenRead("audio.mp3");
+UploadFileResult file = await client.GetFileClient().UploadAsync(new UploadFileReq
+{
+    FileStream = fileStream,
+    FileName = "audio.mp3"
+});
+
+// Or from a public URL
+UploadFileResult fromUrl = await client.GetFileClient().UploadFromUrlAsync(new UploadFileFromUrlReq
+{
+    FileUrl = "https://example.com/invoice.pdf"
+});
+```
+
+`AddSerenityStar` registers `IFileClient` for dependency injection.
+
 See the full documentation at https://github.com/serenitystar-ai/serenitystar-dotnet.

@@ -37,6 +37,8 @@ AnonymizerResult result = await anonymizer.ObfuscateAsync(new AnonymizerReq
 | Speech generation (text-to-speech) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
 | Transcription | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
 
+Services that work with files also accept the id of a file uploaded beforehand (`*ByFileIdAsync` methods). Upload it with `client.GetFileClient().UploadAsync(...)`, which returns the file id.
+
 ## Dependency injection
 
 ```csharp

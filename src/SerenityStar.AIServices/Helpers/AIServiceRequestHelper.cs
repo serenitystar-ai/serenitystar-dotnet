@@ -87,7 +87,7 @@ namespace SerenityStar.Helpers
         internal static void AddFile(this MultipartFormDataContent content, string name, Stream fileStream, string fileName)
         {
             StreamContent fileContent = new(fileStream);
-            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(GetContentType(fileName));
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(ContentTypeHelper.GetContentType(fileName));
             content.Add(fileContent, name, fileName);
         }
 
@@ -96,30 +96,5 @@ namespace SerenityStar.Helpers
         /// </summary>
         internal static void AddFile(this MultipartFormDataContent content, string name, AIServiceFile file)
             => content.AddFile(name, file.FileStream, file.FileName);
-
-        private static string GetContentType(string fileName)
-        {
-            string extension = Path.GetExtension(fileName).ToLowerInvariant();
-            return extension switch
-            {
-                // Audio and video
-                ".mp3" => "audio/mpeg",
-                ".mp4" => "video/mp4",
-                ".mpeg" => "audio/mpeg",
-                ".mpga" => "audio/mpeg",
-                ".m4a" => "audio/mp4",
-                ".wav" => "audio/wav",
-                ".webm" => "audio/webm",
-                // Images
-                ".jpg" => "image/jpeg",
-                ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".gif" => "image/gif",
-                ".webp" => "image/webp",
-                // Documents
-                ".pdf" => "application/pdf",
-                _ => "application/octet-stream",
-            };
-        }
     }
 }

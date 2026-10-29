@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SerenityStar.Client;
+using SerenityStar.Files;
 using SerenityStar.Models;
 using System;
 
@@ -11,7 +13,8 @@ namespace SerenityStar.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds the Serenity Star client (<see cref="SerenityClient"/>) to the service collection.
+        /// Adds the Serenity Star client (<see cref="SerenityClient"/>) and the file client
+        /// (<see cref="IFileClient"/>) to the service collection.
         /// </summary>
         /// <remarks>
         /// Register the features you use on top of it, e.g. <c>AddSerenityStarAgents()</c>
@@ -47,6 +50,9 @@ namespace SerenityStar.Extensions
             {
                 client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             });
+
+            // Transient to match the lifetime of the typed SerenityClient.
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetFileClient());
 
             return services;
         }

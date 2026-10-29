@@ -17,6 +17,7 @@ namespace SerenityStar.Models.Transcription
 
         /// <summary>
         /// The id of the uploaded file to transcribe.
+        /// Upload the file with <see cref="Client.SerenityClient.GetFileClient"/>.
         /// </summary>
         public Guid FileId { get; set; }
 

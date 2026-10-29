@@ -157,6 +157,7 @@ namespace SerenityStar.Models.Ocr
     {
         /// <summary>
         /// The ids of the uploaded documents. At least one is required.
+        /// Upload the documents with <see cref="Client.SerenityClient.GetFileClient"/>.
         /// </summary>
         public List<Guid> FileIds { get; set; } = new List<Guid>();
 

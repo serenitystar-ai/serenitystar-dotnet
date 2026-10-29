@@ -21,6 +21,7 @@ Official .NET SDK for Serenity Star API. The Serenity Star .NET SDK provides a c
 - [Chat Completions](#chat-completions)
 - [Audio Input for Agents](#audio-input-for-agents)
 - [Volatile Knowledge](#volatile-knowledge)
+- [File Upload](#file-upload)
 - [AI Services](#ai-services)
   - [Anonymizer](#anonymizer)
   - [Decisions](#decisions)
@@ -123,7 +124,7 @@ Console.WriteLine(response.Content);
 ```csharp
 // In your startup/program.cs
 using SerenityStar.Extensions;
-services.AddSerenityStar("your-api-key")   // Registers SerenityClient
+services.AddSerenityStar("your-api-key")   // Registers SerenityClient and IFileClient
         .AddSerenityStarAgents()           // Optional: registers AgentsScope (SubgenAI.SerenityStar.SDK)
         .AddSerenityStarAIServices();      // Optional: registers every AI service interface (SubgenAI.SerenityStar.AIServices)
 
@@ -1251,6 +1252,58 @@ Console.WriteLine(result.Content);
 // Both documents are cleared after the message is sent
 ```
 
+### Use a Previously Uploaded File
+
+If the file is already uploaded to Serenity Star (see [File Upload](#file-upload)), use its id instead of uploading it again. The file type is validated against the agent's allowed MIME types.
+
+```csharp
+Conversation conversation = client.GetAgents().Assistants.CreateConversation("my-assistant");
+
+using FileStream fileStream = File.OpenRead("document.pdf");
+UploadFileResult file = await client.GetFileClient().UploadAsync(new UploadFileReq
+{
+    FileStream = fileStream,
+    FileName = "document.pdf"
+});
+
+VolatileKnowledgeRes knowledge = await conversation.VolatileKnowledge.UploadFromFileForAgentAsync(new UploadVolatileKnowledgeFromFileReq
+{
+    FileId = file.Id,
+    ProcessEmbeddings = true
+});
+```
+
+## File Upload
+
+Upload a file once and use its id later, e.g. in the AI services `*ByFileIdAsync` methods or in volatile knowledge `UploadFromFileForAgentAsync`. The file client is part of `SubgenAI.SerenityStar.Core`, so it is available with both the agents and the AI services packages.
+
+```csharp
+using SerenityStar.Client;
+using SerenityStar.Files;
+using SerenityStar.Models.Files;
+
+SerenityClient client = SerenityClient.Create("your-api-key");
+IFileClient files = client.GetFileClient();
+
+// Upload from a stream. The extension of FileName sets the content type.
+using FileStream fileStream = File.OpenRead("audio.mp3");
+UploadFileResult uploaded = await files.UploadAsync(new UploadFileReq
+{
+    FileStream = fileStream,
+    FileName = "audio.mp3"
+});
+
+Console.WriteLine($"File id: {uploaded.Id}");
+
+// Or let Serenity Star download it from a public URL. FileName is optional (taken from the URL by default).
+UploadFileResult fromUrl = await files.UploadFromUrlAsync(new UploadFileFromUrlReq
+{
+    FileUrl = "https://example.com/invoice.pdf"
+});
+```
+
+Uploaded files are not public: they can't be downloaded anonymously, only through the API with your API key. With dependency injection, `AddSerenityStar` registers `IFileClient`, so it can be injected directly.
+
 ## AI Services
 
 AI services are available in the `SubgenAI.SerenityStar.AIServices` package, which does not require the agents package:
@@ -1271,7 +1324,7 @@ Each AI service has its own interface, obtained from `SerenityClient`. The inter
 | [Speech Generation](#speech-generation) | `ISpeechGenerationClient` | `client.GetSpeechGenerationClient()` |
 | [Transcription](#transcription) | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
 
-Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star (`*ByFileIdAsync` methods). Every result includes the instance id (when the service creates one), usage and cost.
+Services that work with files accept the file directly (stream + file name) or the id of a file previously uploaded to Serenity Star with `client.GetFileClient()` (`*ByFileIdAsync` methods, see [File Upload](#file-upload)). Every result includes the instance id (when the service creates one), usage and cost.
 
 ### Anonymizer
 
@@ -1517,6 +1570,7 @@ Convert audio and video files into text.
 ```csharp
 using SerenityStar.AIServices;
 using SerenityStar.Client;
+using SerenityStar.Models.Files;
 using SerenityStar.Models.Transcription;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
@@ -1537,10 +1591,16 @@ Console.WriteLine(result.Transcript);
 Console.WriteLine($"Language: {result.Metadata?.Language}, duration: {result.Metadata?.Duration}");
 Console.WriteLine($"Cost: {result.Cost?.Total} {result.Cost?.Currency}");
 
-// Or transcribe a file previously uploaded to Serenity Star
+// Or transcribe a file previously uploaded to Serenity Star (see File Upload)
+UploadFileResult uploaded = await client.GetFileClient().UploadAsync(new UploadFileReq
+{
+    FileStream = File.OpenRead("audio.mp3"),
+    FileName = "audio.mp3"
+});
+
 TranscriptionResult byId = await transcription.TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq
 {
-    FileId = Guid.Parse("uploaded-file-id")
+    FileId = uploaded.Id
 });
 ```
 
