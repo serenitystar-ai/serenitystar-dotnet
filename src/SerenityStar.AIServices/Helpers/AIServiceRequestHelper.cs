@@ -77,7 +77,7 @@ namespace SerenityStar.Helpers
 
         /// <summary>
         /// Adds a file to the form. The content type is inferred from the file extension; unknown extensions are
-        /// sent as application/octet-stream (OCR and image generation resolve it from the file name;
+        /// sent as application/octet-stream (vision, OCR and image generation resolve it from the file name;
         /// transcription forwards it as is).
         /// </summary>
         /// <remarks>
