@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using SerenityStar.Models.Execute;
 
 namespace SerenityStar.Models.Streaming
 {
@@ -44,5 +47,26 @@ namespace SerenityStar.Models.Streaming
         /// Whether the task completed successfully.
         /// </summary>
         public bool Success { get; set; }
+
+        /// <summary>
+        /// Gets the skill approval the agent requested when this task is an approval request
+        /// (<see cref="StreamingTaskKeys.ApprovalRequest"/>).
+        /// </summary>
+        /// <remarks>
+        /// It lets the approval be shown as soon as it is requested. The same approvals are also listed in the
+        /// <see cref="StreamingAgentMessageStop.Result"/> pending actions once the stream ends.
+        /// </remarks>
+        /// <param name="approval">The requested approval, or null when this task is not an approval request.</param>
+        /// <returns>True when this task is an approval request.</returns>
+        public bool TryGetApprovalRequest([NotNullWhen(true)] out ApprovalPendingAction? approval)
+        {
+            approval = null;
+
+            if (TaskKey != StreamingTaskKeys.ApprovalRequest || !(Output is JsonElement { ValueKind: JsonValueKind.Object } output))
+                return false;
+
+            approval = output.Deserialize<ApprovalPendingAction>(StreamingAgentMessageJsonConverter.s_options);
+            return approval != null;
+        }
     }
 }
