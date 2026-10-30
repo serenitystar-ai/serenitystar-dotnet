@@ -29,8 +29,6 @@ namespace SerenityStar.Models.Vision
 
         /// <summary>
         /// The image file stream to analyze.
-        /// Supported formats: jpg, jpeg, png, gif, webp.
-        /// Maximum file size: 20 MB.
         /// </summary>
         public Stream FileStream { get; set; } = null!;
 
@@ -40,7 +38,7 @@ namespace SerenityStar.Models.Vision
         public string FileName { get; set; } = null!;
 
         /// <summary>
-        /// Optional instructions about what to analyze in the image. Maximum length: 4000 characters.
+        /// Optional instructions about what to analyze in the image.
         /// </summary>
         public string? Prompt { get; set; }
 
@@ -57,12 +55,12 @@ namespace SerenityStar.Models.Vision
         /// <summary>
         /// Validates the request parameters.
         /// </summary>
-        /// <exception cref="ArgumentNullException">Thrown when FileStream or FileName is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when FileStream is null, or FileName is null, empty or whitespace.</exception>
         public void Validate()
         {
             if (FileStream is null)
                 throw new ArgumentNullException(nameof(FileStream), "File stream is required for image analysis.");
-            if (string.IsNullOrEmpty(FileName))
+            if (string.IsNullOrWhiteSpace(FileName))
                 throw new ArgumentNullException(nameof(FileName), "File name is required for image analysis.");
         }
     }

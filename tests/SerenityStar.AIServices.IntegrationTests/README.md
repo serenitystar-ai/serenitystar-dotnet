@@ -36,7 +36,7 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
 | `DecisionModelCode` | Yes | Code of a decision model. |
 | `DecisionVendor` | Yes | Vendor of the decision model. |
 | `EmbeddingModelId` | No | Embedding model id. Uses the default model when empty. |
-| `ImageFilePath` | Yes | Image for vision and image generation from source images (jpg, jpeg, png, gif, webp; max 20 MB). |
+| `ImageFilePath` | Yes | Image for vision, image generation from source images and the decisions image input (jpg, jpeg, png, gif, webp; max 20 MB). |
 | `ImageGenerationModelId` | No | Image generation model id for prompt-only generation. Uses the default model when empty. |
 | `ImageGenerationWithSourceImagesModelId` | Yes | Id of an image generation model that accepts source images. |
 | `OcrFilePath` | Yes | Document with text for OCR (pdf, png, jpg, jpeg; max 50 MB). |

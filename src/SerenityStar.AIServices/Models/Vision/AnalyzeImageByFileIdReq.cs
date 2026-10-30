@@ -28,13 +28,11 @@ namespace SerenityStar.Models.Vision
 
         /// <summary>
         /// The id of the uploaded image to analyze.
-        /// Supported formats: jpg, jpeg, png, gif, webp.
-        /// Maximum file size: 20 MB.
         /// </summary>
         public Guid FileId { get; set; }
 
         /// <summary>
-        /// Optional instructions about what to analyze in the image. Maximum length: 4000 characters.
+        /// Optional instructions about what to analyze in the image.
         /// </summary>
         public string? Prompt { get; set; }
 

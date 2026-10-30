@@ -625,7 +625,7 @@ namespace SerenityStar.AIServices.IntegrationTests
         [Fact]
         public async Task Vision_Analyze_SendsMultipartAndParsesResult()
         {
-            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","response":"A dog","tokenUsage":{"promptTokens":10,"completionTokens":2,"totalTokens":12},"cost":{"prompt":0.1,"completion":0.1,"total":0.2,"currency":"USD"}}""");
+            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","response":"A dog","tokenUsage":{"promptTokens":10,"completionTokens":2,"totalTokens":12},"usage":{"inputUnit":"tokens","input":10,"outputUnit":"tokens","output":2},"cost":{"prompt":0.1,"completion":0.1,"total":0.2,"currency":"USD"}}""");
 
             VisionResult result = await CreateClient(handler).GetVisionClient().AnalyzeAsync(new AnalyzeImageReq
             {
@@ -644,7 +644,8 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.DoesNotContain(handler.FormParts, p => p.Name == "AIModelId");
 
             Assert.Equal("A dog", result.Response);
-            Assert.Equal(12, result.TokenUsage!.TotalTokens);
+            Assert.Equal(10, result.Usage!.Input);
+            Assert.Equal(2, result.Usage.Output);
             Assert.Equal(0.2, result.Cost!.Total);
         }
 
@@ -658,6 +659,16 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             AssertPost(handler, "/api/v2/image/vision/file");
             Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
+        }
+
+        [Fact]
+        public async Task Vision_RejectsBlankFileName()
+        {
+            CapturingHandler handler = new("{}");
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => CreateClient(handler).GetVisionClient()
+                .AnalyzeAsync(new AnalyzeImageReq { FileStream = FileStreamOf("img"), FileName = "  " }));
+            Assert.Equal(0, handler.RequestCount);
         }
         #endregion
 

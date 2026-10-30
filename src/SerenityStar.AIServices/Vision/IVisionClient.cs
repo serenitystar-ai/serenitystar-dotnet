@@ -16,7 +16,6 @@ namespace SerenityStar.AIServices
         /// <summary>
         /// Analyzes an image by uploading it directly.
         /// The file stream is read from its current position and disposed when the request completes.
-        /// Supported formats: jpg, jpeg, png, gif, webp. Maximum file size: 20 MB.
         /// </summary>
         /// <param name="request">The analysis request containing the file stream, file name, and optional parameters.</param>
         /// <param name="cancellationToken">Cancellation token.</param>

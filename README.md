@@ -1608,7 +1608,7 @@ TranscriptionResult byId = await transcription.TranscribeByFileIdAsync(new Trans
 
 ### Vision
 
-Analyze images. Supported formats: jpg, jpeg, png, gif, webp. Maximum file size: 20 MB. The model is optional.
+Analyze images. The model is optional.
 
 ```csharp
 using SerenityStar.AIServices;

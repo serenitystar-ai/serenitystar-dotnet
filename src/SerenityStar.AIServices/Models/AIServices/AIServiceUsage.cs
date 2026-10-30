@@ -72,25 +72,4 @@ namespace SerenityStar.Models.AIServices
         /// </summary>
         public string? Currency { get; set; }
     }
-
-    /// <summary>
-    /// The token counts processed by an AI service execution.
-    /// </summary>
-    public sealed class AIServiceTokenUsage
-    {
-        /// <summary>
-        /// The number of tokens in the prompt.
-        /// </summary>
-        public int PromptTokens { get; set; }
-
-        /// <summary>
-        /// The number of tokens generated.
-        /// </summary>
-        public int CompletionTokens { get; set; }
-
-        /// <summary>
-        /// The total number of tokens processed.
-        /// </summary>
-        public int TotalTokens { get; set; }
-    }
 }

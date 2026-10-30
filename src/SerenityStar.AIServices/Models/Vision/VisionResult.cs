@@ -19,11 +19,6 @@ namespace SerenityStar.Models.Vision
         public string Response { get; set; } = string.Empty;
 
         /// <summary>
-        /// The token counts processed for the request.
-        /// </summary>
-        public AIServiceTokenUsage? TokenUsage { get; set; }
-
-        /// <summary>
         /// The billed quantities in the units the model is priced by.
         /// </summary>
         public AIServiceUsage? Usage { get; set; }
