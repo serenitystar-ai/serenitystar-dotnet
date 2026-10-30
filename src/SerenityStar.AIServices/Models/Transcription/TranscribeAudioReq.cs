@@ -12,12 +12,10 @@ namespace SerenityStar.Models.Transcription
         /// The AI Model Id to use for transcription.
         /// If not provided, the default audio model will be used.
         /// </summary>
-        public Guid? ModelId { get; set; }
+        public Guid? AIModelId { get; set; }
 
         /// <summary>
         /// The audio or video file stream to transcribe.
-        /// Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm.
-        /// Maximum file size: 25 MB.
         /// </summary>
         public Stream FileStream { get; set; } = null!;
 
@@ -45,12 +43,12 @@ namespace SerenityStar.Models.Transcription
         /// <summary>
         /// Validates the request parameters.
         /// </summary>
-        /// <exception cref="ArgumentNullException">Thrown when FileStream or FileName is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when FileStream is null, or FileName is null, empty or whitespace.</exception>
         public void Validate()
         {
             if (FileStream is null)
                 throw new ArgumentNullException(nameof(FileStream), "File stream is required for transcription.");
-            if (string.IsNullOrEmpty(FileName))
+            if (string.IsNullOrWhiteSpace(FileName))
                 throw new ArgumentNullException(nameof(FileName), "File name is required for transcription.");
         }
     }

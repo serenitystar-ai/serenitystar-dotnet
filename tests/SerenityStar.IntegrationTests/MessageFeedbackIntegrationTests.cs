@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
+using SerenityStar.Exceptions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Agents.Conversational;
 using Xunit;
@@ -106,7 +107,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             conversation.SubmitFeedbackAsync(feedbackOptions));
     }
 
@@ -278,7 +279,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             conversation.SubmitFeedbackAsync(feedbackOptions));
     }
 
@@ -295,7 +296,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             conversation.RemoveFeedbackAsync(removeOptions));
     }
 
@@ -483,7 +484,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         GetMessageFeedbackReq options = new() { SortDirection = "sideways" };
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             _client.GetAgents().Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
     }
 
@@ -494,7 +495,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         GetMessageFeedbackReq options = new() { PageSize = 1001 };
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             _client.GetAgents().Assistants.GetMessageFeedbackAsync(_fixture.AssistantAgent, options));
     }
 
@@ -502,7 +503,7 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
     public async Task GetAllFeedback_WithUnknownAgentCode_ShouldFail()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             _client.GetAgents().Assistants.GetMessageFeedbackAsync("agent-that-does-not-exist"));
     }
 

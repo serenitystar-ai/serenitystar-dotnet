@@ -12,6 +12,14 @@
       NEW FEATURES:
       - New package containing SerenityClient, SerenityClientBuilder, SerenityApiException and the
         AddSerenityStar dependency injection registration shared by the agents and AI services packages.
+      - File upload: client.GetFileClient() returns an IFileClient to upload files (UploadAsync) or upload them
+        from a public URL (UploadFromUrlAsync) and get their id, to use with the AI services *ByFileIdAsync
+        methods or volatile knowledge UploadFromFileForAgentAsync. AddSerenityStar registers IFileClient.
+
+      BREAKING CHANGES:
+      - AddSerenityStar now throws ArgumentNullException at registration when the API key is null or empty,
+        instead of failing on the first request. Apps that register with an empty key (e.g. tests or
+        design-time tooling) now fail at startup.
     </PackageReleaseNotes>
   </PropertyGroup>
 

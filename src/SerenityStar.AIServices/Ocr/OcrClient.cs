@@ -20,7 +20,7 @@ namespace SerenityStar.AIServices
         }
 
         /// <inheritdoc />
-        public Task<OcrExecutionResult> ExtractAsync(
+        public Task<OcrResult> ExtractAsync(
             OcrReq request,
             CancellationToken cancellationToken = default)
         {
@@ -42,30 +42,30 @@ namespace SerenityStar.AIServices
             content.AddField("UserIdentifier", request.UserIdentifier);
             content.AddField("Channel", request.Channel);
 
-            return AIServiceRequestHelper.PostMultipartAsync<OcrExecutionResult>(
+            return AIServiceRequestHelper.PostMultipartAsync<OcrResult>(
                 _apiClient, "/api/v2/ocr", content, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<OcrExecutionResult> ExtractFromBase64Async(
+        public Task<OcrResult> ExtractFromBase64Async(
             OcrBase64Req request,
             CancellationToken cancellationToken = default)
             => PostJsonAsync(request, "/api/v2/ocr/base64", cancellationToken);
 
         /// <inheritdoc />
-        public Task<OcrExecutionResult> ExtractFromUrlsAsync(
+        public Task<OcrResult> ExtractFromUrlsAsync(
             OcrUrlReq request,
             CancellationToken cancellationToken = default)
             => PostJsonAsync(request, "/api/v2/ocr/url", cancellationToken);
 
         /// <inheritdoc />
-        public Task<OcrExecutionResult> ExtractByFileIdAsync(
+        public Task<OcrResult> ExtractByFileIdAsync(
             OcrByFileIdReq request,
             CancellationToken cancellationToken = default)
             => PostJsonAsync(request, "/api/v2/ocr/file", cancellationToken);
 
         #region Private Methods
-        private Task<OcrExecutionResult> PostJsonAsync(
+        private Task<OcrResult> PostJsonAsync(
             OcrReqBase request,
             string path,
             CancellationToken cancellationToken)
@@ -76,7 +76,7 @@ namespace SerenityStar.AIServices
             request.Validate();
 
             // Serialized with the runtime type so the derived document list is included.
-            return AIServiceRequestHelper.PostJsonAsync<OcrExecutionResult>(_apiClient, path, request, cancellationToken);
+            return AIServiceRequestHelper.PostJsonAsync<OcrResult>(_apiClient, path, request, cancellationToken);
         }
         #endregion
     }

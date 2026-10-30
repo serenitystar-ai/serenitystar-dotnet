@@ -7,7 +7,7 @@ You normally don't install this package directly. Install the feature packages y
 | Package | Features |
 | --- | --- |
 | `SubgenAI.SerenityStar.SDK` | Agents: assistants, copilots, activities, AI proxies and chat completions |
-| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR, speech generation and transcription |
+| `SubgenAI.SerenityStar.AIServices` | AI services: anonymizer, decisions, embeddings, image generation, OCR, speech generation, transcription and vision |
 
 All packages are always published together and must be used with the same version.
 
@@ -20,5 +20,29 @@ SerenityClient client = SerenityClient.Create("your-api-key");
 // client.GetAgents()               (SubgenAI.SerenityStar.SDK)
 // client.GetAnonymizerClient()     (SubgenAI.SerenityStar.AIServices)
 ```
+
+## File upload
+
+Upload a file once and use its id later, e.g. in the AI services `*ByFileIdAsync` methods or in volatile knowledge `UploadFromFileForAgentAsync`:
+
+```csharp
+using SerenityStar.Files;
+using SerenityStar.Models.Files;
+
+using FileStream fileStream = File.OpenRead("audio.mp3");
+UploadFileResult file = await client.GetFileClient().UploadAsync(new UploadFileReq
+{
+    FileStream = fileStream,
+    FileName = "audio.mp3"
+});
+
+// Or from a public URL
+UploadFileResult fromUrl = await client.GetFileClient().UploadFromUrlAsync(new UploadFileFromUrlReq
+{
+    FileUrl = "https://example.com/invoice.pdf"
+});
+```
+
+`AddSerenityStar` registers `IFileClient` for dependency injection.
 
 See the full documentation at https://github.com/serenitystar-ai/serenitystar-dotnet.

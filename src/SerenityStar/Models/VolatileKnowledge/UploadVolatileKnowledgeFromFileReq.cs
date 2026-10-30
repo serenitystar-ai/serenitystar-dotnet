@@ -9,6 +9,7 @@ namespace SerenityStar.Models.VolatileKnowledge
     {
         /// <summary>
         /// Gets or sets the ID of the file to upload as volatile knowledge.
+        /// Upload the file with <see cref="Client.SerenityClient.GetFileClient"/>.
         /// </summary>
         public Guid FileId { get; set; }
 

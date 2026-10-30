@@ -5,14 +5,17 @@ using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
 using SerenityStar.Exceptions;
 using SerenityStar.Extensions;
+using SerenityStar.Files;
 using SerenityStar.Models.AIServices;
 using SerenityStar.Models.Anonymizer;
 using SerenityStar.Models.Decisions;
 using SerenityStar.Models.Embeddings;
+using SerenityStar.Models.Files;
 using SerenityStar.Models.ImageGeneration;
 using SerenityStar.Models.Ocr;
 using SerenityStar.Models.SpeechGeneration;
 using SerenityStar.Models.Transcription;
+using SerenityStar.Models.Vision;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -185,12 +188,12 @@ namespace SerenityStar.AIServices.IntegrationTests
                 ModelCode = "decision-model",
                 Vendor = "OpenAI",
                 Input = DecisionInput.FromItems(
-                    DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
-                        DecisionInputPart.InputText("Is this receipt paid?"),
-                        DecisionInputPart.InputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
-                    DecisionInputItem.FunctionCall("call_1", "get_order", """{"id":42}"""),
-                    DecisionInputItem.FunctionCallOutput("call_1", "Order 42 is paid."),
-                    DecisionInputItem.Message(DecisionMessageRole.Assistant, "Yes, it is paid.")),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+                        DecisionInputPart.CreateInputText("Is this receipt paid?"),
+                        DecisionInputPart.CreateInputImage(new byte[] { 1, 2, 3 }, "image/png", DecisionImageDetail.Low))),
+                    DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"id":42}"""),
+                    DecisionInputItem.CreateFunctionCallOutput("call_1", "Order 42 is paid."),
+                    DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Yes, it is paid.")),
                 Questions = { new DecisionQuestion { Type = DecisionQuestionType.Predicate, Name = "paid", Instructions = "Is it paid?" } }
             });
 
@@ -239,14 +242,17 @@ namespace SerenityStar.AIServices.IntegrationTests
         [Fact]
         public async Task Embeddings_Generate_SendsContentAndParsesVectors()
         {
-            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3}}""");
+            CapturingHandler handler = new("""{"data":[{"index":0,"embedding":[0.1,-0.2,0.3]}],"cost":{"total":0.001,"currency":"USD"},"tokenUsage":{"totalTokens":3},"usage":{"inputUnit":"tokens","input":3}}""");
+            Guid modelId = Guid.NewGuid();
 
-            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { Content = { "hello" } });
+            EmbeddingsResult result = await CreateClient(handler).GetEmbeddingClient().GenerateAsync(new GenerateEmbeddingsReq { AIModelId = modelId, Content = { "hello" } });
 
             AssertPost(handler, "/api/v2/embeddings/generate");
             Assert.Equal("hello", handler.JsonBody!.Value.GetProperty("content")[0].GetString());
+            Assert.Equal(modelId, handler.JsonBody!.Value.GetProperty("modelId").GetGuid());
             Assert.Equal(new[] { 0.1f, -0.2f, 0.3f }, result.Data[0].Embedding);
-            Assert.Equal(3, result.TokenUsage!.TotalTokens);
+            Assert.Equal("tokens", result.Usage!.InputUnit);
+            Assert.Equal(3, result.Usage.Input);
             Assert.Equal(0.001, result.Cost!.Total);
         }
         #endregion
@@ -271,11 +277,13 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","imageUrl":"u"}""");
             Guid fileId = Guid.NewGuid();
+            Guid modelId = Guid.NewGuid();
 
-            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "Edit", FileIds = { fileId } });
+            await CreateClient(handler).GetImageGenerationClient().GenerateByFileIdAsync(new GenerateImageByFileIdReq { AIModelId = modelId, Prompt = "Edit", FileIds = { fileId } });
 
             AssertPost(handler, "/api/v2/image/generate/file");
             Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileIds")[0].GetGuid());
+            Assert.Equal(modelId, handler.JsonBody!.Value.GetProperty("modelId").GetGuid());
         }
 
         [Fact]
@@ -286,7 +294,7 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             ImageGenerationResult result = await CreateClient(handler).GetImageGenerationClient().GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq
             {
-                ModelId = modelId,
+                AIModelId = modelId,
                 Prompt = "Combine them",
                 Files =
                 {
@@ -313,6 +321,17 @@ namespace SerenityStar.AIServices.IntegrationTests
                 .GenerateWithSourceImagesAsync(new GenerateImageWithSourceImagesReq { Prompt = "Edit" }));
             Assert.Equal(0, handler.RequestCount);
         }
+
+        [Fact]
+        public async Task ImageGeneration_RejectsBlankPrompt()
+        {
+            CapturingHandler handler = new("{}");
+            IImageGenerationClient client = CreateClient(handler).GetImageGenerationClient();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GenerateAsync(new GenerateImageReq { Prompt = "   " }));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GenerateByFileIdAsync(new GenerateImageByFileIdReq { Prompt = "", FileIds = { Guid.NewGuid() } }));
+            Assert.Equal(0, handler.RequestCount);
+        }
         #endregion
 
         #region OCR
@@ -329,7 +348,7 @@ namespace SerenityStar.AIServices.IntegrationTests
         {
             CapturingHandler handler = new(OcrResponse);
 
-            OcrExecutionResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
+            OcrResult result = await CreateClient(handler).GetOcrClient().ExtractAsync(new OcrReq
             {
                 Files =
                 {
@@ -355,6 +374,8 @@ namespace SerenityStar.AIServices.IntegrationTests
 
             Assert.False(result.Files[1].Success);
             Assert.Equal("Unreadable", result.Files[1].Error);
+            Assert.Equal("pages", result.Usage!.InputUnit);
+            Assert.Equal(1, result.Usage.Input);
             Assert.Equal(0.01, result.Cost!.Amount);
         }
 
@@ -392,6 +413,8 @@ namespace SerenityStar.AIServices.IntegrationTests
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractAsync(new OcrReq()));
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "file:///etc/passwd" } }));
             await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractByFileIdAsync(new OcrByFileIdReq { FileIds = { Guid.Empty } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromBase64Async(new OcrBase64Req { Base64Files = { new OcrBase64File { ContentBase64 = "   ", MimeType = "application/pdf" } } }));
+            await Assert.ThrowsAsync<ArgumentException>(() => ocr.ExtractFromUrlsAsync(new OcrUrlReq { Urls = { "" } }));
             Assert.Equal(0, handler.RequestCount);
         }
         #endregion
@@ -481,6 +504,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             CapturingHandler handler = new("{}");
 
             Assert.Throws<ArgumentNullException>(() => CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq()));
+            Assert.Throws<ArgumentNullException>(() => CreateClient(handler).GetSpeechGenerationClient().StreamAsync(new GenerateSpeechReq { Text = "   " }));
             Assert.Equal(0, handler.RequestCount);
         }
         #endregion
@@ -493,11 +517,11 @@ namespace SerenityStar.AIServices.IntegrationTests
                 """{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hello","metadata":{"language":"en","duration":"00:00:05"},"usage":{"inputUnit":"seconds","input":5},"cost":{"prompt":0.1,"completion":0.2,"total":0.3,"currency":"USD"}}""");
             Guid modelId = Guid.NewGuid();
 
-            TranscribeResult result = await CreateClient(handler).GetTranscriptionClient().TranscribeAsync(new TranscribeAudioReq
+            TranscriptionResult result = await CreateClient(handler).GetTranscriptionClient().TranscribeAsync(new TranscribeAudioReq
             {
                 FileStream = FileStreamOf("audio"),
                 FileName = "meeting.mp3",
-                ModelId = modelId,
+                AIModelId = modelId,
                 Prompt = "context",
                 Channel = "web"
             });
@@ -528,6 +552,123 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
             // Nulls are omitted so the server applies its defaults.
             Assert.False(handler.JsonBody.Value.TryGetProperty("modelId", out _));
+
+            CapturingHandler modelHandler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hi"}""");
+            Guid modelId = Guid.NewGuid();
+            await CreateClient(modelHandler).GetTranscriptionClient().TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq { FileId = fileId, AIModelId = modelId });
+            Assert.Equal(modelId, modelHandler.JsonBody!.Value.GetProperty("modelId").GetGuid());
+        }
+
+        [Fact]
+        public async Task Transcription_RejectsBlankFileName()
+        {
+            CapturingHandler handler = new("{}");
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => CreateClient(handler).GetTranscriptionClient()
+                .TranscribeAsync(new TranscribeAudioReq { FileStream = FileStreamOf("audio"), FileName = "  " }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+        #endregion
+
+        #region Files
+        private const string UploadFileResponse = """{"id":"22222222-2222-2222-2222-222222222222","extension":"mp3","name":"audio.mp3","expirationDate":null}""";
+
+        [Fact]
+        public async Task Files_Upload_SendsMultipartWithContentType()
+        {
+            CapturingHandler handler = new(UploadFileResponse);
+
+            UploadFileResult result = await CreateClient(handler).GetFileClient()
+                .UploadAsync(new UploadFileReq { FileStream = FileStreamOf("audio"), FileName = "audio.mp3" });
+
+            AssertPost(handler, "/api/file/upload");
+            (string Name, string? FileName, string? MediaType, string? Value) part = Assert.Single(handler.FormParts);
+            Assert.Equal("formFile", part.Name);
+            Assert.Equal("audio.mp3", part.FileName);
+            // The API stores this content type and transcription by file id forwards it as is.
+            Assert.Equal("audio/mpeg", part.MediaType);
+
+            Assert.Equal(Guid.Parse("22222222-2222-2222-2222-222222222222"), result.Id);
+            Assert.Equal("audio.mp3", result.Name);
+            Assert.Equal("mp3", result.Extension);
+        }
+
+        [Fact]
+        public async Task Files_UploadFromUrl_SendsJson()
+        {
+            CapturingHandler handler = new(UploadFileResponse);
+
+            UploadFileResult result = await CreateClient(handler).GetFileClient()
+                .UploadFromUrlAsync(new UploadFileFromUrlReq { FileUrl = "https://example.com/audio.mp3" });
+
+            AssertPost(handler, "/api/file/upload/url");
+            Assert.Equal("https://example.com/audio.mp3", handler.JsonBody!.Value.GetProperty("fileUrl").GetString());
+            // Nulls are omitted so the server takes the file name from the URL.
+            Assert.False(handler.JsonBody.Value.TryGetProperty("fileName", out _));
+            Assert.Equal(Guid.Parse("22222222-2222-2222-2222-222222222222"), result.Id);
+        }
+
+        [Fact]
+        public async Task Files_RejectInvalidRequests()
+        {
+            CapturingHandler handler = new("{}");
+            IFileClient files = CreateClient(handler).GetFileClient();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => files.UploadAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => files.UploadAsync(new UploadFileReq { FileStream = FileStreamOf("x"), FileName = " " }));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => files.UploadFromUrlAsync(new UploadFileFromUrlReq { FileUrl = "" }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+        #endregion
+
+        #region Vision
+        [Fact]
+        public async Task Vision_Analyze_SendsMultipartAndParsesResult()
+        {
+            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","response":"A dog","tokenUsage":{"promptTokens":10,"completionTokens":2,"totalTokens":12},"usage":{"inputUnit":"tokens","input":10,"outputUnit":"tokens","output":2},"cost":{"prompt":0.1,"completion":0.1,"total":0.2,"currency":"USD"}}""");
+
+            VisionResult result = await CreateClient(handler).GetVisionClient().AnalyzeAsync(new AnalyzeImageReq
+            {
+                FileStream = FileStreamOf("img"),
+                FileName = "photo.JPG",
+                ModelCode = "gpt-4o",
+                Vendor = "OpenAI",
+                Prompt = "Describe"
+            });
+
+            AssertPost(handler, "/api/v2/image/vision");
+            Assert.Contains(handler.FormParts, p => p.Name == "File" && p.FileName == "photo.JPG" && p.MediaType == "image/jpeg");
+            Assert.Equal("gpt-4o", handler.FormValue("ModelCode"));
+            Assert.Equal("OpenAI", handler.FormValue("Vendor"));
+            Assert.Equal("Describe", handler.FormValue("Prompt"));
+            Assert.DoesNotContain(handler.FormParts, p => p.Name == "AIModelId");
+
+            Assert.Equal("A dog", result.Response);
+            Assert.Equal(10, result.Usage!.Input);
+            Assert.Equal(2, result.Usage.Output);
+            Assert.Equal(0.2, result.Cost!.Total);
+        }
+
+        [Fact]
+        public async Task Vision_AnalyzeByFileId_SendsJson()
+        {
+            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","response":"ok"}""");
+            Guid fileId = Guid.NewGuid();
+
+            await CreateClient(handler).GetVisionClient().AnalyzeByFileIdAsync(new AnalyzeImageByFileIdReq { FileId = fileId });
+
+            AssertPost(handler, "/api/v2/image/vision/file");
+            Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
+        }
+
+        [Fact]
+        public async Task Vision_RejectsBlankFileName()
+        {
+            CapturingHandler handler = new("{}");
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => CreateClient(handler).GetVisionClient()
+                .AnalyzeAsync(new AnalyzeImageReq { FileStream = FileStreamOf("img"), FileName = "  " }));
+            Assert.Equal(0, handler.RequestCount);
         }
         #endregion
 
@@ -556,6 +697,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
             Assert.Throws<ArgumentNullException>(() => client.GetSpeechGenerationClient());
             Assert.Throws<ArgumentNullException>(() => client.GetTranscriptionClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetVisionClient());
         }
 
         [Fact]
@@ -577,6 +719,8 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.NotNull(provider.GetRequiredService<IOcrClient>());
             Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
             Assert.NotNull(provider.GetRequiredService<ITranscriptionClient>());
+            Assert.NotNull(provider.GetRequiredService<IFileClient>());
+            Assert.NotNull(provider.GetRequiredService<IVisionClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 

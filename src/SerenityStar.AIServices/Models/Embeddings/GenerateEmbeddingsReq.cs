@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SerenityStar.Models.Embeddings
 {
@@ -12,7 +13,8 @@ namespace SerenityStar.Models.Embeddings
         /// The AI Model Id to use for embeddings.
         /// If not provided, the default embedding model will be used.
         /// </summary>
-        public Guid? ModelId { get; set; }
+        [JsonPropertyName("modelId")]
+        public Guid? AIModelId { get; set; }
 
         /// <summary>
         /// The texts to embed. At least one is required.
@@ -32,11 +34,11 @@ namespace SerenityStar.Models.Embeddings
         /// <summary>
         /// Validates the request parameters.
         /// </summary>
-        /// <exception cref="ArgumentException">Thrown when no content is provided or any entry is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when no content is provided or any entry is null, empty or whitespace.</exception>
         public void Validate()
         {
-            if (Content is null || Content.Count == 0 || Content.Contains(null!))
-                throw new ArgumentException("At least one non-null text is required to generate embeddings.", nameof(Content));
+            if (Content is null || Content.Count == 0 || Content.Exists(string.IsNullOrWhiteSpace))
+                throw new ArgumentException("At least one text is required to generate embeddings, and none can be null, empty or whitespace.", nameof(Content));
         }
     }
 }
