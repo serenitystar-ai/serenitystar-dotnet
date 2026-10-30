@@ -5,13 +5,16 @@ using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
 using SerenityStar.Exceptions;
 using SerenityStar.Extensions;
+using SerenityStar.Files;
 using SerenityStar.Models.AIServices;
 using SerenityStar.Models.Anonymizer;
 using SerenityStar.Models.Decisions;
 using SerenityStar.Models.Embeddings;
+using SerenityStar.Models.Files;
 using SerenityStar.Models.ImageGeneration;
 using SerenityStar.Models.Ocr;
 using SerenityStar.Models.SpeechGeneration;
+using SerenityStar.Models.Transcription;
 using Xunit;
 
 namespace SerenityStar.AIServices.IntegrationTests
@@ -505,6 +508,118 @@ namespace SerenityStar.AIServices.IntegrationTests
         }
         #endregion
 
+        #region Transcription
+        [Fact]
+        public async Task Transcription_Transcribe_SendsMultipartAndParsesResult()
+        {
+            CapturingHandler handler = new(
+                """{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hello","metadata":{"language":"en","duration":"00:00:05"},"usage":{"inputUnit":"seconds","input":5},"cost":{"prompt":0.1,"completion":0.2,"total":0.3,"currency":"USD"}}""");
+            Guid modelId = Guid.NewGuid();
+
+            TranscriptionResult result = await CreateClient(handler).GetTranscriptionClient().TranscribeAsync(new TranscribeAudioReq
+            {
+                FileStream = FileStreamOf("audio"),
+                FileName = "meeting.mp3",
+                AIModelId = modelId,
+                Prompt = "context",
+                Channel = "web"
+            });
+
+            AssertPost(handler, "/api/v2/audio/transcribe");
+            Assert.Equal("multipart/form-data", handler.ContentMediaType);
+            Assert.Contains(handler.FormParts, p => p.Name == "File" && p.FileName == "meeting.mp3" && p.MediaType == "audio/mpeg");
+            Assert.Equal(modelId.ToString(), handler.FormValue("ModelId"));
+            Assert.Equal("context", handler.FormValue("Prompt"));
+            Assert.Equal("web", handler.FormValue("Channel"));
+            Assert.DoesNotContain(handler.FormParts, p => p.Name == "UserIdentifier");
+
+            Assert.Equal("hello", result.Transcript);
+            Assert.Equal(TimeSpan.FromSeconds(5), result.Metadata!.Duration);
+            Assert.Equal("seconds", result.Usage!.InputUnit);
+            Assert.Equal(0.3, result.Cost!.Total);
+        }
+
+        [Fact]
+        public async Task Transcription_TranscribeByFileId_SendsJson()
+        {
+            CapturingHandler handler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hi"}""");
+            Guid fileId = Guid.NewGuid();
+
+            await CreateClient(handler).GetTranscriptionClient().TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq { FileId = fileId });
+
+            AssertPost(handler, "/api/v2/audio/transcribe/file");
+            Assert.Equal(fileId, handler.JsonBody!.Value.GetProperty("fileId").GetGuid());
+            // Nulls are omitted so the server applies its defaults.
+            Assert.False(handler.JsonBody.Value.TryGetProperty("modelId", out _));
+
+            CapturingHandler modelHandler = new("""{"instanceId":"11111111-1111-1111-1111-111111111111","transcript":"hi"}""");
+            Guid modelId = Guid.NewGuid();
+            await CreateClient(modelHandler).GetTranscriptionClient().TranscribeByFileIdAsync(new TranscribeAudioByFileIdReq { FileId = fileId, AIModelId = modelId });
+            Assert.Equal(modelId, modelHandler.JsonBody!.Value.GetProperty("modelId").GetGuid());
+        }
+
+        [Fact]
+        public async Task Transcription_RejectsBlankFileName()
+        {
+            CapturingHandler handler = new("{}");
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => CreateClient(handler).GetTranscriptionClient()
+                .TranscribeAsync(new TranscribeAudioReq { FileStream = FileStreamOf("audio"), FileName = "  " }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+        #endregion
+
+        #region Files
+        private const string UploadFileResponse = """{"id":"22222222-2222-2222-2222-222222222222","extension":"mp3","name":"audio.mp3","expirationDate":null}""";
+
+        [Fact]
+        public async Task Files_Upload_SendsMultipartWithContentType()
+        {
+            CapturingHandler handler = new(UploadFileResponse);
+
+            UploadFileResult result = await CreateClient(handler).GetFileClient()
+                .UploadAsync(new UploadFileReq { FileStream = FileStreamOf("audio"), FileName = "audio.mp3" });
+
+            AssertPost(handler, "/api/file/upload");
+            (string Name, string? FileName, string? MediaType, string? Value) part = Assert.Single(handler.FormParts);
+            Assert.Equal("formFile", part.Name);
+            Assert.Equal("audio.mp3", part.FileName);
+            // The API stores this content type and transcription by file id forwards it as is.
+            Assert.Equal("audio/mpeg", part.MediaType);
+
+            Assert.Equal(Guid.Parse("22222222-2222-2222-2222-222222222222"), result.Id);
+            Assert.Equal("audio.mp3", result.Name);
+            Assert.Equal("mp3", result.Extension);
+        }
+
+        [Fact]
+        public async Task Files_UploadFromUrl_SendsJson()
+        {
+            CapturingHandler handler = new(UploadFileResponse);
+
+            UploadFileResult result = await CreateClient(handler).GetFileClient()
+                .UploadFromUrlAsync(new UploadFileFromUrlReq { FileUrl = "https://example.com/audio.mp3" });
+
+            AssertPost(handler, "/api/file/upload/url");
+            Assert.Equal("https://example.com/audio.mp3", handler.JsonBody!.Value.GetProperty("fileUrl").GetString());
+            // Nulls are omitted so the server takes the file name from the URL.
+            Assert.False(handler.JsonBody.Value.TryGetProperty("fileName", out _));
+            Assert.Equal(Guid.Parse("22222222-2222-2222-2222-222222222222"), result.Id);
+        }
+
+        [Fact]
+        public async Task Files_RejectInvalidRequests()
+        {
+            CapturingHandler handler = new("{}");
+            IFileClient files = CreateClient(handler).GetFileClient();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => files.UploadAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => files.UploadAsync(new UploadFileReq { FileStream = FileStreamOf("x"), FileName = " " }));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => files.UploadFromUrlAsync(new UploadFileFromUrlReq { FileUrl = "" }));
+            Assert.Equal(0, handler.RequestCount);
+        }
+        #endregion
+
         #region Cross-cutting
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
@@ -529,6 +644,7 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.Throws<ArgumentNullException>(() => client.GetImageGenerationClient());
             Assert.Throws<ArgumentNullException>(() => client.GetOcrClient());
             Assert.Throws<ArgumentNullException>(() => client.GetSpeechGenerationClient());
+            Assert.Throws<ArgumentNullException>(() => client.GetTranscriptionClient());
         }
 
         [Fact]
@@ -549,6 +665,8 @@ namespace SerenityStar.AIServices.IntegrationTests
             Assert.NotNull(provider.GetRequiredService<IImageGenerationClient>());
             Assert.NotNull(provider.GetRequiredService<IOcrClient>());
             Assert.NotNull(provider.GetRequiredService<ISpeechGenerationClient>());
+            Assert.NotNull(provider.GetRequiredService<ITranscriptionClient>());
+            Assert.NotNull(provider.GetRequiredService<IFileClient>());
 
             await provider.GetRequiredService<IAnonymizerClient>().ObfuscateAsync(new AnonymizerReq { Inputs = "x" });
 

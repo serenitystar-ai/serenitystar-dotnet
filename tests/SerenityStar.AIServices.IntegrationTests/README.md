@@ -9,12 +9,13 @@ This project has two kinds of tests:
 
 Create an `appsettings.Development.json` file in this directory (it is git-ignored) and set every value marked `replace-me` in `appsettings.json`. Empty values and `replace-me` are treated as not configured; a test that needs a missing value fails with a message naming the setting.
 
-Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the services that support it: decisions, OCR and speech generation. Both values must be set together. The vendor is the name of a Serenity Star vendor, e.g. `OpenAI`, `Anthropic`, `Google` or `ElevenLabs`. Embeddings and image generation only accept a model id (`*ModelId`).
+Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the services that support it: decisions, OCR and speech generation. Both values must be set together. The vendor is the name of a Serenity Star vendor, e.g. `OpenAI`, `Anthropic`, `Google` or `ElevenLabs`. Embeddings, image generation and transcription only accept a model id (`*ModelId`).
 
 ```json
 {
   "SerenityStar": {
     "ApiKey": "your-api-key",
+    "AudioFilePath": "C:\\test-files\\audio.mp3",
     "DecisionModelCode": "your-decision-model-code",
     "DecisionVendor": "OpenAI",
     "ImageFilePath": "C:\\test-files\\image.png",
@@ -30,6 +31,7 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
 | Setting | Required | Description |
 | --- | --- | --- |
 | `ApiKey` | Yes | API key with permission to execute AI services. |
+| `AudioFilePath` | Yes | Audio file for transcription (mp3, mp4, mpeg, mpga, m4a, wav, webm; max 25 MB). |
 | `BaseUrl` | No | API URL. Leave empty to run against production (`https://api.serenitystar.ai`). |
 | `DecisionModelCode` | Yes | Code of a decision model. |
 | `DecisionVendor` | Yes | Vendor of the decision model. |
@@ -44,6 +46,7 @@ Models are selected by code and vendor (`*ModelCode` + `*Vendor`) on the service
 | `SpeechGenerationModelCode` | Yes | Code of a speech generation (text-to-speech) model. |
 | `SpeechGenerationVendor` | Yes | Vendor of the speech generation model. |
 | `SpeechGenerationVoice` | No | Voice name. Uses the vendor's default voice when empty. |
+| `TranscriptionModelId` | No | Transcription model id. Uses the default model when empty. |
 
 Settings can also be provided as environment variables, e.g. `SerenityStar__ApiKey`.
 

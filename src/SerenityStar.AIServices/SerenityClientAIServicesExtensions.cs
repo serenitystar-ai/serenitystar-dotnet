@@ -63,6 +63,15 @@ namespace SerenityStar.Client
         public static ISpeechGenerationClient GetSpeechGenerationClient(this SerenityClient client)
             => new SpeechGenerationClient(GetApiClient(client));
 
+        /// <summary>
+        /// Gets a client to transcribe audio and video files into text.
+        /// </summary>
+        /// <param name="client">The Serenity Star client.</param>
+        /// <returns>An <see cref="ITranscriptionClient"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
+        public static ITranscriptionClient GetTranscriptionClient(this SerenityClient client)
+            => new TranscriptionClient(GetApiClient(client));
+
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)

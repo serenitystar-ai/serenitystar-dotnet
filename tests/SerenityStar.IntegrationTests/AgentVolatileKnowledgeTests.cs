@@ -1,8 +1,11 @@
+using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Client;
+using SerenityStar.Exceptions;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.Files;
 using SerenityStar.Models.VolatileKnowledge;
 using Xunit;
 
@@ -131,6 +134,37 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
     }
 
     [Fact]
+    public async Task UploadFromFileForAgent_WithFileUploadedByFileClient_ShouldSucceed()
+    {
+        // Arrange - upload the file with the file client to obtain a file id
+        EnsureTestFileExists();
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
+
+        UploadFileResult file;
+        using (FileStream fileStream = File.OpenRead(_testFilePath))
+        {
+            file = await _client.GetFileClient().UploadAsync(new UploadFileReq
+            {
+                FileStream = fileStream,
+                FileName = TestFileName
+            });
+        }
+
+        UploadVolatileKnowledgeFromFileReq request = new()
+        {
+            FileId = file.Id
+        };
+
+        // Act
+        VolatileKnowledgeRes result = await conversation.VolatileKnowledge.UploadFromFileForAgentAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
+        Assert.Equal(file.Id, result.FileId);
+    }
+
+    [Fact]
     public async Task GetAllowedMimeTypes_ShouldReturnNonEmptyList()
     {
         // Arrange
@@ -158,10 +192,10 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert - the backend rejects unsupported types with a 400 that the SDK surfaces.
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(
+        SerenityApiException ex = await Assert.ThrowsAsync<SerenityApiException>(
             () => conversation.VolatileKnowledge.UploadForAgentAsync(request));
 
-        Assert.Contains("400", ex.Message);
+        Assert.Equal(HttpStatusCode.BadRequest, ex.StatusCode);
     }
 
     [Fact]
@@ -219,9 +253,9 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
         };
 
         // Act & Assert
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(
+        SerenityApiException ex = await Assert.ThrowsAsync<SerenityApiException>(
             () => conversation.VolatileKnowledge.UploadForAgentAsync(request));
 
-        Assert.Contains("404", ex.Message);
+        Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
     }
 }

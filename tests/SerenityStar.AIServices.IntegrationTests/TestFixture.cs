@@ -1,8 +1,8 @@
-using System.Net.Http.Headers;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Extensions;
+using SerenityStar.Files;
+using SerenityStar.Models.Files;
 
 namespace SerenityStar.AIServices.IntegrationTests;
 
@@ -13,15 +13,11 @@ public class TestFixture : IDisposable
     /// </summary>
     public const string Placeholder = "replace-me";
 
-    private const string DefaultBaseUrl = "https://api.serenitystar.ai";
-
-    private readonly string _apiKey;
-    private readonly string _baseUrl;
-    private readonly HttpClient _uploadHttpClient = new();
-
     public IServiceProvider ServiceProvider { get; }
     public IConfiguration Configuration { get; }
     public bool HasValidApiKey { get; }
+    public Guid? TranscriptionModelId { get; }
+    public string? AudioFilePath { get; }
 
     public TestFixture()
     {
@@ -36,6 +32,8 @@ public class TestFixture : IDisposable
 
         string? apiKey = GetSetting("ApiKey");
 
+        TranscriptionModelId = GetOptionalGuid("TranscriptionModelId");
+        AudioFilePath = GetSetting("AudioFilePath");
 
         // Check if we have a valid API key (not null, empty or a placeholder)
         HasValidApiKey = apiKey != null && apiKey != "your-api-key-here";
@@ -45,14 +43,11 @@ public class TestFixture : IDisposable
                 "No valid API key found. Please set 'SerenityStar:ApiKey' in appsettings.Development.json or environment variables. " +
                 "Integration tests require a valid Serenity Star API key to run.");
 
-        _apiKey = apiKey!;
-
         // Production by default; an empty BaseUrl is treated as unset (AddSerenityStar only coalesces null,
         // and new Uri("") would throw).
         string? baseUrl = GetSetting("BaseUrl");
-        _baseUrl = baseUrl ?? DefaultBaseUrl;
 
-        services.AddSerenityStar(_apiKey, timeoutSeconds: 300, baseUrl: baseUrl)
+        services.AddSerenityStar(apiKey!, timeoutSeconds: 300, baseUrl: baseUrl)
                 .AddSerenityStarAIServices();
 
         ServiceProvider = services.BuildServiceProvider();
@@ -132,35 +127,19 @@ public class TestFixture : IDisposable
     }
 
     /// <summary>
-    /// Uploads a local file to Serenity Star (as a private file) and returns its id, for the *ByFileId methods.
+    /// Uploads a local file to Serenity Star (as a private file) with the SDK file client and returns its id,
+    /// for the *ByFileId methods.
     /// </summary>
-    /// <remarks>
-    /// The SDK does not expose file upload publicly, so the tests call the API directly.
-    /// </remarks>
     public async Task<Guid> UploadFileAsync(string path)
     {
-        using MultipartFormDataContent content = new();
-        StreamContent fileContent = new(File.OpenRead(path));
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        content.Add(fileContent, "formFile", Path.GetFileName(path));
+        UploadFileResult result = await ServiceProvider.GetRequiredService<IFileClient>()
+            .UploadAsync(new UploadFileReq { FileStream = File.OpenRead(path), FileName = Path.GetFileName(path) });
 
-        using HttpRequestMessage request = new(HttpMethod.Post, new Uri(new Uri(_baseUrl), "/api/v2/file/upload")) { Content = content };
-        request.Headers.Add("X-API-KEY", _apiKey);
-
-        using HttpResponseMessage response = await _uploadHttpClient.SendAsync(request);
-        string body = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"File upload failed with status code {response.StatusCode}: {body}");
-
-        using JsonDocument document = JsonDocument.Parse(body);
-        return Guid.Parse(document.RootElement.GetProperty("id").GetString()!);
+        return result.Id;
     }
 
     public void Dispose()
     {
-        _uploadHttpClient.Dispose();
-
         if (ServiceProvider is IDisposable disposable)
             disposable.Dispose();
     }

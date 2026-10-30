@@ -19,6 +19,7 @@ namespace SerenityStar.Models.ImageGeneration
 
         /// <summary>
         /// The ids of the uploaded source images, in the order the prompt refers to them. At least one is required.
+        /// Upload the images with <see cref="Client.SerenityClient.GetFileClient"/>.
         /// </summary>
         public List<Guid> FileIds { get; set; } = new List<Guid>();
 
