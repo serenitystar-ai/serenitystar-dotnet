@@ -38,6 +38,8 @@ AnonymizerResult result = await anonymizer.ObfuscateAsync(new AnonymizerReq
 | Transcription | `ITranscriptionClient` | `client.GetTranscriptionClient()` |
 | Vision | `IVisionClient` | `client.GetVisionClient()` |
 
+Services that work with files also accept the id of a file uploaded beforehand (`*ByFileIdAsync` methods). Upload it with `client.GetFileClient().UploadAsync(...)`, which returns the file id.
+
 ## Dependency injection
 
 ```csharp

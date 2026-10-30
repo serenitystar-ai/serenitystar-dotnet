@@ -19,7 +19,7 @@ namespace SerenityStar.AIServices
         }
 
         /// <inheritdoc />
-        public Task<TranscribeResult> TranscribeAsync(
+        public Task<TranscriptionResult> TranscribeAsync(
             TranscribeAudioReq request,
             CancellationToken cancellationToken = default)
         {
@@ -31,19 +31,19 @@ namespace SerenityStar.AIServices
             MultipartFormDataContent content = new();
             content.AddFile("File", request.FileStream, request.FileName);
 
-            if (request.ModelId.HasValue)
-                content.AddField("ModelId", request.ModelId.Value.ToString());
+            if (request.AIModelId.HasValue)
+                content.AddField("ModelId", request.AIModelId.Value.ToString());
 
             content.AddField("Prompt", request.Prompt);
             content.AddField("UserIdentifier", request.UserIdentifier);
             content.AddField("Channel", request.Channel);
 
-            return AIServiceRequestHelper.PostMultipartAsync<TranscribeResult>(
+            return AIServiceRequestHelper.PostMultipartAsync<TranscriptionResult>(
                 _apiClient, "/api/v2/audio/transcribe", content, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<TranscribeResult> TranscribeByFileIdAsync(
+        public Task<TranscriptionResult> TranscribeByFileIdAsync(
             TranscribeAudioByFileIdReq request,
             CancellationToken cancellationToken = default)
         {
@@ -52,7 +52,7 @@ namespace SerenityStar.AIServices
 
             request.Validate();
 
-            return AIServiceRequestHelper.PostJsonAsync<TranscribeResult>(
+            return AIServiceRequestHelper.PostJsonAsync<TranscriptionResult>(
                 _apiClient, "/api/v2/audio/transcribe/file", request, cancellationToken);
         }
     }

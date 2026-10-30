@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
+using SerenityStar.Exceptions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Agents.System;
@@ -50,7 +51,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             activity.ExecuteAsync());
     }
 
@@ -208,9 +209,15 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         if (string.IsNullOrEmpty(apiKey))
             throw new InvalidOperationException("API key is required for this test");
 
-        SerenityClient serenityClient = new SerenityClientBuilder()
-            .WithApiKey(apiKey)
-            .Build();
+        SerenityClientBuilder builder = new SerenityClientBuilder()
+            .WithApiKey(apiKey);
+
+        // Target the same environment as the fixture; an empty BaseUrl keeps the SDK default.
+        string? baseUrl = _fixture.Configuration["SerenityStar:BaseUrl"];
+        if (!string.IsNullOrEmpty(baseUrl))
+            builder = builder.WithBaseUrl(baseUrl);
+
+        SerenityClient serenityClient = builder.Build();
 
         AgentExecutionReq options = new()
         {

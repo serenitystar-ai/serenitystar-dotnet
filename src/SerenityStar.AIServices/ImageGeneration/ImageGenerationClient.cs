@@ -48,8 +48,8 @@ namespace SerenityStar.AIServices
             foreach (AIServiceFile file in request.Files)
                 content.AddFile("Files", file);
 
-            if (request.ModelId.HasValue)
-                content.AddField("ModelId", request.ModelId.Value.ToString());
+            if (request.AIModelId.HasValue)
+                content.AddField("ModelId", request.AIModelId.Value.ToString());
 
             content.AddField("Prompt", request.Prompt);
             content.AddField("UserIdentifier", request.UserIdentifier);

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
+using SerenityStar.Exceptions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.Citations;
@@ -28,7 +29,7 @@ public class AssistantIntegrationTests : IClassFixture<TestFixture>
         Conversation conversation = _client.GetAgents().Assistants.CreateConversation("invalid-agent");
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             conversation.SendMessageAsync("Hello"));
     }
 

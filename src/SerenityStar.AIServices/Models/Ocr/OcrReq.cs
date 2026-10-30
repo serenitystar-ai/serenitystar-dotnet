@@ -33,7 +33,7 @@ namespace SerenityStar.Models.Ocr
         public string? Vendor { get; set; }
 
         /// <summary>
-        /// Optional instructions to guide the extraction. Maximum length: 4000 characters.
+        /// Optional instructions to guide the extraction.
         /// </summary>
         public string? Instructions { get; set; }
 
@@ -56,7 +56,6 @@ namespace SerenityStar.Models.Ocr
 
     /// <summary>
     /// Request for extracting text from documents by uploading them directly.
-    /// Supported formats: png, jpg, jpeg, pdf. Maximum size per file: 50 MB.
     /// </summary>
     public sealed class OcrReq : OcrReqBase
     {
@@ -83,7 +82,6 @@ namespace SerenityStar.Models.Ocr
 
     /// <summary>
     /// Request for extracting text from base64-encoded documents.
-    /// Supported formats: png, jpg, jpeg, pdf. Maximum decoded size per file: 50 MB.
     /// </summary>
     public sealed class OcrBase64Req : OcrReqBase
     {
@@ -100,7 +98,7 @@ namespace SerenityStar.Models.Ocr
 
             foreach (OcrBase64File file in Base64Files)
             {
-                if (file is null || string.IsNullOrEmpty(file.ContentBase64) || string.IsNullOrEmpty(file.MimeType))
+                if (file is null || string.IsNullOrWhiteSpace(file.ContentBase64) || string.IsNullOrWhiteSpace(file.MimeType))
                     throw new ArgumentException("Every base64 file requires ContentBase64 and MimeType.", nameof(Base64Files));
             }
         }
@@ -143,11 +141,11 @@ namespace SerenityStar.Models.Ocr
             if (Urls is null || Urls.Count == 0)
                 throw new ArgumentException("At least one URL is required for OCR.", nameof(Urls));
 
-            foreach (string url in Urls)
+            for (int i = 0; i < Urls.Count; i++)
             {
-                if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri)
+                if (!Uri.TryCreate(Urls[i], UriKind.Absolute, out Uri? uri)
                     || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-                    throw new ArgumentException($"'{url}' is not an absolute http or https URL.", nameof(Urls));
+                    throw new ArgumentException($"{nameof(Urls)}[{i}] is not an absolute http or https URL.", nameof(Urls));
             }
         }
     }
@@ -159,6 +157,7 @@ namespace SerenityStar.Models.Ocr
     {
         /// <summary>
         /// The ids of the uploaded documents. At least one is required.
+        /// Upload the documents with <see cref="Client.SerenityClient.GetFileClient"/>.
         /// </summary>
         public List<Guid> FileIds { get; set; } = new List<Guid>();
 

@@ -29,7 +29,13 @@
 
       BREAKING CHANGES:
       - Replaces client.AIServices.Transcription (previously in SubgenAI.SerenityStar.SDK):
-        use client.GetTranscriptionClient().TranscribeAsync(...). Request and result models are unchanged.
+        use client.GetTranscriptionClient().TranscribeAsync(...). The models are aligned with the other AI services:
+        * TranscribeResult is renamed to TranscriptionResult
+        * TranscribeAudioReq.ModelId and TranscribeAudioByFileIdReq.ModelId are renamed to AIModelId
+        * TranscriptionResult.TokenUsage (and TranscribeTokenUsage) is removed: use Usage, which reports the
+          billed quantity with its unit (e.g. seconds or tokens)
+        * TranscriptionResult.Cost is now AIServiceTokenCost (same Prompt, Completion, Total and Currency);
+          TranscribeCost is removed
     </PackageReleaseNotes>
   </PropertyGroup>
 
