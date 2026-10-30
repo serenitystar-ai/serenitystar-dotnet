@@ -92,6 +92,47 @@ public class SkillApprovalsOfflineTests
         return messages;
     }
 
+    #region Cancellation
+    [Fact]
+    public async Task StreamMessage_ThrowsOperationCanceled_WhenCanceledMidStream()
+    {
+        CapturingHandler handler = new(Sse(
+            """{"type":"task_start","task":"Getting AI response","task_key":"llm_response"}""",
+            """{"type":"task_stop","task":"Getting AI response","task_key":"llm_response","output":{"text":"x"},"success":true}"""),
+            "text/event-stream");
+
+        Conversation conversation = CreateClient(handler).GetAgents().Assistants.CreateConversation("assistant");
+        using CancellationTokenSource cts = new();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await foreach (StreamingAgentMessage _ in conversation.StreamMessageAsync("Hi", cts.Token))
+                cts.Cancel();
+        });
+    }
+
+    [Fact]
+    public async Task ProxyStream_ThrowsOperationCanceled_WhenCanceledMidStream()
+    {
+        CapturingHandler handler = new(Sse(
+            """{"type":"task_start","task":"Getting AI response","task_key":"llm_response"}""",
+            """{"type":"task_stop","task":"Getting AI response","task_key":"llm_response","output":{"text":"x"},"success":true}"""),
+            "text/event-stream");
+
+        Proxy proxy = CreateClient(handler).GetAgents().AIProxies.Create("proxy", new ProxyExecutionReq
+        {
+            Messages = { new ProxyExecutionMessage { Role = "user", Content = "Hi" } }
+        });
+        using CancellationTokenSource cts = new();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await foreach (StreamingAgentMessage _ in proxy.StreamAsync(cts.Token))
+                cts.Cancel();
+        });
+    }
+    #endregion
+
     #region Pending actions
     [Fact]
     public async Task SendMessage_ParsesEveryPendingActionType()

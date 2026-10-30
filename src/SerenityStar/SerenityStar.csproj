@@ -46,6 +46,9 @@
         design-time tooling) now fail at startup.
       - client.AIServices (transcription) was removed from this package. Install SubgenAI.SerenityStar.AIServices
         and use client.GetTranscriptionClient().TranscribeAsync(...)
+      - Streaming (conversation.StreamMessageAsync / StreamApprovalsAsync and the system agents' StreamAsync) now
+        throws OperationCanceledException when the cancellation token is canceled, instead of silently ending the
+        stream. Code that cancels a stream should catch it.
       - Audio input (conversations, activities and chat completions) is now uploaded as a private file, with its
         content type inferred from the file extension. It was previously uploaded as a public file, which anyone
         with the file id could download without authentication.
