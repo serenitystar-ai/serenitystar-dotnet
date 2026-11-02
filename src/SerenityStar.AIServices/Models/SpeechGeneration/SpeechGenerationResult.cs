@@ -14,7 +14,7 @@ namespace SerenityStar.Models.SpeechGeneration
         public Guid InstanceId { get; set; }
 
         /// <summary>
-        /// The public URL to download the generated audio.
+        /// The public URL to download the generated audio. It doesn't require authentication.
         /// </summary>
         public string? AudioUrl { get; set; }
 

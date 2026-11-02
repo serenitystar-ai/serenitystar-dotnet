@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using SerenityStar.Constants;
+using SerenityStar.Files;
 using SerenityStar.Models;
 using System;
 using System.Net.Http;
@@ -16,6 +17,7 @@ namespace SerenityStar.Client
     /// <item><description>Agents (SubgenAI.SerenityStar.SDK): <c>client.GetAgents()</c></description></item>
     /// <item><description>AI services (SubgenAI.SerenityStar.AIServices): <c>client.GetAnonymizerClient()</c>, <c>client.GetDecisionClient()</c>, etc.</description></item>
     /// </list>
+    /// File upload, shared by every package, is available directly: <see cref="GetFileClient"/>.
     /// </remarks>
     public sealed class SerenityClient
     {
@@ -60,6 +62,13 @@ namespace SerenityStar.Client
                 .WithTimeout(timeout ?? 100)
                 .Build();
         }
+
+        /// <summary>
+        /// Gets a client to upload files to Serenity Star and use them later by id, e.g. in the AI services
+        /// <c>*ByFileIdAsync</c> methods or volatile knowledge <c>UploadFromFileForAgentAsync</c>.
+        /// </summary>
+        /// <returns>An <see cref="IFileClient"/>.</returns>
+        public IFileClient GetFileClient() => new FileClient(ApiClient);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SerenityClient"/> class.

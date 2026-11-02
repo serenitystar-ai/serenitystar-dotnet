@@ -8,7 +8,7 @@ namespace SerenityStar.Models.Ocr
     /// Represents the result of an OCR operation over one or more documents.
     /// A failure on one document does not abort the others: check <see cref="OcrFileResult.Success"/> per file.
     /// </summary>
-    public sealed class OcrExecutionResult
+    public sealed class OcrResult
     {
         /// <summary>
         /// The unique identifier of the OCR instance.
@@ -19,11 +19,6 @@ namespace SerenityStar.Models.Ocr
         /// The result of each document, in request order.
         /// </summary>
         public List<OcrFileResult> Files { get; set; } = new List<OcrFileResult>();
-
-        /// <summary>
-        /// The token counts processed. Null for page-priced models.
-        /// </summary>
-        public AIServiceTokenUsage? TokenUsage { get; set; }
 
         /// <summary>
         /// The billed quantities in the units the model is priced by.

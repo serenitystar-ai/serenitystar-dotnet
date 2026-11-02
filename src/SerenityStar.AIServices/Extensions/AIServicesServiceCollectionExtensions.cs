@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SerenityStar.AIServices;
 using SerenityStar.Client;
 using System;
@@ -13,7 +14,7 @@ namespace SerenityStar.Extensions
         /// <summary>
         /// Registers every AI service interface (<see cref="IAnonymizerClient"/>, <see cref="IDecisionClient"/>,
         /// <see cref="IEmbeddingClient"/>, <see cref="IImageGenerationClient"/>, <see cref="IOcrClient"/>,
-        /// <see cref="ISpeechGenerationClient"/> and <see cref="ITranscriptionClient"/>)
+        /// <see cref="ISpeechGenerationClient"/>, <see cref="ITranscriptionClient"/> and <see cref="IVisionClient"/>)
         /// so they can be injected directly.
         /// Requires <see cref="ServiceCollectionExtensions.AddSerenityStar"/> to be called first.
         /// </summary>
@@ -25,13 +26,14 @@ namespace SerenityStar.Extensions
                 throw new ArgumentNullException(nameof(services));
 
             // Transient to match the lifetime of the typed SerenityClient registered by AddSerenityStar.
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetAnonymizerClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetDecisionClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetEmbeddingClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetImageGenerationClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetOcrClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetSpeechGenerationClient());
-            services.AddTransient(sp => sp.GetRequiredService<SerenityClient>().GetTranscriptionClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetAnonymizerClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetDecisionClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetEmbeddingClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetImageGenerationClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetOcrClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetSpeechGenerationClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetTranscriptionClient());
+            services.TryAddTransient(sp => sp.GetRequiredService<SerenityClient>().GetVisionClient());
 
             return services;
         }

@@ -21,7 +21,7 @@ public class EmbeddingsIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         GenerateEmbeddingsReq request = new()
         {
-            ModelId = _fixture.GetOptionalGuid("EmbeddingModelId"),
+            AIModelId = _fixture.GetOptionalGuid("EmbeddingModelId"),
             Content = { "The quick brown fox", "jumps over the lazy dog" }
         };
 
@@ -44,5 +44,7 @@ public class EmbeddingsIntegrationTests : IClassFixture<TestFixture>
     public async Task GenerateAsync_WithoutContent_ShouldThrowBeforeSending()
     {
         await Assert.ThrowsAsync<ArgumentException>(() => _client.GenerateAsync(new GenerateEmbeddingsReq()));
+        await Assert.ThrowsAsync<ArgumentException>(() => _client.GenerateAsync(new GenerateEmbeddingsReq { Content = { "hello", "" } }));
+        await Assert.ThrowsAsync<ArgumentException>(() => _client.GenerateAsync(new GenerateEmbeddingsReq { Content = { "   " } }));
     }
 }

@@ -5,6 +5,7 @@ using SerenityStar.Client;
 using SerenityStar.Exceptions;
 using SerenityStar.Extensions;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using System.Net;
@@ -59,7 +60,12 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         AgentResult result = await conversation.SendMessageAsync(_fixture.ApprovalMessage);
 
         Assert.NotNull(conversation.ConversationId);
-        return (conversation, AssertApprovalsRequested(result));
+        List<ApprovalPendingAction> approvals = AssertApprovalsRequested(result);
+
+        // Add delay to avoid rate limiting
+        await Task.Delay(1000);
+
+        return (conversation, approvals);
     }
 
     #region Assistants
@@ -81,7 +87,6 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         (Conversation conversation, List<ApprovalPendingAction> approvals) =
             await StartConversationAwaitingApprovalAsync(_client.GetAgents().Assistants, _fixture.AssistantAgent);
-        await Task.Delay(1000);
 
         // Act
         AgentResult result = await conversation.SendApprovalsAsync(approvals.Select(a => a.Approve()));
@@ -97,7 +102,6 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         (Conversation conversation, List<ApprovalPendingAction> approvals) =
             await StartConversationAwaitingApprovalAsync(_client.GetAgents().Assistants, _fixture.AssistantAgent);
-        await Task.Delay(1000);
 
         // Act
         AgentResult result = await conversation.SendApprovalsAsync(
@@ -115,7 +119,6 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         (Conversation conversation, List<ApprovalPendingAction> approvals) =
             await StartConversationAwaitingApprovalAsync(_client.GetAgents().Assistants, _fixture.AssistantAgent);
-        await Task.Delay(1000);
 
         ApprovalDecision unrelatedDecision = new ApprovalPendingAction { RequestId = Guid.NewGuid().ToString() }.Approve();
 
@@ -164,7 +167,6 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         // Arrange
         (Conversation conversation, List<ApprovalPendingAction> approvals) =
             await StartConversationAwaitingApprovalAsync(_client.GetAgents().Assistants, _fixture.AssistantAgent);
-        await Task.Delay(1000);
 
         List<StreamingAgentMessage> messages = new();
 
@@ -186,7 +188,6 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange - Without auto mode the same message pauses, so the assertion below can't pass vacuously.
         (_, _) = await StartConversationAwaitingApprovalAsync(_client.GetAgents().Assistants, _fixture.AssistantAgent);
-        await Task.Delay(1000);
 
         Conversation conversation = _client.GetAgents().Assistants.CreateConversation(
             _fixture.AssistantAgent,
@@ -252,7 +253,7 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         // AI Proxy skills are sent on each request, so the same options must be kept when resuming.
         Skills = new ProxySkillsOptions
         {
-            ImageGeneration = new ProxySkillsOptions.ImageGenerationSkillOptions { RequiresApproval = true }
+            ImageGeneration = new ImageGenerationSkillOptions { RequiresApproval = true }
         }
     };
 
@@ -264,6 +265,8 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ApprovalProxyAgent, options);
 
         List<ApprovalPendingAction> approvals = AssertApprovalsRequested(await proxy.ExecuteAsync());
+
+        // Add delay to avoid rate limiting
         await Task.Delay(1000);
 
         foreach (ApprovalPendingAction approval in approvals)
@@ -285,6 +288,8 @@ public class SkillApprovalsIntegrationTests : IClassFixture<TestFixture>
         Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ApprovalProxyAgent, options);
 
         List<ApprovalPendingAction> approvals = AssertApprovalsRequested(await proxy.ExecuteAsync());
+
+        // Add delay to avoid rate limiting
         await Task.Delay(1000);
 
         foreach (ApprovalPendingAction approval in approvals)

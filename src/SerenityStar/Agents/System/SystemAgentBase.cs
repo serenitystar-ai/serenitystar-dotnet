@@ -141,8 +141,10 @@ namespace SerenityStar.Agents.System
                 yield return new StreamingAgentMessageStart();
 
                 bool executionStarted = false;
-                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+                while (!reader.EndOfStream)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     string? line = await reader.ReadLineAsync();
                     if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
                         continue;

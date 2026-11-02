@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
@@ -16,21 +15,9 @@ namespace SerenityStar.IntegrationTests
     /// </summary>
     public class HttpClientAuthenticationTests
     {
-        // The base URL the SDK is expected to resolve requests against, read from appsettings.json
-        // (SerenityStar:BaseUrl), falling back to the SDK's built-in default when not configured.
-        private static readonly string BaseUrl = LoadBaseUrl();
-
-        private static string LoadBaseUrl()
-        {
-            IConfiguration configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true)
-                .AddJsonFile("appsettings.Development.json", optional: true)
-                .AddEnvironmentVariables()
-                .Build();
-
-            return configuration["SerenityStar:BaseUrl"] ?? "https://api.serenitystar.ai";
-        }
+        // The SDK's built-in default base URL. The clients in these tests are built without a base URL,
+        // so requests must resolve against it regardless of the SerenityStar:BaseUrl test setting.
+        private const string BaseUrl = "https://api.serenitystar.ai";
 
         /// <summary>
         /// Captures each outgoing request and returns a canned successful response so that

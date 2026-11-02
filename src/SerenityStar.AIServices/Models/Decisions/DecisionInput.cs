@@ -267,7 +267,7 @@ namespace SerenityStar.Models.Decisions
         /// </summary>
         /// <param name="role">The author. See <see cref="DecisionMessageRole"/>.</param>
         /// <param name="content">The content: a text, or <see cref="DecisionContent.FromParts"/>.</param>
-        public static DecisionInputItem Message(string role, DecisionContent content) => new DecisionInputItem
+        public static DecisionInputItem CreateMessage(string role, DecisionContent content) => new DecisionInputItem
         {
             Type = DecisionInputItemType.Message,
             Role = role,
@@ -280,7 +280,7 @@ namespace SerenityStar.Models.Decisions
         /// <param name="callId">The id that links the call to its output.</param>
         /// <param name="name">The called function's name.</param>
         /// <param name="arguments">The arguments, usually a JSON object.</param>
-        public static DecisionInputItem FunctionCall(string callId, string name, string arguments) => new DecisionInputItem
+        public static DecisionInputItem CreateFunctionCall(string callId, string name, string arguments) => new DecisionInputItem
         {
             Type = DecisionInputItemType.FunctionCall,
             CallId = callId,
@@ -293,7 +293,7 @@ namespace SerenityStar.Models.Decisions
         /// </summary>
         /// <param name="callId">The id of the function call this output belongs to.</param>
         /// <param name="output">The result: a text, or <see cref="DecisionContent.FromParts"/>.</param>
-        public static DecisionInputItem FunctionCallOutput(string callId, DecisionContent output) => new DecisionInputItem
+        public static DecisionInputItem CreateFunctionCallOutput(string callId, DecisionContent output) => new DecisionInputItem
         {
             Type = DecisionInputItemType.FunctionCallOutput,
             CallId = callId,
@@ -335,7 +335,7 @@ namespace SerenityStar.Models.Decisions
         /// <summary>
         /// Creates a text part sent by the user, developer or system, or returned by a function call.
         /// </summary>
-        public static DecisionInputPart InputText(string text) => new DecisionInputPart
+        public static DecisionInputPart CreateInputText(string text) => new DecisionInputPart
         {
             Type = DecisionInputPartType.InputText,
             Text = text
@@ -346,7 +346,7 @@ namespace SerenityStar.Models.Decisions
         /// </summary>
         /// <param name="dataUrl">The base64 data URL. HTTP(S) URLs are not supported.</param>
         /// <param name="detail">Optional detail level. See <see cref="DecisionImageDetail"/>.</param>
-        public static DecisionInputPart InputImage(string dataUrl, string? detail = null) => new DecisionInputPart
+        public static DecisionInputPart CreateInputImage(string dataUrl, string? detail = null) => new DecisionInputPart
         {
             Type = DecisionInputPartType.InputImage,
             ImageUrl = dataUrl,
@@ -359,20 +359,20 @@ namespace SerenityStar.Models.Decisions
         /// <param name="image">The image bytes.</param>
         /// <param name="mediaType">The image media type, e.g. <c>image/png</c>.</param>
         /// <param name="detail">Optional detail level. See <see cref="DecisionImageDetail"/>.</param>
-        public static DecisionInputPart InputImage(byte[] image, string mediaType, string? detail = null)
+        public static DecisionInputPart CreateInputImage(byte[] image, string mediaType, string? detail = null)
         {
             if (image is null)
                 throw new ArgumentNullException(nameof(image));
             if (string.IsNullOrEmpty(mediaType))
                 throw new ArgumentNullException(nameof(mediaType));
 
-            return InputImage($"data:{mediaType};base64,{Convert.ToBase64String(image)}", detail);
+            return CreateInputImage($"data:{mediaType};base64,{Convert.ToBase64String(image)}", detail);
         }
 
         /// <summary>
         /// Creates a text part written by the assistant.
         /// </summary>
-        public static DecisionInputPart OutputText(string text) => new DecisionInputPart
+        public static DecisionInputPart CreateOutputText(string text) => new DecisionInputPart
         {
             Type = DecisionInputPartType.OutputText,
             Text = text

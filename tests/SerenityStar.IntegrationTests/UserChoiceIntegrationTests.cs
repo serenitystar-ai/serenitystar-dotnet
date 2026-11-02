@@ -3,6 +3,7 @@ using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using Xunit;

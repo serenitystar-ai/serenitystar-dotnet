@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace SerenityStar.Models.ImageGeneration
 {
@@ -11,10 +12,11 @@ namespace SerenityStar.Models.ImageGeneration
         /// The AI Model Id to use for image generation.
         /// If not provided, the default image model will be used.
         /// </summary>
-        public Guid? ModelId { get; set; }
+        [JsonPropertyName("modelId")]
+        public Guid? AIModelId { get; set; }
 
         /// <summary>
-        /// The description of the image to generate. Maximum length: 1000 characters.
+        /// The description of the image to generate.
         /// </summary>
         public string Prompt { get; set; } = null!;
 
@@ -31,10 +33,10 @@ namespace SerenityStar.Models.ImageGeneration
         /// <summary>
         /// Validates the request parameters.
         /// </summary>
-        /// <exception cref="ArgumentNullException">Thrown when Prompt is null or empty.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when Prompt is null, empty or whitespace.</exception>
         public void Validate()
         {
-            if (string.IsNullOrEmpty(Prompt))
+            if (string.IsNullOrWhiteSpace(Prompt))
                 throw new ArgumentNullException(nameof(Prompt), "Prompt is required for image generation.");
         }
     }

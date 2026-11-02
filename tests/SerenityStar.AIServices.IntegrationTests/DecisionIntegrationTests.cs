@@ -80,12 +80,12 @@ public class DecisionIntegrationTests : IClassFixture<TestFixture>
             ModelCode = modelCode,
             Vendor = vendor,
             Input = DecisionInput.FromItems(
-                DecisionInputItem.Message(DecisionMessageRole.User, DecisionContent.FromParts(
-                    DecisionInputPart.InputText("Here is a picture. Can you look up my order 42?"),
-                    DecisionInputPart.InputImage(await File.ReadAllBytesAsync(imagePath), GetImageMediaType(imagePath)))),
-                DecisionInputItem.FunctionCall("call_1", "get_order", """{"orderId":42}"""),
-                DecisionInputItem.FunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
-                DecisionInputItem.Message(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
+                DecisionInputItem.CreateMessage(DecisionMessageRole.User, DecisionContent.FromParts(
+                    DecisionInputPart.CreateInputText("Here is a picture. Can you look up my order 42?"),
+                    DecisionInputPart.CreateInputImage(await File.ReadAllBytesAsync(imagePath), GetImageMediaType(imagePath)))),
+                DecisionInputItem.CreateFunctionCall("call_1", "get_order", """{"orderId":42}"""),
+                DecisionInputItem.CreateFunctionCallOutput("call_1", """{"orderId":42,"status":"shipped"}"""),
+                DecisionInputItem.CreateMessage(DecisionMessageRole.Assistant, "Your order 42 has been shipped.")),
             Questions =
             {
                 new DecisionQuestion

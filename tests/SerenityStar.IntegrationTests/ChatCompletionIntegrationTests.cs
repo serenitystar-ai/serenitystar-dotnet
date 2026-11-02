@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
+using SerenityStar.Exceptions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.ChatCompletion;
@@ -360,7 +361,7 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         ChatCompletion chatCompletion = _client.GetAgents().ChatCompletions.Create(_fixture.ChatCompletionAgent, options);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             chatCompletion.ExecuteAsync());
     }
 
