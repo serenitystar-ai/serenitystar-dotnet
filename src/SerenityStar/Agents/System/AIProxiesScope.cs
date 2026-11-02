@@ -1,6 +1,7 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Models.Execute;
 using System.Collections.Generic;
 using System.Linq;

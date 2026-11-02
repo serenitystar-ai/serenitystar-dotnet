@@ -4,6 +4,7 @@ using SerenityStar.Client;
 using SerenityStar.Exceptions;
 using SerenityStar.Extensions;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using System.Net;
@@ -373,9 +374,9 @@ public class SkillApprovalsOfflineTests
             Messages = new List<ProxyExecutionMessage> { new() { Role = "user", Content = "Draw an apple" } },
             Skills = new ProxySkillsOptions
             {
-                ImageGeneration = new ProxySkillsOptions.ImageGenerationSkillOptions { Model = "gpt-image-1", Vendor = "OpenAI", RequiresApproval = true },
-                SpeechGeneration = new ProxySkillsOptions.SpeechGenerationSkillOptions { Voice = "alloy", VoiceId = "v-1", Speed = 1.5f },
-                Workbench = new ProxySkillsOptions.WorkbenchSkillOptions { RequiresApproval = true }
+                ImageGeneration = new ImageGenerationSkillOptions { Model = "gpt-image-1", Vendor = "OpenAI", RequiresApproval = true },
+                SpeechGeneration = new SpeechGenerationSkillOptions { Voice = "alloy", VoiceId = "v-1", Speed = 1.5f },
+                Workbench = new WorkbenchSkillOptions { RequiresApproval = true }
             }
         };
 

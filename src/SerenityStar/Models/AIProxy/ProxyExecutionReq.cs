@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.AIProxy.Skills;
 
 namespace SerenityStar.Models.AIProxy
 {

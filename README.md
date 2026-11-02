@@ -699,6 +699,7 @@ AI Proxy skills are sent with each request through `Skills`, and each one sets w
 ```csharp
 using SerenityStar.Agents.System;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 
 ProxyExecutionReq options = new ProxyExecutionReq
 {
@@ -709,7 +710,7 @@ ProxyExecutionReq options = new ProxyExecutionReq
     },
     Skills = new ProxySkillsOptions
     {
-        ImageGeneration = new ProxySkillsOptions.ImageGenerationSkillOptions { RequiresApproval = true }
+        ImageGeneration = new ImageGenerationSkillOptions { RequiresApproval = true }
     }
 };
 
@@ -962,6 +963,7 @@ The following options can be passed when executing a proxy agent via `ProxyExecu
 ```csharp
 using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Agents.System;
 
 SerenityClient client = SerenityClient.Create("your-api-key");
@@ -1005,8 +1007,8 @@ Proxy proxy = client.GetAgents().AIProxies.Create(
         // Skills available to the model (see Skill Approvals)
         Skills = new ProxySkillsOptions
         {
-            WebSearch = new ProxySkillsOptions.WebSearchSkillOptions(),
-            ImageGeneration = new ProxySkillsOptions.ImageGenerationSkillOptions { RequiresApproval = true }
+            WebSearch = new WebSearchSkillOptions(),
+            ImageGeneration = new ImageGenerationSkillOptions { RequiresApproval = true }
         }
     }
 );
@@ -1820,6 +1822,26 @@ Namespaces and models are unchanged, so most code only needs the new entry point
 | `client.AIServices.Transcription.TranscribeAsync(...)` | `client.GetTranscriptionClient().TranscribeAsync(...)` (install `SubgenAI.SerenityStar.AIServices`) |
 | Inject `ISerenityClient` | Inject `SerenityClient`, or `AgentsScope` / an AI service interface after `AddSerenityStarAgents()` / `AddSerenityStarAIServices()` |
 | `services.AddHttpClient<ISerenityClient, SerenityClient>()` | `services.AddHttpClient<SerenityClient>()` |
+
+### Canceling a stream
+
+Streaming (`conversation.StreamMessageAsync` / `StreamApprovalsAsync` and the system agents' `StreamAsync`) now throws `OperationCanceledException` when the cancellation token is canceled, instead of silently ending the stream. Code that cancels a stream should catch it:
+
+```csharp
+using CancellationTokenSource cts = new CancellationTokenSource();
+
+try
+{
+    await foreach (StreamingAgentMessage message in conversation.StreamMessageAsync("Hello", cts.Token))
+    {
+        // Handle each message; call cts.Cancel() to stop the stream
+    }
+}
+catch (OperationCanceledException)
+{
+    // The stream was canceled
+}
+```
 
 ## 🤝 Contributing
 
