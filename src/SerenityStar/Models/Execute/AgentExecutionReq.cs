@@ -35,5 +35,12 @@ namespace SerenityStar.Models.Execute
         /// Required when AudioFileStream is provided.
         /// </summary>
         public string? AudioFileName { get; set; }
+
+        /// <summary>
+        /// Optional skill options for the execution, such as automatically approving the skill invocations that
+        /// require approval (<see cref="SkillsOptions.AutoMode"/>).
+        /// Only applies to conversational agents (Assistants and Copilots).
+        /// </summary>
+        public SkillsOptions? Skills { get; set; }
     }
 }

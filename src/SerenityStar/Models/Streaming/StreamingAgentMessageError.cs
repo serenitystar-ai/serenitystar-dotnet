@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SerenityStar.Models.Execute;
 
 namespace SerenityStar.Models.Streaming
 {
@@ -24,5 +25,11 @@ namespace SerenityStar.Models.Streaming
         /// Validation errors, if applicable.
         /// </summary>
         public IDictionary<string, string>? Errors { get; set; }
+
+        /// <summary>
+        /// The pending actions that blocked the execution, if applicable.
+        /// For example, the skill approvals left unanswered when continuing the execution.
+        /// </summary>
+        public List<PendingAction>? PendingActions { get; set; }
     }
 }
