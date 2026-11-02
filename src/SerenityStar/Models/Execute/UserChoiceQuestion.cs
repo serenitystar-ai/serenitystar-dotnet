@@ -78,18 +78,20 @@ namespace SerenityStar.Models.Execute
         /// </exception>
         public UserChoiceAnswer Answer(IEnumerable<string>? optionIds, string? other = null)
         {
-            List<string> selected = optionIds?.Distinct(StringComparer.Ordinal).ToList() ?? new List<string>();
+            List<string> requested = optionIds?.ToList() ?? new List<string>();
+            List<string> selected = requested.Distinct(StringComparer.Ordinal).ToList();
             string? otherText = string.IsNullOrWhiteSpace(other) ? null : other;
 
             if (selected.Count == 0 && otherText == null)
                 throw new ArgumentException("The answer must select at least one option or include a free-text answer.", nameof(optionIds));
 
             if (!IsMultiselect && selected.Count > 1)
-                throw new ArgumentException($"Question '{Id}' only accepts one option.", nameof(optionIds));
+                throw new ArgumentException("This question only accepts one option.", nameof(optionIds));
 
-            string? unknown = selected.FirstOrDefault(id => !Options.Any(o => string.Equals(o.Id, id, StringComparison.Ordinal)));
-            if (unknown != null)
-                throw new ArgumentException($"Option '{unknown}' doesn't belong to question '{Id}'.", nameof(optionIds));
+            // The ids come from the caller, so the message names their position instead of echoing them.
+            int unknown = requested.FindIndex(id => !Options.Any(o => string.Equals(o.Id, id, StringComparison.Ordinal)));
+            if (unknown >= 0)
+                throw new ArgumentException($"{nameof(optionIds)}[{unknown}] doesn't belong to this question.", nameof(optionIds));
 
             return new UserChoiceAnswer { QuestionId = Id, SelectedOptionIds = selected, Other = otherText };
         }

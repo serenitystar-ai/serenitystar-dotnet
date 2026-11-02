@@ -212,6 +212,17 @@ public class UserChoiceOfflineTests
     }
 
     [Fact]
+    public void Answer_UnknownOption_NamesItsPositionWithoutEchoingIt()
+    {
+        UserChoiceQuestion question = CreateUserChoice().Questions[1];
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => question.Answer(new[] { "q2-o1", "private-value" }));
+
+        Assert.Contains("optionIds[1]", exception.Message);
+        Assert.DoesNotContain("private-value", exception.Message);
+    }
+
+    [Fact]
     public void Select_NoOptions_Throws()
     {
         Assert.Throws<ArgumentException>(() => CreateUserChoice().Questions[0].Select());
