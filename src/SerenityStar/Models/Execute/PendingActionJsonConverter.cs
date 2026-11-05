@@ -28,6 +28,7 @@ namespace SerenityStar.Models.Execute
             {
                 "connection" => JsonSerializer.Deserialize<ConnectionPendingAction>(jsonObject, options),
                 "approval" => JsonSerializer.Deserialize<ApprovalPendingAction>(jsonObject, options),
+                "user_choice" => JsonSerializer.Deserialize<UserChoicePendingAction>(jsonObject, options),
                 _ => CreateUnsupportedPendingAction(type, jsonObject)
             };
 
