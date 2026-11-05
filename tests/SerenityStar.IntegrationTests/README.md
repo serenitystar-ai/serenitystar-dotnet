@@ -21,6 +21,11 @@ To run the integration tests, you need to:
 enables the skill on each request, so it needs no configuration. `UserChoiceMessage` is the message that makes the
 agents ask the user to choose.
 
+## Agent TODOs
+
+`AgentTodosIntegrationTests` uses the `AssistantAgent`, which needs Agent TODOs enabled. `AgentTodoMessage` is the
+message that makes the agent plan a TODO list.
+
 ## Permissions
 
 Most tests only need an API key with the **Execution** permission on the configured agents.

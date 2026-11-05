@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using SerenityStar.Models.Execute;
@@ -89,5 +90,41 @@ namespace SerenityStar.Models.Streaming
             userChoice = output.Deserialize<UserChoicePendingAction>(StreamingAgentMessageJsonConverter.s_options);
             return userChoice != null;
         }
+
+        /// <summary>
+        /// Gets the agent's TODO list when this task reports it: an Agent TODOs skill invocation (adding,
+        /// completing, canceling or reading items) or a new iteration of the agent (<see cref="StreamingTaskKeys.AgentTodoIterate"/>).
+        /// </summary>
+        /// <remarks>
+        /// Each of these tasks carries the whole list, so the latest one received holds the current progress.
+        /// </remarks>
+        /// <param name="todos">The current TODO list, or null when this task does not report it.</param>
+        /// <returns>True when this task reports the TODO list.</returns>
+        public bool TryGetAgentTodos([NotNullWhen(true)] out IReadOnlyList<AgentTodoItem>? todos)
+        {
+            todos = null;
+
+            if (!(Output is JsonElement output))
+                return false;
+
+            // The iteration task carries the bare list; skill tasks wrap it in a result whose type is the skill type.
+            JsonElement list;
+            if (TaskKey == StreamingTaskKeys.AgentTodoIterate)
+                list = output;
+            else if (output.ValueKind != JsonValueKind.Object
+                || !output.TryGetProperty("type", out JsonElement type)
+                || type.ValueKind != JsonValueKind.String
+                || type.GetString() != AgentTodoSkillType
+                || !output.TryGetProperty("content", out list))
+                return false;
+
+            if (list.ValueKind != JsonValueKind.Array)
+                return false;
+
+            todos = list.Deserialize<List<AgentTodoItem>>(StreamingAgentMessageJsonConverter.s_options);
+            return todos != null;
+        }
+
+        private const string AgentTodoSkillType = "AgentTodo";
     }
 }

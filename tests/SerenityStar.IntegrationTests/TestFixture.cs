@@ -19,6 +19,7 @@ public class TestFixture : IDisposable
     public string UserChoiceAssistantAgent { get; }
     public string UserChoiceProxyAgent { get; }
     public string UserChoiceMessage { get; }
+    public string AgentTodoMessage { get; }
     public Guid? TranscriptionModelId { get; }
     public string? AudioFilePath { get; }
 
@@ -51,6 +52,11 @@ public class TestFixture : IDisposable
         UserChoiceProxyAgent = Configuration["SerenityStar:UserChoiceProxyAgent"] ?? ApprovalProxyAgent;
         UserChoiceMessage = Configuration["SerenityStar:UserChoiceMessage"]
             ?? "I want to plan a trip. Before answering, use the request user choice skill to ask me which destination type I prefer (beach, mountain, city) and my budget range, giving me options.";
+
+        // The Agent TODOs tests use AssistantAgent, which needs Agent TODOs enabled, and a message that makes it
+        // plan a TODO list.
+        AgentTodoMessage = Configuration["SerenityStar:AgentTodoMessage"]
+            ?? "Plan this with your TODO list before answering: 1) name a fruit, 2) name a color, 3) write one sentence using both. Mark each item as you finish it and keep the answer short.";
 
         string? transcriptionModelId = Configuration["SerenityStar:TranscriptionModelId"];
         if (!string.IsNullOrEmpty(transcriptionModelId) && Guid.TryParse(transcriptionModelId, out Guid modelId))
