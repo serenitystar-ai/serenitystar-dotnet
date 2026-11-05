@@ -3,6 +3,7 @@ using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using Xunit;
@@ -67,6 +68,7 @@ public class UserChoiceIntegrationTests : IClassFixture<TestFixture>
         Assert.NotNull(conversation.ConversationId);
         UserChoicePendingAction userChoice = AssertUserChoiceRequested(result);
 
+        // Add delay to avoid rate limiting
         await Task.Delay(1000);
         return (conversation, userChoice);
     }
@@ -218,6 +220,7 @@ public class UserChoiceIntegrationTests : IClassFixture<TestFixture>
 
         UserChoicePendingAction userChoice = AssertUserChoiceRequested(await proxy.ExecuteAsync());
 
+        // Add delay to avoid rate limiting
         await Task.Delay(1000);
         return (options, proxy, userChoice);
     }

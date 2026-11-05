@@ -72,6 +72,15 @@ namespace SerenityStar.Client
         public static ITranscriptionClient GetTranscriptionClient(this SerenityClient client)
             => new TranscriptionClient(GetApiClient(client));
 
+        /// <summary>
+        /// Gets a client to analyze images with vision models.
+        /// </summary>
+        /// <param name="client">The Serenity Star client.</param>
+        /// <returns>An <see cref="IVisionClient"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
+        public static IVisionClient GetVisionClient(this SerenityClient client)
+            => new VisionClient(GetApiClient(client));
+
         private static SerenityApiClient GetApiClient(SerenityClient client)
         {
             if (client is null)

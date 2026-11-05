@@ -2,6 +2,7 @@ using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using SerenityStar.Client;
 using SerenityStar.Models.AIProxy;
+using SerenityStar.Models.AIProxy.Skills;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using System.Net;
@@ -208,6 +209,17 @@ public class UserChoiceOfflineTests
     {
         // Options belong to their question: q2's option can't answer q1.
         Assert.Throws<ArgumentException>(() => CreateUserChoice().Questions[0].Select("q2-o1"));
+    }
+
+    [Fact]
+    public void Answer_UnknownOption_NamesItsPositionWithoutEchoingIt()
+    {
+        UserChoiceQuestion question = CreateUserChoice().Questions[1];
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => question.Answer(new[] { "q2-o1", "private-value" }));
+
+        Assert.Contains("optionIds[1]", exception.Message);
+        Assert.DoesNotContain("private-value", exception.Message);
     }
 
     [Fact]

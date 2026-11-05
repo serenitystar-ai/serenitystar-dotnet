@@ -2,10 +2,11 @@ using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Client;
 using SerenityStar.Constants;
 using SerenityStar.Extensions;
-using SerenityStar.Helpers;
+using SerenityStar.Files;
 using SerenityStar.Models.Connector;
 using SerenityStar.Models.Conversation;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.Files;
 using SerenityStar.Models.MessageFeedback;
 using SerenityStar.Models.Streaming;
 using System;
@@ -314,8 +315,10 @@ namespace SerenityStar.Agents.Conversational
             using (StreamReader reader = new StreamReader(stream))
             {
                 bool messageStarted = false;
-                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+                while (!reader.EndOfStream)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     string? line = await reader.ReadLineAsync();
                     if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
                         continue;
@@ -406,7 +409,8 @@ namespace SerenityStar.Agents.Conversational
 
             if (audioStream != null)
             {
-                Guid uploadedFileId = await FileUploadHelper.UploadFileAsync(_apiClient, audioStream, audioFileName!, cancellationToken);
+                Guid uploadedFileId = (await new FileClient(_apiClient).UploadAsync(
+                    new UploadFileReq { FileStream = audioStream, FileName = audioFileName! }, cancellationToken)).Id;
                 parameters.Add(new { Key = "audioInput", Value = JsonSerializer.Serialize(new { fileId = uploadedFileId }, JsonSerializerOptionsCache.s_camelCase) });
             }
 

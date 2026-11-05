@@ -22,7 +22,7 @@ public class OcrIntegrationTests : IClassFixture<TestFixture>
 
     private string GetOcrFilePath() => _fixture.GetRequiredFilePath("OcrFilePath", "a document with text (pdf, png, jpg or jpeg; max 50 MB)");
 
-    private static void AssertSuccessfulExtraction(OcrExecutionResult result)
+    private static void AssertSuccessfulExtraction(OcrResult result)
     {
         Assert.NotEqual(Guid.Empty, result.InstanceId);
         OcrFileResult file = Assert.Single(result.Files);
@@ -46,7 +46,7 @@ public class OcrIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        OcrExecutionResult result = await _client.ExtractAsync(request);
+        OcrResult result = await _client.ExtractAsync(request);
 
         // Assert
         AssertSuccessfulExtraction(result);
@@ -73,7 +73,7 @@ public class OcrIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        OcrExecutionResult result = await _client.ExtractFromBase64Async(request);
+        OcrResult result = await _client.ExtractFromBase64Async(request);
 
         // Assert
         AssertSuccessfulExtraction(result);
@@ -91,7 +91,7 @@ public class OcrIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        OcrExecutionResult result = await _client.ExtractFromUrlsAsync(request);
+        OcrResult result = await _client.ExtractFromUrlsAsync(request);
 
         // Assert
         AssertSuccessfulExtraction(result);
@@ -110,7 +110,7 @@ public class OcrIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        OcrExecutionResult result = await _client.ExtractByFileIdAsync(request);
+        OcrResult result = await _client.ExtractByFileIdAsync(request);
 
         // Assert
         AssertSuccessfulExtraction(result);

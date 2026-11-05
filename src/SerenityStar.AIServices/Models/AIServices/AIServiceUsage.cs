@@ -11,7 +11,6 @@ namespace SerenityStar.Models.AIServices
         /// <summary>
         /// The unit of the input quantity (e.g. "tokens", "characters").
         /// </summary>
-        // Explicit names: the API fixes these names even in snake_case payloads (speech generation stream).
         [JsonPropertyName("inputUnit")]
         public string? InputUnit { get; set; }
 
@@ -72,26 +71,5 @@ namespace SerenityStar.Models.AIServices
         /// The ISO currency code for the tenant's currency.
         /// </summary>
         public string? Currency { get; set; }
-    }
-
-    /// <summary>
-    /// The token counts processed by an AI service execution.
-    /// </summary>
-    public sealed class AIServiceTokenUsage
-    {
-        /// <summary>
-        /// The number of tokens in the prompt.
-        /// </summary>
-        public int PromptTokens { get; set; }
-
-        /// <summary>
-        /// The number of tokens generated.
-        /// </summary>
-        public int CompletionTokens { get; set; }
-
-        /// <summary>
-        /// The total number of tokens processed.
-        /// </summary>
-        public int TotalTokens { get; set; }
     }
 }

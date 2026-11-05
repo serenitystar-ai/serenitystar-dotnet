@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
+using SerenityStar.Exceptions;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.Conversation;
@@ -27,7 +28,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
         Conversation conversation = _client.GetAgents().Copilots.CreateConversation("invalid-agent");
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             conversation.SendMessageAsync("Hello"));
     }
 
@@ -324,7 +325,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
         using MemoryStream emptyStream = new(new byte[] { 0, 1, 2 });
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<SerenityApiException>(() =>
             conversation.SendMessageAsync(emptyStream, "invalid.txt"));
     }
 

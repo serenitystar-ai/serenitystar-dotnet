@@ -26,7 +26,7 @@ namespace SerenityStar.Models.SpeechGeneration
         public string? Vendor { get; set; }
 
         /// <summary>
-        /// The text to convert to speech. Maximum length: 4000 characters.
+        /// The text to convert to speech.
         /// </summary>
         public string Text { get; set; } = null!;
 
@@ -36,7 +36,7 @@ namespace SerenityStar.Models.SpeechGeneration
         public string? Voice { get; set; }
 
         /// <summary>
-        /// Optional raw vendor voice id. Takes precedence over <see cref="Voice"/>. Maximum length: 128 characters.
+        /// Optional raw vendor voice id. Takes precedence over <see cref="Voice"/>.
         /// </summary>
         public string? VoiceId { get; set; }
 
@@ -59,10 +59,10 @@ namespace SerenityStar.Models.SpeechGeneration
         /// <summary>
         /// Validates the request parameters.
         /// </summary>
-        /// <exception cref="ArgumentNullException">Thrown when Text is null or empty.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when Text is null, empty or whitespace.</exception>
         public void Validate()
         {
-            if (string.IsNullOrEmpty(Text))
+            if (string.IsNullOrWhiteSpace(Text))
                 throw new ArgumentNullException(nameof(Text), "Text is required for speech generation.");
         }
     }

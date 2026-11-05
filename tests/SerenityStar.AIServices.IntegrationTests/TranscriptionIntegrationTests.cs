@@ -45,7 +45,7 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeAsync(request);
+        TranscriptionResult result = await _client.TranscribeAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -68,7 +68,7 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeAsync(request);
+        TranscriptionResult result = await _client.TranscribeAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -91,7 +91,7 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeAsync(request);
+        TranscriptionResult result = await _client.TranscribeAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -111,13 +111,13 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         using FileStream fileStream = File.OpenRead(audioPath);
         TranscribeAudioReq request = new()
         {
-            ModelId = modelId,
+            AIModelId = modelId,
             FileStream = fileStream,
             FileName = Path.GetFileName(audioPath)
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeAsync(request);
+        TranscriptionResult result = await _client.TranscribeAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -126,7 +126,7 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
     }
 
     [Fact]
-    public async Task TranscribeAsync_ShouldReturnTokenUsageAndCost()
+    public async Task TranscribeAsync_ShouldReturnUsageAndCost()
     {
         // Arrange
         string audioPath = GetAudioFilePath();
@@ -138,14 +138,14 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeAsync(request);
+        TranscriptionResult result = await _client.TranscribeAsync(request);
 
         // Assert
         Assert.NotNull(result);
         Assert.NotNull(result.Transcript);
 
-        if (result.TokenUsage != null)
-            Assert.True(result.TokenUsage.TotalTokens >= 0);
+        if (result.Usage != null)
+            Assert.True(result.Usage.Input >= 0);
 
         if (result.Cost != null)
         {
@@ -167,7 +167,7 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeAsync(request);
+        TranscriptionResult result = await _client.TranscribeAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -189,11 +189,11 @@ public class TranscriptionIntegrationTests : IClassFixture<TestFixture>
         TranscribeAudioByFileIdReq request = new()
         {
             FileId = fileId,
-            ModelId = _fixture.TranscriptionModelId
+            AIModelId = _fixture.TranscriptionModelId
         };
 
         // Act
-        TranscribeResult result = await _client.TranscribeByFileIdAsync(request);
+        TranscriptionResult result = await _client.TranscribeByFileIdAsync(request);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result.InstanceId);

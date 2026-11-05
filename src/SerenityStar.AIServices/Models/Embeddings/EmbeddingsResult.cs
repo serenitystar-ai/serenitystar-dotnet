@@ -20,11 +20,6 @@ namespace SerenityStar.Models.Embeddings
         public EmbeddingsCost? Cost { get; set; }
 
         /// <summary>
-        /// The token counts processed for the request.
-        /// </summary>
-        public EmbeddingsTokenUsage? TokenUsage { get; set; }
-
-        /// <summary>
         /// The billed quantities in the units the model is priced by.
         /// </summary>
         public AIServiceUsage? Usage { get; set; }
@@ -60,16 +55,5 @@ namespace SerenityStar.Models.Embeddings
         /// The ISO currency code for the tenant's currency.
         /// </summary>
         public string? Currency { get; set; }
-    }
-
-    /// <summary>
-    /// The token counts processed for an embeddings generation.
-    /// </summary>
-    public sealed class EmbeddingsTokenUsage
-    {
-        /// <summary>
-        /// The total number of tokens processed.
-        /// </summary>
-        public int TotalTokens { get; set; }
     }
 }

@@ -52,7 +52,7 @@ namespace SerenityStar.Models.Anonymizer
         public string Category { get; set; } = null!;
 
         /// <summary>
-        /// Optional base label for the placeholders (e.g. "Person" produces "Person-1"). Maximum length: 100 characters.
+        /// Optional base label for the placeholders (e.g. "Person" produces "Person-1").
         /// </summary>
         public string? Key { get; set; }
 
