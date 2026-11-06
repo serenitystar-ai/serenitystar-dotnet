@@ -44,6 +44,14 @@
           Status) from the TODO skill tasks and the agent iteration task
         * AgentTodoStatus exposes the known statuses (Pending, Completed, Canceled), and StreamingTaskKeys.AgentTodoIterate
           the iteration task key
+      - Typed API errors (see "Error handling" in the README). The error model ships in SubgenAI.SerenityStar.Core:
+        * SerenityApiException.Error and StreamingAgentMessageError.Error carry the same SerenityApiError types, typed
+          by code (e.g. ValidationError, AgentExecutionFailedError), so one handler serves both HTTP and streaming errors
+        * AgentExecutionFailedError lists every attempt (main and fallback models), with its code, raw provider status
+          and provider detail (VendorError)
+        * error.GetPendingActions() and error.GetAgentResult() (namespace SerenityStar.Extensions) read the pending
+          actions that blocked the execution, and the agent result when a system agent's output failed its JSON format.
+          SerenityApiException.GetPendingActions() is a shortcut for ex.Error.GetPendingActions()
 
       FIXES:
       - Pending actions are now resolved by their "type": responses with pending actions no longer fail to deserialize,
@@ -73,6 +81,20 @@
         content type inferred from the file extension. It was previously uploaded as a public file, which anyone
         with the file id could download without authentication.
       - To get a file id for UploadFromFileForAgentAsync, upload the file with client.GetFileClient().UploadAsync(...)
+      - Error handling (requires the Serenity Star API error format with error codes; errors without a code read as
+        SerenityErrorCodes.Unknown):
+        * SerenityApiException moved from SerenityStar.Exceptions to SerenityStar.Errors (SubgenAI.SerenityStar.Core).
+          ReasonPhrase and ResponseJson (3.0.0-beta1) are replaced by Error and ResponseContent (the raw body, set only
+          when it isn't a Serenity API error)
+        * SerenityApiException.Message is now the error message returned by the API. It still derives from
+          HttpRequestException, so existing catch (HttpRequestException) blocks keep working
+        * StreamingAgentMessageError: Errors and Status are removed (use Error). Message is kept, and is now a read-only
+          shortcut for Error.Message
+
+      SECURITY:
+      - Logging a whole error object can log user input and model output: ValidationError.GeneratedJson,
+        GetAgentResult() and the arguments of pending actions. Log Code, Message and DocumentationUrl instead, or treat
+        those logs as sensitive.
 
       Version 3.0.0-beta1 - Per-Request Authentication Release
 
