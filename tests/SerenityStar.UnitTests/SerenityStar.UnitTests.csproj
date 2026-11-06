@@ -14,6 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SerenityStar.Core\SerenityStar.Core.csproj" />
     <ProjectReference Include="..\..\src\SerenityStar\SerenityStar.csproj" />
+    <ProjectReference Include="..\..\src\SerenityStar.AIServices\SerenityStar.AIServices.csproj" />
   </ItemGroup>
 </Project>

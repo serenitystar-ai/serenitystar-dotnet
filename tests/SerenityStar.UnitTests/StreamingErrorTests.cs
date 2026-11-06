@@ -3,6 +3,8 @@ using SerenityStar.Client;
 using SerenityStar.Errors;
 using SerenityStar.Errors.Constants;
 using SerenityStar.Errors.Models;
+using SerenityStar.Extensions;
+using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using Xunit;
 
@@ -28,6 +30,7 @@ public class StreamingErrorTests
         Assert.Equal("https://docs.serenitystar.ai/#agent_execution_failed", error.DocumentationUrl);
         Assert.Equal(TimeSpan.FromSeconds(30), error.RetryAfter);
         Assert.Equal("fallback detail", error.Errors![VendorErrorCodes.VendorError]);
+        Assert.Null(message.PendingActions);
 
         // "type" and "retry_after_seconds" are modelled elsewhere, so nothing is left over.
         Assert.Null(error.ExtensionData);
@@ -52,8 +55,29 @@ public class StreamingErrorTests
         ValidationError error = Assert.IsType<ValidationError>(message.Error);
         Assert.Null(error.DocumentationUrl);
         Assert.Null(error.Errors);
-        Assert.Equal("{ not json", error.AgentResult!.Content);
+        Assert.Equal("{ not json", error.GetAgentResult()!.Content);
         Assert.Equal("{ not json", error.GeneratedJson);
+        Assert.Null(message.PendingActions);
+    }
+
+    [Fact]
+    public async Task ValidationError_WithPendingActions()
+    {
+        StreamingAgentMessageError message = await StreamErrorAsync("""
+            {"type":"error","code":"validation_error","message":"One or more validation errors occurred.","documentation_url":null,"errors":{"tool_approval_pending":"Answer every pending approval before continuing."},"pending_actions":[{"type":"approval","request_id":"req-1","call_id":"call-1","skill_code":"send_email","skill_type":"HttpRequest","arguments":{"to":"john@example.com"}}]}
+            """);
+
+        ValidationError error = Assert.IsType<ValidationError>(message.Error);
+        Assert.True(error.Errors!.ContainsKey(ValidationErrorKeys.ToolApprovalPending));
+        Assert.Null(error.GetAgentResult());
+
+        ApprovalPendingAction pending = Assert.IsType<ApprovalPendingAction>(Assert.Single(message.PendingActions!));
+        Assert.Equal("req-1", pending.RequestId);
+        Assert.Equal("send_email", pending.SkillCode);
+        Assert.Equal("HttpRequest", pending.SkillType);
+
+        // The message property and the error extension read the same data.
+        Assert.Equal("req-1", Assert.IsType<ApprovalPendingAction>(Assert.Single(error.GetPendingActions())).RequestId);
     }
 
     [Fact]
@@ -64,7 +88,7 @@ public class StreamingErrorTests
             """), "text/event-stream");
 
         List<StreamingAgentMessage> messages = new();
-        await foreach (StreamingAgentMessage message in client.Agents.Assistants.CreateConversation("agent").StreamMessageAsync("Hello"))
+        await foreach (StreamingAgentMessage message in client.GetAgents().Assistants.CreateConversation("agent").StreamMessageAsync("Hello"))
             messages.Add(message);
 
         StreamingAgentMessageError errorMessage = Assert.Single(messages.OfType<StreamingAgentMessageError>());
@@ -105,7 +129,7 @@ public class StreamingErrorTests
 
         SerenityApiException ex = await Assert.ThrowsAsync<SerenityApiException>(async () =>
         {
-            await foreach (StreamingAgentMessage _ in client.Agents.Activities.Create("agent").StreamAsync())
+            await foreach (StreamingAgentMessage _ in client.GetAgents().Activities.Create("agent").StreamAsync())
             {
             }
         });
@@ -119,7 +143,7 @@ public class StreamingErrorTests
         SerenityClient client = TestClient.Returning(HttpStatusCode.OK, ToSse(payload), "text/event-stream");
 
         List<StreamingAgentMessage> messages = new();
-        await foreach (StreamingAgentMessage message in client.Agents.Activities.Create("agent").StreamAsync())
+        await foreach (StreamingAgentMessage message in client.GetAgents().Activities.Create("agent").StreamAsync())
             messages.Add(message);
 
         return Assert.Single(messages.OfType<StreamingAgentMessageError>());

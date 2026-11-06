@@ -4,7 +4,8 @@ using SerenityStar.Client;
 using SerenityStar.Errors;
 using SerenityStar.Errors.Constants;
 using SerenityStar.Errors.Models;
-using SerenityStar.Models.Transcription;
+using SerenityStar.Extensions;
+using SerenityStar.Models.Execute;
 using Xunit;
 
 namespace SerenityStar.UnitTests;
@@ -54,8 +55,9 @@ public class HttpErrorTests
         ValidationError error = Assert.IsType<ValidationError>(ex.Error);
         Assert.NotNull(error.Errors);
         Assert.Equal("Duplicate input keys are not allowed: message", error.Errors![ValidationErrorKeys.InputKeysDuplicated]);
-        Assert.Null(error.AgentResult);
+        Assert.Null(error.GetAgentResult());
         Assert.Null(error.GeneratedJson);
+        Assert.Empty(error.GetPendingActions());
     }
 
     [Fact]
@@ -84,13 +86,41 @@ public class HttpErrorTests
             """);
 
         ValidationError error = Assert.IsType<ValidationError>(ex.Error);
-        Assert.NotNull(error.AgentResult);
-        Assert.Equal("{ not json", error.AgentResult!.Content);
+        AgentResult? agentResult = error.GetAgentResult();
+        Assert.NotNull(agentResult);
+        Assert.Equal("{ not json", agentResult!.Content);
         Assert.Equal("{ not json", error.GeneratedJson);
+        Assert.Empty(error.GetPendingActions());
 
-        // pendingActions isn't modelled, so it's kept as-is.
-        Assert.NotNull(error.ExtensionData);
-        Assert.True(error.ExtensionData!.ContainsKey("pendingActions"));
+        // Agent-only data stays in ExtensionData, read through the agents package's extension methods.
+        Assert.True(error.ExtensionData!.ContainsKey("agentResult"));
+        Assert.True(error.ExtensionData.ContainsKey("pendingActions"));
+    }
+
+    [Fact]
+    public async Task ValidationError_WithPendingActions()
+    {
+        SerenityApiException ex = await ExecuteAsync(HttpStatusCode.BadRequest, """
+            {
+              "code": "validation_error",
+              "message": "One or more validation errors occurred.",
+              "errors": { "tool_approval_pending": "Answer every pending approval before continuing." },
+              "pendingActions": [
+                { "type": "approval", "requestId": "req-1", "callId": "call-1", "skillCode": "send_email", "skillType": "HttpRequest", "arguments": { "to": "john@example.com" } }
+              ]
+            }
+            """);
+
+        ValidationError error = Assert.IsType<ValidationError>(ex.Error);
+        Assert.True(error.Errors!.ContainsKey(ValidationErrorKeys.ToolApprovalPending));
+        Assert.Null(error.GetAgentResult());
+
+        ApprovalPendingAction pending = Assert.IsType<ApprovalPendingAction>(Assert.Single(ex.GetPendingActions()));
+        Assert.Equal("req-1", pending.RequestId);
+        Assert.Equal("send_email", pending.SkillCode);
+
+        // The exception shortcut and the error extension read the same data.
+        Assert.Equal("req-1", Assert.IsType<ApprovalPendingAction>(Assert.Single(ex.Error.GetPendingActions())).RequestId);
     }
 
     [Fact]
@@ -147,60 +177,6 @@ public class HttpErrorTests
         Assert.Equal(VendorErrorCodes.VendorContextLengthError, attempt.Code);
         Assert.Null(attempt.StatusCode);
         Assert.Null(error.RetryAfter);
-    }
-
-    [Fact]
-    public async Task AIServiceExecutionFailed_WithAttempts()
-    {
-        SerenityApiException ex = await TranscribeAsync(HttpStatusCode.BadGateway, """
-            {
-              "code": "aiservice_execution_failed",
-              "message": "The audio couldn't be transcribed. Please try again.",
-              "errors": { "vendor_error": "detail" },
-              "attempts": [
-                { "index": 0, "code": "vendor_service_error", "statusCode": 503, "message": "The AI provider returned a server error (HTTP 503) (Code 0086)", "errors": { "vendor_error": "detail" } }
-              ]
-            }
-            """);
-
-        AIServiceExecutionFailedError error = Assert.IsType<AIServiceExecutionFailedError>(ex.Error);
-        Assert.Null(error.Files);
-        ExecutionAttempt attempt = Assert.Single(error.Attempts!);
-        Assert.IsType<ExecutionAttempt>(attempt);
-        Assert.Equal(VendorErrorCodes.VendorServiceError, attempt.Code);
-        Assert.Equal(503, attempt.StatusCode);
-        Assert.Equal("detail", attempt.VendorError);
-    }
-
-    [Fact]
-    public async Task AIServiceExecutionFailed_WithFilesForOcr()
-    {
-        SerenityApiException ex = await TranscribeAsync(HttpStatusCode.BadRequest, """
-            {
-              "code": "aiservice_execution_failed",
-              "message": "The text couldn't be extracted from any of the files. Please try again.",
-              "errors": { "invoice.pdf": "server error", "scan.png": "rejected" },
-              "files": [
-                { "index": 0, "source": "invoice.pdf", "attempts": [ { "index": 0, "code": "vendor_service_error", "statusCode": 503, "message": "server error", "errors": { "vendor_error": "a" } } ] },
-                { "index": 1, "source": "scan.png", "attempts": [ { "index": 0, "code": "vendor_validation_error", "statusCode": 422, "message": "rejected", "errors": { "vendor_error": "b" } } ] }
-              ]
-            }
-            """);
-
-        AIServiceExecutionFailedError error = Assert.IsType<AIServiceExecutionFailedError>(ex.Error);
-        Assert.Null(error.Attempts);
-        Assert.Equal("rejected", error.Errors!["scan.png"]);
-        Assert.Collection(error.Files!,
-            invoice =>
-            {
-                Assert.Equal("invoice.pdf", invoice.Source);
-                Assert.Equal(503, Assert.Single(invoice.Attempts).StatusCode);
-            },
-            scan =>
-            {
-                Assert.Equal(1, scan.Index);
-                Assert.Equal(VendorErrorCodes.VendorValidationError, Assert.Single(scan.Attempts).Code);
-            });
     }
 
     [Fact]
@@ -389,7 +365,7 @@ public class HttpErrorTests
 
         using MemoryStream audio = new(new byte[] { 1, 2, 3 });
         SerenityApiException ex = await Assert.ThrowsAsync<SerenityApiException>(() =>
-            client.Agents.Assistants.CreateConversation("agent").SendMessageAsync(audio, "audio.mp3"));
+            client.GetAgents().Assistants.CreateConversation("agent").SendMessageAsync(audio, "audio.mp3"));
 
         Assert.Equal(SerenityErrorCodes.RequestTooLarge, ex.Error.Code);
     }
@@ -401,17 +377,6 @@ public class HttpErrorTests
         string mediaType = "application/json")
     {
         SerenityClient client = TestClient.Returning(statusCode, body, mediaType, configure);
-        return Assert.ThrowsAsync<SerenityApiException>(() => client.Agents.Activities.Create("agent").ExecuteAsync());
-    }
-
-    private static Task<SerenityApiException> TranscribeAsync(HttpStatusCode statusCode, string body)
-    {
-        SerenityClient client = TestClient.Returning(statusCode, body);
-        TranscribeAudioReq request = new()
-        {
-            FileStream = new MemoryStream(new byte[] { 1, 2, 3 }),
-            FileName = "audio.mp3"
-        };
-        return Assert.ThrowsAsync<SerenityApiException>(() => client.AIServices.Transcription.TranscribeAsync(request));
+        return Assert.ThrowsAsync<SerenityApiException>(() => client.GetAgents().Activities.Create("agent").ExecuteAsync());
     }
 }

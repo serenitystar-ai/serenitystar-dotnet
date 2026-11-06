@@ -8,7 +8,6 @@ using SerenityStar.Errors.Models;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Files;
 using SerenityStar.Models.VolatileKnowledge;
-using System.Net;
 using Xunit;
 
 namespace SerenityStar.IntegrationTests;

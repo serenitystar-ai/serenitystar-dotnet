@@ -67,7 +67,7 @@ public class RequestValidationTests
         SerenityClient client = NoRequestsClient();
 
         ArgumentNullException ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            client.AIServices.Transcription.TranscribeAsync(null!));
+            client.GetTranscriptionClient().TranscribeAsync(null!));
         Assert.Equal("request", ex.ParamName);
     }
 
@@ -77,7 +77,7 @@ public class RequestValidationTests
         SerenityClient client = NoRequestsClient();
 
         ArgumentNullException ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            client.Agents.Assistants.GetMessageFeedbackAsync(string.Empty));
+            client.GetAgents().Assistants.GetMessageFeedbackAsync(string.Empty));
         Assert.Equal("agentCode", ex.ParamName);
     }
 
