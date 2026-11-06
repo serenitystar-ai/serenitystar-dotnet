@@ -1,3 +1,5 @@
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
 using SerenityStar.Models.AIServices;
 using System;
 using System.Text.Json;
@@ -89,42 +91,27 @@ namespace SerenityStar.Models.SpeechGeneration
     }
 
     /// <summary>
-    /// Represents an error during streaming. Carries the same fields as the non-streaming error response.
+    /// Represents an error that happened after the stream opened.
     /// </summary>
+    /// <remarks>
+    /// Errors before the stream opens are thrown as <see cref="SerenityApiException"/>, carrying the same
+    /// <see cref="SerenityApiError"/> types.
+    /// </remarks>
     public sealed class StreamingSpeechGenerationMessageError : StreamingSpeechGenerationMessage
     {
         /// <inheritdoc />
         public override string Type => "error";
 
         /// <summary>
-        /// The error code.
+        /// The error. Pattern-match on its type, for example <see cref="AIServiceExecutionFailedError"/>, or branch
+        /// on <see cref="SerenityApiError.Code"/>.
         /// </summary>
-        public string? Code { get; set; }
+        public SerenityApiError Error { get; set; } = new SerenityApiError();
 
         /// <summary>
-        /// The error message.
+        /// Shortcut for <c>Error.Message</c>.
         /// </summary>
-        public string Message { get; set; } = string.Empty;
-
-        /// <summary>
-        /// A link to documentation about the error, if any.
-        /// </summary>
-        public string? DocumentationUrl { get; set; }
-
-        /// <summary>
-        /// Additional error details, if any, as raw JSON.
-        /// </summary>
-        public JsonElement? Errors { get; set; }
-
-        /// <summary>
-        /// The errors of each model attempt (e.g. fallbacks), if any, as raw JSON.
-        /// </summary>
-        public JsonElement? Attempts { get; set; }
-
-        /// <summary>
-        /// When rate limited, the number of seconds to wait before retrying.
-        /// </summary>
-        public int? RetryAfterSeconds { get; set; }
+        public string Message => Error.Message;
     }
 
     /// <summary>
