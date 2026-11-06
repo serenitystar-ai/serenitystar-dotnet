@@ -45,4 +45,8 @@ UploadFileResult fromUrl = await client.GetFileClient().UploadFromUrlAsync(new U
 
 `AddSerenityStar` registers `IFileClient` for dependency injection.
 
+## Errors
+
+Failed requests throw `SerenityApiException` (namespace `SerenityStar.Errors`), whose `Error` is a typed `SerenityApiError` (namespace `SerenityStar.Errors.Models`). Branch on its type or on `Error.Code` (see `SerenityErrorCodes` in `SerenityStar.Errors.Constants`), not on the message. Every feature package uses these same types. See [Error handling](https://github.com/serenitystar-ai/serenitystar-dotnet#error-handling) for the full error model.
+
 See the full documentation at https://github.com/serenitystar-ai/serenitystar-dotnet.
