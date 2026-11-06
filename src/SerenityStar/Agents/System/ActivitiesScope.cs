@@ -1,8 +1,9 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Client;
 using SerenityStar.Constants;
-using SerenityStar.Helpers;
+using SerenityStar.Files;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.Files;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,8 +48,8 @@ namespace SerenityStar.Agents.System
                 if (string.IsNullOrEmpty(executionOptions.AudioFileName))
                     throw new ArgumentNullException(nameof(executionOptions.AudioFileName), "Audio file name is required when providing an audio file stream.");
 
-                _uploadedAudioFileId = await FileUploadHelper.UploadFileAsync(
-                    _apiClient, executionOptions.AudioFileStream, executionOptions.AudioFileName, cancellationToken);
+                _uploadedAudioFileId = (await new FileClient(_apiClient).UploadAsync(
+                    new UploadFileReq { FileStream = executionOptions.AudioFileStream, FileName = executionOptions.AudioFileName }, cancellationToken)).Id;
             }
         }
 

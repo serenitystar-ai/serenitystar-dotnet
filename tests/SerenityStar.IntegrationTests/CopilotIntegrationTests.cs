@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
@@ -12,19 +13,19 @@ namespace SerenityStar.IntegrationTests;
 public class CopilotIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
 
     public CopilotIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
     }
 
     [Fact]
     public async Task SendMessage_WithInvalidAgent_ShouldFail()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Copilots.CreateConversation("invalid-agent");
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation("invalid-agent");
 
         // Act & Assert
         await Assert.ThrowsAsync<SerenityApiException>(() =>
@@ -35,7 +36,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_ShouldReturnValidInstance()
     {
         // Arrange & Act
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
 
         // Assert
         Assert.NotNull(conversation);
@@ -47,7 +48,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange
         const string testConversationId = "test-conv-id-12345";
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(
             _fixture.CopilotAgent,
             conversationId: testConversationId
         );
@@ -61,7 +62,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task SendMultipleMessages_ShouldSucceed()
     {
         // Arrange - Create a conversation
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
 
         // Act - First message creates conversation automatically
         AgentResult firstResult = await conversation.SendMessageAsync("Hello, how are you?");
@@ -91,7 +92,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task FullConversationFlow_ShouldSucceed()
     {
         // Arrange - Create a conversation
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
 
         // Act & Assert - Send multiple messages
         string[] messages =
@@ -130,7 +131,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamMessage_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
         List<StreamingAgentMessage> messages = [];
 
         // Act - Stream first message (creates conversation automatically)
@@ -151,7 +152,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamMessage_MultipleMessages_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
 
         // Act - First stream (creates conversation)
         List<StreamingAgentMessage> firstMessages = new();
@@ -183,7 +184,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamMessage_WithExecutionOptions_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(
             _fixture.CopilotAgent,
             options: new AgentExecutionReq
             {
@@ -207,7 +208,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task GetInfoByCode_ShouldSucceed()
     {
         // Act
-        ConversationInfoResult info = await _client.Agents.Copilots.GetInfoByCodeAsync(_fixture.CopilotAgent);
+        ConversationInfoResult info = await _client.GetAgents().Copilots.GetInfoByCodeAsync(_fixture.CopilotAgent);
 
         // Assert
         Assert.NotNull(info);
@@ -219,14 +220,14 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task GetConversationById_ShouldSucceed()
     {
         // Arrange - Create a conversation and send a message
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
         await conversation.SendMessageAsync("Test message");
         string? conversationId = conversation.ConversationId;
 
         Assert.NotNull(conversationId);
 
         // Act
-        ConversationRes conversationDetails = await _client.Agents.Copilots.GetConversationByIdAsync(
+        ConversationRes conversationDetails = await _client.GetAgents().Copilots.GetConversationByIdAsync(
             _fixture.CopilotAgent,
             conversationId
         );
@@ -240,7 +241,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task CreateConversation_WithVersion_ShouldSucceed()
     {
         // Arrange - Create conversation with specific version
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(
             _fixture.CopilotAgent,
             2 // Specific version
         );
@@ -265,7 +266,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
             Channel = "web"
         };
 
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(
             _fixture.CopilotAgent,
             2, // Specific version
             options: options
@@ -284,7 +285,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task StreamMessage_WithVersion_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(
             _fixture.CopilotAgent,
             2 // Specific version
         );
@@ -320,7 +321,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     public async Task SendMessage_WithEmptyAudioStream_ShouldFail()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
         using MemoryStream emptyStream = new(new byte[] { 0, 1, 2 });
 
         // Act & Assert
@@ -333,7 +334,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange
         string audioPath = GetRequiredAudioFilePath();
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
 
         using FileStream audioStream = File.OpenRead(audioPath);
 
@@ -353,7 +354,7 @@ public class CopilotIntegrationTests : IClassFixture<TestFixture>
     {
         // Arrange
         string audioPath = GetRequiredAudioFilePath();
-        Conversation conversation = _client.Agents.Copilots.CreateConversation(_fixture.CopilotAgent);
+        Conversation conversation = _client.GetAgents().Copilots.CreateConversation(_fixture.CopilotAgent);
         List<StreamingAgentMessage> messages = [];
 
         using FileStream audioStream = File.OpenRead(audioPath);

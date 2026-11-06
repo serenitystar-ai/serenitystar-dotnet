@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using SerenityStar.Errors;
 using SerenityStar.Errors.Models;
+using SerenityStar.Models.Execute;
 
 namespace SerenityStar.Models.Streaming
 {
@@ -24,5 +26,12 @@ namespace SerenityStar.Models.Streaming
         /// Shortcut for <c>Error.Message</c>.
         /// </summary>
         public string Message => Error.Message;
+
+        /// <summary>
+        /// The pending actions that blocked the execution, if applicable.
+        /// For example, the skill approvals left unanswered when continuing the execution.
+        /// <c>null</c> when the error reports none.
+        /// </summary>
+        public List<PendingAction>? PendingActions { get; set; }
     }
 }

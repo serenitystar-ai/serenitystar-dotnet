@@ -147,8 +147,10 @@ namespace SerenityStar.Agents.System
                 yield return new StreamingAgentMessageStart();
 
                 bool executionStarted = false;
-                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+                while (!reader.EndOfStream)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     string? line = await reader.ReadLineAsync();
                     if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: "))
                         continue;
@@ -157,7 +159,7 @@ namespace SerenityStar.Agents.System
                     if (data == "[DONE]")
                         break;
 
-                    StreamingAgentMessage? msg = JsonSerializer.Deserialize<StreamingAgentMessage>(data, JsonSerializerOptionsCache.s_streamingSnakeCaseLower);
+                    StreamingAgentMessage? msg = JsonSerializer.Deserialize<StreamingAgentMessage>(data, StreamingAgentMessageJsonConverter.s_options);
                     if (msg != null)
                     {
                         if (!executionStarted)

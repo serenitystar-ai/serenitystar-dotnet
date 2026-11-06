@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
@@ -11,12 +12,12 @@ namespace SerenityStar.IntegrationTests;
 public class ActivityIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
 
     public ActivityIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
     }
 
     [Fact]
@@ -31,7 +32,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();
@@ -47,7 +48,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
     public async Task ExecuteAsync_WithoutWord_ShouldFail()
     {
         // Arrange - No input parameters
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent);
 
         // Act & Assert
         await Assert.ThrowsAsync<SerenityApiException>(() =>
@@ -72,7 +73,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
                 }
             };
 
-            Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+            Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
             AgentResult result = await activity.ExecuteAsync();
 
             Assert.NotNull(result);
@@ -101,7 +102,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, 28, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, 28, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();
@@ -125,7 +126,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();
@@ -154,7 +155,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -180,7 +181,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
         List<StreamingAgentMessage> messages = new();
 
         // Act
@@ -208,9 +209,15 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
         if (string.IsNullOrEmpty(apiKey))
             throw new InvalidOperationException("API key is required for this test");
 
-        SerenityClient serenityClient = new SerenityClientBuilder()
-            .WithApiKey(apiKey)
-            .Build();
+        SerenityClientBuilder builder = new SerenityClientBuilder()
+            .WithApiKey(apiKey);
+
+        // Target the same environment as the fixture; an empty BaseUrl keeps the SDK default.
+        string? baseUrl = _fixture.Configuration["SerenityStar:BaseUrl"];
+        if (!string.IsNullOrEmpty(baseUrl))
+            builder = builder.WithBaseUrl(baseUrl);
+
+        SerenityClient serenityClient = builder.Build();
 
         AgentExecutionReq options = new()
         {
@@ -220,7 +227,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             }
         };
 
-        Activity activity = serenityClient.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = serenityClient.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();
@@ -259,7 +266,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             AudioFileName = "invalid.txt"
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
 
         // Act & Assert — upload succeeds but the agent should reject the invalid audio
         await Assert.ThrowsAnyAsync<Exception>(() =>
@@ -278,7 +285,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             AudioFileName = Path.GetFileName(audioPath)
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();
@@ -308,7 +315,7 @@ public class ActivityIntegrationTests : IClassFixture<TestFixture>
             Channel = "SDK-Tests"
         };
 
-        Activity activity = _client.Agents.Activities.Create(_fixture.ActivityAgent, options);
+        Activity activity = _client.GetAgents().Activities.Create(_fixture.ActivityAgent, options);
 
         // Act
         AgentResult result = await activity.ExecuteAsync();

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.VolatileKnowledge;
@@ -13,13 +14,13 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     private const string TestJpgFileName = "test-jpg-file.jpg";
 
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
     private readonly string _testFilePath;
 
     public VolatileKnowledgeTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
         string baseDirectory = AppContext.BaseDirectory;
         string projectRoot = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", ".."));
         _testFilePath = Path.Combine(projectRoot, TestFileName);
@@ -38,7 +39,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq request = new()
@@ -60,7 +61,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task UploadVolatileKnowledge_WithContent_ShouldSucceed()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
         UploadVolatileKnowledgeReq request = new()
         {
             Content = "https://serenitystar.ai"
@@ -80,7 +81,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq request = new()
@@ -110,7 +111,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq request = new()
@@ -134,7 +135,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq request = new()
@@ -157,7 +158,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq uploadRequest = new()
@@ -183,7 +184,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq request = new()
@@ -216,7 +217,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange - Create conversation and upload volatile knowledge
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation(_fixture.AssistantAgent);
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation(_fixture.AssistantAgent);
 
         using FileStream fileStream = File.OpenRead(_testFilePath);
         UploadVolatileKnowledgeReq uploadRequest = new()
@@ -258,7 +259,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     public async Task UploadVolatileKnowledge_WithJpgFile_ShouldReturnKnowledgeWithId()
     {
         // Arrange
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
         string testJpgPath = Path.Combine(Path.GetDirectoryName(_testFilePath) ?? "", TestJpgFileName);
         if (!File.Exists(testJpgPath))
             throw new FileNotFoundException($"Test JPG file not found at {testJpgPath}");
@@ -284,7 +285,7 @@ public class VolatileKnowledgeTests : IClassFixture<TestFixture>
     {
         // Arrange
         await EnsureTestFileExistsAsync();
-        Conversation conversation = _client.Agents.Assistants.CreateConversation("assistantagent");
+        Conversation conversation = _client.GetAgents().Assistants.CreateConversation("assistantagent");
 
         // Act
         Guid knowledgeId1 = Guid.Empty;

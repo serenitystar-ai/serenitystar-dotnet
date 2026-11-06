@@ -1,46 +1,78 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>SubgenAI.SerenityStar.SDK</PackageId>
     <AssemblyName>SerenityStar</AssemblyName>
     <RootNamespace>SerenityStar</RootNamespace>
-    <Authors>Serenity Star team</Authors>
-    <Company>Subgen AI</Company>
-    <Description>Official .NET SDK for Serenity Star API</Description>
-    <PackageProjectUrl>https://hub.serenitystar.ai/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/serenitystar-ai/serenity-dotnet</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>Official .NET SDK for Serenity Star API: agents (assistants, copilots, activities, AI proxies and chat completions). AI services are available in SubgenAI.SerenityStar.AIServices.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>ai;chat;sdk;serenity;serenitystar</PackageTags>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageIcon>icon.png</PackageIcon>
-    <Version>3.0.0-beta2</Version>
     <PackageReleaseNotes>
-      Version 3.0.0-beta2 - Error Handling Release
-
-      BREAKING CHANGES:
-      - SerenityApiException moved from SerenityStar.Exceptions to SerenityStar.Errors, and now exposes the parsed error
-        * ReasonPhrase and ResponseJson are replaced by Error (the SerenityApiError) and ResponseContent (the raw body, set only when it couldn't be mapped to a Serenity API error)
-        * Exception.Message is now the error message returned by the API, instead of "Request failed with status code X"
-        * It still derives from HttpRequestException, so existing catch (HttpRequestException) blocks keep working
-
-      - StreamingAgentMessageError: removed Errors (use Error instead) and Status (no longer sent by the API)
-        * Message is kept, and is now a read-only shortcut for Error.Message
-
-      - Requires the Serenity Star API error format with error codes. Errors without a code read as SerenityErrorCodes.Unknown
+      Version 3.0.0-beta2 - Package Split Release
 
       NEW FEATURES:
-      - SerenityApiError (namespace SerenityStar.Errors.Models): the full error returned by the API, with Code, Message, DocumentationUrl, RetryAfter and ExtensionData
-        * Typed by code: InputValidationError, ValidationError, ResourceNotFoundError, RateLimitExceededError, AgentExecutionFailedError and AIServiceExecutionFailedError
-        * AgentExecutionFailedError and AIServiceExecutionFailedError list every attempt made against the AI provider, with its code, raw provider status and provider detail (VendorError)
-        * ValidationError exposes AgentResult and GeneratedJson when a system agent's output failed its JSON format
-        * Fields this SDK version doesn't model yet are kept in ExtensionData
+      - Skill Approvals: agents pause when a skill that requires approval is invoked, and the SDK can now answer them
+        * New ApprovalPendingAction ("approval") in AgentResult.PendingActions with RequestId, CallId, SkillCode, SkillType, Tool and Arguments
+        * ApprovalPendingAction.Approve(reason) / Reject(reason) create the ApprovalDecision to send back
+        * Assistants and Copilots: conversation.SendApprovalsAsync(decisions, message) and StreamApprovalsAsync(decisions, message)
+          answer the pending approvals and continue the execution
+        * AI Proxy: ProxyExecutionReq.AddApprovalDecision(approval, decision) echoes the request and the decision in the
+          client-side history (ProxyExecutionMessage.ToolApprovalRequest / ToolApprovalResponse)
+        * AI Proxy skills: ProxyExecutionReq.Skills enables web search, image generation, speech generation and workbench
+          per request, each with its own RequiresApproval setting
+        * Streaming: StreamingAgentMessageTaskStop.TryGetApprovalRequest surfaces the approval as soon as it is requested,
+          and StreamingTaskKeys exposes the approval task keys
+        * Unanswered approvals: StreamingAgentMessageError.PendingActions and SerenityApiException.GetPendingActions()
+          return the approvals still pending
+        * Auto mode: AgentExecutionReq.Skills = new SkillsOptions { AutoMode = true } approves every skill invocation
+          without pausing (Assistants and Copilots). Opt-in only: it bypasses the human review
+      - Request User Choice: agents with the skill enabled pause to ask the user to choose from a set of options, and the
+        SDK can now answer them
+        * New UserChoicePendingAction ("user_choice") in AgentResult.PendingActions with its Questions (Id, Header, Text,
+          IsMultiselect and Options with Id, Title and Description)
+        * UserChoiceQuestion.Select(optionIds), AnswerOther(text) and Answer(optionIds, text) create a UserChoiceAnswer
+          validated against the question
+        * Assistants and Copilots: conversation.SendUserChoicesAsync(answers, message) and StreamUserChoicesAsync(answers, message)
+          answer all, some or none of the questions and continue the conversation
+        * AI Proxy: ProxySkillsOptions.UserChoice enables the skill per request, and
+          ProxyExecutionReq.AddUserChoiceAnswers(userChoice, answers, message) echoes the questions and the answers in the
+          client-side history (ProxyExecutionMessage.UserChoiceRequest / UserChoiceResponse)
+        * Streaming: StreamingAgentMessageTaskStop.TryGetUserChoiceRequest surfaces the questions as soon as they are
+          asked, and StreamingTaskKeys.UserChoiceRequest exposes its task key
+      - Agent TODOs: agents with the skill enabled plan their own TODO list and keep iterating until it is done, and the
+        SDK now exposes its progress while streaming (Assistants and Copilots)
+        * StreamingAgentMessageTaskStop.TryGetAgentTodos returns the whole list (AgentTodoItem with Id, Description and
+          Status) from the TODO skill tasks and the agent iteration task
+        * AgentTodoStatus exposes the known statuses (Pending, Completed, Canceled), and StreamingTaskKeys.AgentTodoIterate
+          the iteration task key
 
-      - StreamingAgentMessageError.Error carries the same SerenityApiError types, so one handler serves both HTTP and streaming errors
+      FIXES:
+      - Pending actions are now resolved by their "type": responses with pending actions no longer fail to deserialize,
+        and unknown pending action types are surfaced as UnsupportedPendingAction instead of failing
+      - "user_choice" pending actions are now surfaced as UserChoicePendingAction instead of UnsupportedPendingAction
 
-      - RetryAfter is read from the Retry-After header on HTTP responses, and from retry_after_seconds on streaming error events
-
-      - Constants for codes and keys (namespace SerenityStar.Errors.Constants): SerenityErrorCodes, VendorErrorCodes, ValidationErrorKeys, ResourceNotFoundKeys and AgentModelTypes
+      BREAKING CHANGES:
+      - The SDK is now split into packages that are always published together with the same version:
+        * SubgenAI.SerenityStar.Core: SerenityClient, SerenityClientBuilder, SerenityApiException and AddSerenityStar
+        * SubgenAI.SerenityStar.SDK (this package): agents. Depends on Core
+        * SubgenAI.SerenityStar.AIServices: all AI services (anonymizer, decisions, embeddings, image generation,
+          OCR, speech generation, transcription and vision). Depends on Core only
+        Namespaces are unchanged, so most code only needs the new entry points below.
+      - Agents are now obtained from SerenityClient: client.Agents becomes client.GetAgents()
+        (in the SerenityStar.Client namespace). e.g. client.GetAgents().Activities.Create("agent-code")
+      - ISerenityClient was removed. Inject SerenityClient (registered by AddSerenityStar), or AgentsScope after
+        calling services.AddSerenityStar(apiKey).AddSerenityStarAgents()
+      - AddSerenityStar now throws ArgumentNullException at registration when the API key is null or empty,
+        instead of failing on the first request. Apps that register with an empty key (e.g. tests or
+        design-time tooling) now fail at startup.
+      - client.AIServices (transcription) was removed from this package. Install SubgenAI.SerenityStar.AIServices
+        and use client.GetTranscriptionClient().TranscribeAsync(...)
+      - Streaming (conversation.StreamMessageAsync / StreamApprovalsAsync and the system agents' StreamAsync) now
+        throws OperationCanceledException when the cancellation token is canceled, instead of silently ending the
+        stream. Code that cancels a stream should catch it.
+      - Audio input (conversations, activities and chat completions) is now uploaded as a private file, with its
+        content type inferred from the file extension. It was previously uploaded as a public file, which anyone
+        with the file id could download without authentication.
+      - To get a file id for UploadFromFileForAgentAsync, upload the file with client.GetFileClient().UploadAsync(...)
 
       Version 3.0.0-beta1 - Per-Request Authentication Release
 
@@ -198,21 +230,13 @@
       - Step-by-step guides for volatile knowledge workflows
       - Connector integration patterns
     </PackageReleaseNotes>
-    <LangVersion>9.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="/" />
-    <None Include="..\..\icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <ProjectReference Include="..\SerenityStar.Core\SerenityStar.Core.csproj" />
   </ItemGroup>
 </Project>

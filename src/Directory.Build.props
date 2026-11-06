@@ -1,0 +1,40 @@
+<Project>
+  <!--
+    Shared settings for every SDK package. All packages are always published together with the same version:
+    bump <Version> here only.
+  -->
+  <PropertyGroup>
+    <Version>3.0.0-beta2</Version>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Authors>Serenity Star team</Authors>
+    <Company>Subgen AI</Company>
+    <PackageProjectUrl>https://hub.serenitystar.ai/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/serenitystar-ai/serenitystar-dotnet</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\icon.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <!--
+    SerenityStar.Core shares its internals (the authenticated API client) with the feature packages through
+    InternalsVisibleTo, so the packages must always be used with the exact same version. ProjectReference
+    produces a ">= version" NuGet dependency by default; pin it to "[version]" so NuGet refuses mixed versions
+    at restore time instead of failing at runtime (MissingMethodException).
+  -->
+  <Target Name="PinProjectReferenceVersions" AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <_PinnedProjectReferencesWithVersions Include="@(_ProjectReferencesWithVersions)">
+        <ProjectVersion>[%(_ProjectReferencesWithVersions.ProjectVersion)]</ProjectVersion>
+      </_PinnedProjectReferencesWithVersions>
+      <_ProjectReferencesWithVersions Remove="@(_ProjectReferencesWithVersions)" />
+      <_ProjectReferencesWithVersions Include="@(_PinnedProjectReferencesWithVersions)" />
+    </ItemGroup>
+  </Target>
+</Project>

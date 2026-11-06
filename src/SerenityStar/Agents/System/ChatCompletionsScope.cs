@@ -1,9 +1,10 @@
 using SerenityStar.Agents.VolatileKnowledge;
 using SerenityStar.Client;
 using SerenityStar.Constants;
-using SerenityStar.Helpers;
+using SerenityStar.Files;
 using SerenityStar.Models.ChatCompletion;
 using SerenityStar.Models.Execute;
+using SerenityStar.Models.Files;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,8 +51,8 @@ namespace SerenityStar.Agents.System
             _chatOptions.Validate();
 
             if (_chatOptions.AudioFileStream != null)
-                _uploadedAudioFileId = await FileUploadHelper.UploadFileAsync(
-                    _apiClient, _chatOptions.AudioFileStream, _chatOptions.AudioFileName!, cancellationToken);
+                _uploadedAudioFileId = (await new FileClient(_apiClient).UploadAsync(
+                    new UploadFileReq { FileStream = _chatOptions.AudioFileStream, FileName = _chatOptions.AudioFileName! }, cancellationToken)).Id;
         }
 
         /// <inheritdoc/>

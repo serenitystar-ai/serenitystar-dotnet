@@ -14,6 +14,12 @@ public class TestFixture : IDisposable
     public string ActivityAgent { get; }
     public string ProxyAgent { get; }
     public string ChatCompletionAgent { get; }
+    public string ApprovalProxyAgent { get; }
+    public string ApprovalMessage { get; }
+    public string UserChoiceAssistantAgent { get; }
+    public string UserChoiceProxyAgent { get; }
+    public string UserChoiceMessage { get; }
+    public string AgentTodoMessage { get; }
     public Guid? TranscriptionModelId { get; }
     public string? AudioFilePath { get; }
 
@@ -34,6 +40,23 @@ public class TestFixture : IDisposable
         ActivityAgent = Configuration["SerenityStar:ActivityAgent"] ?? "activityagent";
         ProxyAgent = Configuration["SerenityStar:ProxyAgent"] ?? "proxyagent";
         ChatCompletionAgent = Configuration["SerenityStar:ChatCompletionAgent"] ?? "chatcompletionagent";
+
+        // The skill approval tests use AssistantAgent and this proxy, both with at least one skill that requires
+        // approval, and a message that makes them invoke it.
+        ApprovalProxyAgent = Configuration["SerenityStar:ApprovalProxyAgent"] ?? "aiproxyagenttester";
+        ApprovalMessage = Configuration["SerenityStar:ApprovalMessage"] ?? "Generate an image of a red apple on a white table.";
+
+        // The Request User Choice tests use an assistant agent with the skill enabled (the proxy enables it per
+        // request) and a message that makes them ask the user to choose.
+        UserChoiceAssistantAgent = Configuration["SerenityStar:UserChoiceAssistantAgent"] ?? AssistantAgent;
+        UserChoiceProxyAgent = Configuration["SerenityStar:UserChoiceProxyAgent"] ?? ApprovalProxyAgent;
+        UserChoiceMessage = Configuration["SerenityStar:UserChoiceMessage"]
+            ?? "I want to plan a trip. Before answering, use the request user choice skill to ask me which destination type I prefer (beach, mountain, city) and my budget range, giving me options.";
+
+        // The Agent TODOs tests use AssistantAgent, which needs Agent TODOs enabled, and a message that makes it
+        // plan a TODO list.
+        AgentTodoMessage = Configuration["SerenityStar:AgentTodoMessage"]
+            ?? "Plan this with your TODO list before answering: 1) name a fruit, 2) name a color, 3) write one sentence using both. Mark each item as you finish it and keep the answer short.";
 
         string? transcriptionModelId = Configuration["SerenityStar:TranscriptionModelId"];
         if (!string.IsNullOrEmpty(transcriptionModelId) && Guid.TryParse(transcriptionModelId, out Guid modelId))

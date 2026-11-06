@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SerenityStar.Agents;
 using SerenityStar.Client;
 using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
@@ -12,12 +13,12 @@ namespace SerenityStar.IntegrationTests;
 public class AIProxyIntegrationTests : IClassFixture<TestFixture>
 {
     private readonly TestFixture _fixture;
-    private readonly ISerenityClient _client;
+    private readonly SerenityClient _client;
 
     public AIProxyIntegrationTests(TestFixture fixture)
     {
         _fixture = fixture;
-        _client = _fixture.ServiceProvider.GetRequiredService<ISerenityClient>();
+        _client = _fixture.ServiceProvider.GetRequiredService<SerenityClient>();
     }
 
     [Fact]
@@ -35,7 +36,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act
         AgentResult result = await proxy.ExecuteAsync();
@@ -63,7 +64,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act
         AgentResult result = await proxy.ExecuteAsync();
@@ -90,7 +91,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act
         AgentResult result = await proxy.ExecuteAsync();
@@ -120,7 +121,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act
         AgentResult result = await proxy.ExecuteAsync();
@@ -144,7 +145,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             Messages = [] // Empty messages
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act & Assert
         await Assert.ThrowsAsync<SerenityApiException>(() =>
@@ -166,7 +167,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -195,7 +196,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
         List<StreamingAgentMessage> messages = [];
 
         // Act
@@ -236,7 +237,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
                 ]
             };
 
-            Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+            Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
             AgentResult result = await proxy.ExecuteAsync();
 
             Assert.NotNull(result);
@@ -271,7 +272,7 @@ public class AIProxyIntegrationTests : IClassFixture<TestFixture>
             ]
         };
 
-        Proxy proxy = _client.Agents.AIProxies.Create(_fixture.ProxyAgent, options);
+        Proxy proxy = _client.GetAgents().AIProxies.Create(_fixture.ProxyAgent, options);
 
         // Act
         AgentResult result = await proxy.ExecuteAsync();
