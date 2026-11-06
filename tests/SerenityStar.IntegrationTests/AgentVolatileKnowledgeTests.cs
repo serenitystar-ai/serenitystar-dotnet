@@ -3,7 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Files;
 using SerenityStar.Models.VolatileKnowledge;
@@ -257,5 +258,6 @@ public class AgentVolatileKnowledgeTests : IClassFixture<TestFixture>
             () => conversation.VolatileKnowledge.UploadForAgentAsync(request));
 
         Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
+        Assert.IsType<ResourceNotFoundError>(ex.Error);
     }
 }

@@ -15,11 +15,33 @@
       - File upload: client.GetFileClient() returns an IFileClient to upload files (UploadAsync) or upload them
         from a public URL (UploadFromUrlAsync) and get their id, to use with the AI services *ByFileIdAsync
         methods or volatile knowledge UploadFromFileForAgentAsync. AddSerenityStar registers IFileClient.
+      - Typed API errors, shared by every feature package: SerenityApiException.Error is a SerenityApiError
+        (namespace SerenityStar.Errors.Models) with Code, Message, DocumentationUrl, RetryAfter and ExtensionData
+        * Typed by code: InputValidationError, ValidationError, ResourceNotFoundError, RateLimitExceededError,
+          AgentExecutionFailedError and AIServiceExecutionFailedError. Other codes use SerenityApiError itself
+        * AgentExecutionFailedError and AIServiceExecutionFailedError list every attempt made against the AI provider
+          (Attempts, or Files for OCR), with its code, raw provider status and provider detail (VendorError)
+        * RetryAfter is read from the Retry-After header on HTTP responses, and from retry_after_seconds on streaming
+          error events
+        * Fields this SDK version doesn't model yet are kept in ExtensionData
+        * Constants for codes and keys (namespace SerenityStar.Errors.Constants): SerenityErrorCodes, VendorErrorCodes,
+          ValidationErrorKeys, ResourceNotFoundKeys and AgentModelTypes
 
       BREAKING CHANGES:
       - AddSerenityStar now throws ArgumentNullException at registration when the API key is null or empty,
         instead of failing on the first request. Apps that register with an empty key (e.g. tests or
         design-time tooling) now fail at startup.
+      - SerenityApiException moved from SerenityStar.Exceptions to SerenityStar.Errors, and now exposes the parsed error
+        * ReasonPhrase and ResponseJson (3.0.0-beta1) are replaced by Error (the SerenityApiError) and ResponseContent
+          (the raw body, set only when it isn't a Serenity API error)
+        * Exception.Message is now the error message returned by the API, instead of "Request failed with status code X"
+        * It still derives from HttpRequestException, so existing catch (HttpRequestException) blocks keep working
+      - Requires the Serenity Star API error format with error codes. Errors without a code read as
+        SerenityErrorCodes.Unknown
+
+      SECURITY:
+      - Logging a whole error object can log user input and model output, such as ValidationError.GeneratedJson.
+        Log Code, Message and DocumentationUrl instead, or treat those logs as sensitive.
     </PackageReleaseNotes>
   </PropertyGroup>
 

@@ -1,4 +1,5 @@
 using SerenityStar.Client;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Models.VolatileKnowledge;
 using System;
@@ -32,6 +33,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="expirationDays">Optional parameter to specify the number of days until expiration.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The created volatile knowledge entity</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> UploadAsync(
             UploadVolatileKnowledgeReq request,
             bool processEmbeddings = true,
@@ -86,6 +88,7 @@ namespace SerenityStar.Agents.VolatileKnowledge
         /// <param name="knowledgeId">The knowledge ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The volatile knowledge entity with current status.</returns>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         public async Task<VolatileKnowledgeRes> GetStatusAsync(
             Guid knowledgeId,
             CancellationToken cancellationToken = default)

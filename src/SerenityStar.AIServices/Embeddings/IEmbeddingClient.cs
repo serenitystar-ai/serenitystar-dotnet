@@ -20,7 +20,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The embeddings, usage, and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when no texts are provided.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<EmbeddingsResult> GenerateAsync(GenerateEmbeddingsReq request, CancellationToken cancellationToken = default);
     }
 }

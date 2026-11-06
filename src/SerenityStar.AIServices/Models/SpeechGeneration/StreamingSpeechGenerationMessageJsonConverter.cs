@@ -1,3 +1,5 @@
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -46,7 +48,7 @@ namespace SerenityStar.Models.SpeechGeneration
                 "start" => JsonSerializer.Deserialize<StreamingSpeechGenerationMessageStart>(jsonObject, options),
                 "audio" => JsonSerializer.Deserialize<StreamingSpeechGenerationMessageAudio>(jsonObject, options),
                 "ping" => JsonSerializer.Deserialize<StreamingSpeechGenerationMessagePing>(jsonObject, options),
-                "error" => JsonSerializer.Deserialize<StreamingSpeechGenerationMessageError>(jsonObject, options),
+                "error" => CreateErrorMessage(jsonObject, options),
                 "stop" => JsonSerializer.Deserialize<StreamingSpeechGenerationMessageStop>(jsonObject, options),
                 _ => CreateUnsupportedMessage(type, jsonObject)
             } ?? throw new JsonException($"Failed to deserialize streaming message of type '{type}'");
@@ -57,6 +59,17 @@ namespace SerenityStar.Models.SpeechGeneration
         public override void Write(Utf8JsonWriter writer, StreamingSpeechGenerationMessage value, JsonSerializerOptions options)
         {
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        }
+
+        private static StreamingSpeechGenerationMessageError CreateErrorMessage(JsonElement jsonObject, JsonSerializerOptions options)
+        {
+            // The error fields sit at the root of the event, next to "type", so the whole payload is the error.
+            SerenityApiError error = SerenityApiErrorParser.Parse(jsonObject, options);
+
+            // "type" is the event's own discriminator, already exposed as StreamingSpeechGenerationMessage.Type.
+            SerenityApiErrorParser.RemoveExtensionData(error, "type");
+
+            return new StreamingSpeechGenerationMessageError { Error = error };
         }
 
         private static StreamingSpeechGenerationMessage CreateUnsupportedMessage(string type, JsonElement jsonObject)

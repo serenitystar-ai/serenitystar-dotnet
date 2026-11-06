@@ -21,7 +21,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid files.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<OcrResult> ExtractAsync(OcrReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid files.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<OcrResult> ExtractFromBase64Async(OcrBase64Req request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid URLs.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<OcrResult> ExtractFromUrlsAsync(OcrUrlReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result of each document, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the request has no valid file ids.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<OcrResult> ExtractByFileIdAsync(OcrByFileIdReq request, CancellationToken cancellationToken = default);
     }
 }

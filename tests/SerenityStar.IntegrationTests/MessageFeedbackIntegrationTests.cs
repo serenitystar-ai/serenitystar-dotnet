@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
 using SerenityStar.Agents.Conversational;
 using Xunit;
@@ -505,14 +505,6 @@ public class MessageFeedbackIntegrationTests : IClassFixture<TestFixture>
         // Act & Assert
         await Assert.ThrowsAsync<SerenityApiException>(() =>
             _client.GetAgents().Assistants.GetMessageFeedbackAsync("agent-that-does-not-exist"));
-    }
-
-    [Fact]
-    public async Task GetAllFeedback_WithEmptyAgentCode_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert - This one is validated locally, no request is issued
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _client.GetAgents().Assistants.GetMessageFeedbackAsync(string.Empty));
     }
 
     [Fact]

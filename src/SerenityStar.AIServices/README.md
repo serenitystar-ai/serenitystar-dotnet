@@ -51,4 +51,48 @@ services.AddSerenityStar("your-api-key")
 // Then inject any interface, e.g. ITranscriptionClient or IOcrClient.
 ```
 
+## Error handling
+
+Failed requests throw `SerenityApiException`. When the AI provider fails, its `Error` is an `AIServiceExecutionFailedError` listing every attempt made (`Attempts`), or, for OCR, the attempts made for each file (`Files`). Wait `Error.RetryAfter` before retrying when it's set.
+
+```csharp
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
+
+try
+{
+    TranscriptionResult result = await client.GetTranscriptionClient().TranscribeAsync(request);
+}
+catch (SerenityApiException ex) when (ex.Error is AIServiceExecutionFailedError failed)
+{
+    foreach (ExecutionAttempt attempt in failed.Attempts ?? new List<ExecutionAttempt>())
+        Console.WriteLine($"{attempt.Code} (HTTP {attempt.StatusCode}): {attempt.VendorError}");
+}
+catch (SerenityApiException ex)
+{
+    Console.WriteLine($"{ex.Error.Code}: {ex.Message}");
+}
+```
+
+A speech generation stream throws `SerenityApiException` only when the request is rejected before the stream opens. After that, failures arrive as a `StreamingSpeechGenerationMessageError` with the same `Error`:
+
+```csharp
+using SerenityStar.Models.SpeechGeneration;
+
+await foreach (StreamingSpeechGenerationMessage message in client.GetSpeechGenerationClient().StreamAsync(request))
+{
+    switch (message)
+    {
+        case StreamingSpeechGenerationMessageAudio audio:
+            byte[] bytes = audio.GetAudioBytes();
+            break;
+        case StreamingSpeechGenerationMessageError errorMessage:
+            Console.WriteLine($"{errorMessage.Error.Code}: {errorMessage.Message}");
+            break;
+    }
+}
+```
+
+See [Error handling](https://github.com/serenitystar-ai/serenitystar-dotnet#error-handling) for the full error model.
+
 See the full documentation and examples at https://github.com/serenitystar-ai/serenitystar-dotnet.

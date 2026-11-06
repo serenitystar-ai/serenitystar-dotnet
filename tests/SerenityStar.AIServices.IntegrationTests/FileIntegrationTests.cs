@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Files;
 using SerenityStar.Models.Files;
 using Xunit;

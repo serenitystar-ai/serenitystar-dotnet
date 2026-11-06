@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.Citations;

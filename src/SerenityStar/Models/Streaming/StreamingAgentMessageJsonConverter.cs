@@ -1,4 +1,9 @@
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
+using SerenityStar.Extensions;
+using SerenityStar.Models.Execute;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -44,7 +49,7 @@ namespace SerenityStar.Models.Streaming
                 "reasoning" => JsonSerializer.Deserialize<StreamingAgentMessageReasoning>(jsonObject, options),
                 "task_stop" => JsonSerializer.Deserialize<StreamingAgentMessageTaskStop>(jsonObject, options),
                 "stop" => JsonSerializer.Deserialize<StreamingAgentMessageStop>(jsonObject, options),
-                "error" => JsonSerializer.Deserialize<StreamingAgentMessageError>(jsonObject, options),
+                "error" => CreateErrorMessage(jsonObject, options),
                 "ping" => JsonSerializer.Deserialize<StreamingAgentMessagePing>(jsonObject, options),
                 _ => CreateUnsupportedMessage(type, jsonObject)
             } ?? throw new JsonException($"Failed to deserialize streaming message of type '{type}'");
@@ -55,6 +60,23 @@ namespace SerenityStar.Models.Streaming
         public override void Write(Utf8JsonWriter writer, StreamingAgentMessage value, JsonSerializerOptions options)
         {
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        }
+
+        private static StreamingAgentMessageError CreateErrorMessage(JsonElement jsonObject, JsonSerializerOptions options)
+        {
+            // The error fields sit at the root of the event, next to "type", so the whole payload is the error.
+            SerenityApiError error = SerenityApiErrorParser.Parse(jsonObject, options);
+
+            // "type" is the event's own discriminator, already exposed as StreamingAgentMessage.Type.
+            SerenityApiErrorParser.RemoveExtensionData(error, "type");
+
+            List<PendingAction> pendingActions = error.GetPendingActions();
+
+            return new StreamingAgentMessageError
+            {
+                Error = error,
+                PendingActions = pendingActions.Count > 0 ? pendingActions : null
+            };
         }
 
         private static StreamingAgentMessage CreateUnsupportedMessage(string type, JsonElement jsonObject)

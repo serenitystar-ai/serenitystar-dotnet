@@ -20,7 +20,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The obfuscated text and the detected entities.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or its inputs are null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<AnonymizerResult> ObfuscateAsync(AnonymizerReq request, CancellationToken cancellationToken = default);
     }
 }

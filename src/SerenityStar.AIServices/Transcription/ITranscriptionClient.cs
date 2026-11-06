@@ -21,7 +21,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The transcription result including the transcribed text, metadata, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request, file stream, or file name is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<TranscriptionResult> TranscribeAsync(TranscribeAudioReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace SerenityStar.AIServices
         /// <returns>The transcription result including the transcribed text, metadata, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when the file id is empty.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<TranscriptionResult> TranscribeByFileIdAsync(TranscribeAudioByFileIdReq request, CancellationToken cancellationToken = default);
     }
 }

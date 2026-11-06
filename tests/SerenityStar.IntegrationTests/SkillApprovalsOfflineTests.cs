@@ -1,7 +1,8 @@
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
+using SerenityStar.Errors.Models;
 using SerenityStar.Extensions;
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.AIProxy.Skills;
@@ -266,7 +267,7 @@ public class SkillApprovalsOfflineTests
     [Fact]
     public void GetPendingActions_WithoutPendingActions_ReturnsEmpty()
     {
-        SerenityApiException exception = new("Bad request", HttpStatusCode.BadRequest);
+        SerenityApiException exception = new(HttpStatusCode.BadRequest, new SerenityApiError { Code = "validation_error", Message = "Bad request" });
 
         Assert.Empty(exception.GetPendingActions());
     }

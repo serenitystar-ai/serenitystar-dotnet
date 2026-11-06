@@ -3,7 +3,9 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
+using SerenityStar.Errors.Constants;
+using SerenityStar.Errors.Models;
 using SerenityStar.Extensions;
 using SerenityStar.Files;
 using SerenityStar.Models.AIServices;
@@ -676,13 +678,15 @@ namespace SerenityStar.AIServices.IntegrationTests
         [Fact]
         public async Task ErrorResponse_ThrowsSerenityApiException_WithPayload()
         {
-            CapturingHandler handler = new("""{"message":"Vendor not found","code":"not_found"}""", statusCode: HttpStatusCode.NotFound);
+            CapturingHandler handler = new("""{"message":"Vendor not found","code":"resource_not_found"}""", statusCode: HttpStatusCode.NotFound);
 
             SerenityApiException exception = await Assert.ThrowsAsync<SerenityApiException>(() =>
                 CreateClient(handler).GetAnonymizerClient().ObfuscateAsync(new AnonymizerReq { Inputs = "x" }));
 
             Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
-            Assert.Equal("not_found", exception.ResponseJson!.Value.GetProperty("code").GetString());
+            Assert.Equal("Vendor not found", exception.Message);
+            Assert.IsType<ResourceNotFoundError>(exception.Error);
+            Assert.Equal(SerenityErrorCodes.ResourceNotFound, exception.Error.Code);
         }
 
         [Fact]

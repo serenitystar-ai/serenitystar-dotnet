@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents.Conversational;
 using SerenityStar.Agents.System;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Models.AIProxy;
 using SerenityStar.Models.AIProxy.Skills;

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Agents;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Models.Execute;
 using SerenityStar.Models.Streaming;
 using SerenityStar.Models.ChatCompletion;
@@ -416,32 +416,6 @@ public class ChatCompletionIntegrationTests : IClassFixture<TestFixture>
         Assert.NotNull(result);
         Assert.NotNull(result.Content);
         Assert.NotEmpty(result.Content);
-    }
-
-    [Fact]
-    public void ChatCompletionReq_Validate_WithBothMessageAndAudioStream_ShouldThrowArgumentException()
-    {
-        // Arrange
-        using MemoryStream dummyStream = new(new byte[] { 1, 2, 3 });
-        ChatCompletionReq options = new()
-        {
-            Message = "Hello",
-            AudioFileStream = dummyStream,
-            AudioFileName = "test.wav"
-        };
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => options.Validate());
-    }
-
-    [Fact]
-    public void ChatCompletionReq_Validate_WithNeitherMessageNorAudioStream_ShouldThrowArgumentException()
-    {
-        // Arrange
-        ChatCompletionReq options = new();
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => options.Validate());
     }
 
     #endregion

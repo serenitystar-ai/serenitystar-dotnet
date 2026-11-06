@@ -26,6 +26,11 @@
         agent trace) as input, including images: DecisionInput.FromItems(...).
       - Image generation from source images (up to 16), uploaded directly (GenerateWithSourceImagesAsync) or by
         file id (GenerateByFileIdAsync).
+      - Typed errors (the error model ships in SubgenAI.SerenityStar.Core): failed requests throw SerenityApiException.
+        When the AI provider fails, its Error is an AIServiceExecutionFailedError listing every attempt (Attempts), or,
+        for OCR, the attempts made for each file (Files). RetryAfter is set when the API says how long to wait.
+      - Speech generation streaming: errors after the stream opened arrive as StreamingSpeechGenerationMessageError,
+        whose Error carries the same SerenityApiError types, with Message as a shortcut for Error.Message.
 
       BREAKING CHANGES:
       - Replaces client.AIServices.Transcription (previously in SubgenAI.SerenityStar.SDK):
