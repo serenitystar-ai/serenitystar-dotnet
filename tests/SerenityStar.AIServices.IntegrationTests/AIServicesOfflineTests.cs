@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using SerenityStar.Client;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Extensions;
 using SerenityStar.Files;
 using SerenityStar.Models.AIServices;

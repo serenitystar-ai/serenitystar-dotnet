@@ -21,7 +21,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result including the audio URL, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or its text is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<SpeechGenerationResult> GenerateAsync(GenerateSpeechReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The stream of speech generation messages.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or its text is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API rejects the request before the stream opens.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API rejects the request before the stream opens.</exception>
         IAsyncEnumerable<StreamingSpeechGenerationMessage> StreamAsync(GenerateSpeechReq request, CancellationToken cancellationToken = default);
     }
 }

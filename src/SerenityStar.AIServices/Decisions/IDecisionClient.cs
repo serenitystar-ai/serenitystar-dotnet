@@ -21,7 +21,7 @@ namespace SerenityStar.AIServices
         /// <returns>The answers, in question order, plus usage and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or its input is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when no questions are provided.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<DecisionResult> EvaluateAsync(DecisionReq request, CancellationToken cancellationToken = default);
     }
 }

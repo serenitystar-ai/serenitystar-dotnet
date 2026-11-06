@@ -1,6 +1,5 @@
 using SerenityStar.Errors.Constants;
 using SerenityStar.Errors.Models;
-using SerenityStar.Models.Streaming;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -12,8 +11,9 @@ namespace SerenityStar.Errors
     /// </summary>
     /// <remarks>
     /// On streaming calls this is thrown only when the request fails before the stream opens. Errors that happen
-    /// after the stream opens are delivered as <see cref="StreamingAgentMessageError"/> messages,
-    /// carrying the same <see cref="SerenityApiError"/> types.
+    /// after the stream opens are delivered as error messages on the stream (<c>StreamingAgentMessageError</c> for
+    /// agents, <c>StreamingSpeechGenerationMessageError</c> for speech generation), carrying the same
+    /// <see cref="SerenityApiError"/> types.
     /// </remarks>
     public sealed class SerenityApiException : HttpRequestException
     {

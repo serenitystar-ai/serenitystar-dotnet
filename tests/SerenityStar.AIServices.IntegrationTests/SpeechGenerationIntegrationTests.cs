@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using SerenityStar.Exceptions;
+using SerenityStar.Errors;
 using SerenityStar.Models.SpeechGeneration;
 using Xunit;
 

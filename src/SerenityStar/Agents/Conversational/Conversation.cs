@@ -142,7 +142,7 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>The agent's response once the execution continues.</returns>
         /// <exception cref="ArgumentException">Thrown when no decisions are provided.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">
+        /// <exception cref="Errors.SerenityApiException">
         /// Thrown with an HTTP 400 response when a pending approval is left unanswered. The approvals still pending can
         /// be read with <see cref="Extensions.SerenityApiExceptionExtensions.GetPendingActions"/>.
         /// </exception>

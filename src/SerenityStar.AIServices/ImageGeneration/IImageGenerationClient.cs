@@ -20,7 +20,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result including the image URL, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or its prompt is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<ImageGenerationResult> GenerateAsync(GenerateImageReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace SerenityStar.AIServices
         /// <returns>The result including the image URL, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request, its prompt, or a file's stream or name is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when no source images are provided.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<ImageGenerationResult> GenerateWithSourceImagesAsync(GenerateImageWithSourceImagesReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace SerenityStar.AIServices
         /// <returns>The result including the image URL, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or its prompt is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when no file ids are provided.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<ImageGenerationResult> GenerateByFileIdAsync(GenerateImageByFileIdReq request, CancellationToken cancellationToken = default);
     }
 }

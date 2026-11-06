@@ -22,7 +22,7 @@ namespace SerenityStar.Files
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The uploaded file, including its id.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request, file stream, or file name is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<UploadFileResult> UploadAsync(UploadFileReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace SerenityStar.Files
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The uploaded file, including its id.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request or file URL is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails, e.g. the URL is invalid or the file could not be downloaded.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails, e.g. the URL is invalid or the file could not be downloaded.</exception>
         Task<UploadFileResult> UploadFromUrlAsync(UploadFileFromUrlReq request, CancellationToken cancellationToken = default);
     }
 }

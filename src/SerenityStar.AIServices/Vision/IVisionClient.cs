@@ -21,7 +21,7 @@ namespace SerenityStar.AIServices
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The result including the model response, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request, file stream, or file name is null.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<VisionResult> AnalyzeAsync(AnalyzeImageReq request, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace SerenityStar.AIServices
         /// <returns>The result including the model response, usage, and cost.</returns>
         /// <exception cref="System.ArgumentNullException">Thrown when the request is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when the file id is empty.</exception>
-        /// <exception cref="Exceptions.SerenityApiException">Thrown when the API request fails.</exception>
+        /// <exception cref="Errors.SerenityApiException">Thrown when the API request fails.</exception>
         Task<VisionResult> AnalyzeByFileIdAsync(AnalyzeImageByFileIdReq request, CancellationToken cancellationToken = default);
     }
 }
