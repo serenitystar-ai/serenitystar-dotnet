@@ -142,9 +142,10 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>The agent's response once the execution continues.</returns>
         /// <exception cref="ArgumentException">Thrown when no decisions are provided.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
-        /// <exception cref="Errors.SerenityApiException">
-        /// Thrown with an HTTP 400 response when a pending approval is left unanswered. The approvals still pending can
-        /// be read with <see cref="Extensions.SerenityApiExceptionExtensions.GetPendingActions"/>.
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the API returns an error response. When a pending approval is left unanswered, the error is a
+        /// <see cref="Errors.Models.ValidationError"/> and the approvals still pending can be read with
+        /// <see cref="SerenityApiExceptionExtensions.GetPendingActions"/>.
         /// </exception>
         public Task<AgentResult> SendApprovalsAsync(
             IEnumerable<ApprovalDecision> decisions,
@@ -170,6 +171,7 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>The agent's response once the conversation continues.</returns>
         /// <exception cref="ArgumentException">Thrown when neither answers nor a message are provided, or an answer has no question id.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
+        /// <exception cref="SerenityApiException">Thrown when the API returns an error response.</exception>
         /// <remarks>
         /// The answers, including the free-text ones, are stored in the conversation history.
         /// </remarks>
@@ -259,6 +261,10 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>An async enumerable of streaming messages.</returns>
         /// <exception cref="ArgumentException">Thrown when no decisions are provided.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the API rejects the request before the stream opens. Errors after that are yielded as
+        /// <see cref="StreamingAgentMessageError"/>.
+        /// </exception>
         /// <remarks>
         /// When a pending approval is left unanswered, the stream emits a <see cref="StreamingAgentMessageError"/>
         /// whose <see cref="StreamingAgentMessageError.PendingActions"/> lists the approvals still pending.
@@ -289,6 +295,10 @@ namespace SerenityStar.Agents.Conversational
         /// <returns>An async enumerable of streaming messages.</returns>
         /// <exception cref="ArgumentException">Thrown when neither answers nor a message are provided, or an answer has no question id.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the conversation has not been started.</exception>
+        /// <exception cref="SerenityApiException">
+        /// Thrown when the API rejects the request before the stream opens. Errors after that are yielded as
+        /// <see cref="StreamingAgentMessageError"/>.
+        /// </exception>
         public IAsyncEnumerable<StreamingAgentMessage> StreamUserChoicesAsync(
             IEnumerable<UserChoiceAnswer> answers,
             string? message = null,

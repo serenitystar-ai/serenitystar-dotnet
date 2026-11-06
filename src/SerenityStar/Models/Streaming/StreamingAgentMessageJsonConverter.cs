@@ -1,6 +1,9 @@
 using SerenityStar.Errors;
 using SerenityStar.Errors.Models;
+using SerenityStar.Extensions;
+using SerenityStar.Models.Execute;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -67,7 +70,13 @@ namespace SerenityStar.Models.Streaming
             // "type" is the event's own discriminator, already exposed as StreamingAgentMessage.Type.
             SerenityApiErrorParser.RemoveExtensionData(error, "type");
 
-            return new StreamingAgentMessageError { Error = error };
+            List<PendingAction> pendingActions = error.GetPendingActions();
+
+            return new StreamingAgentMessageError
+            {
+                Error = error,
+                PendingActions = pendingActions.Count > 0 ? pendingActions : null
+            };
         }
 
         private static StreamingAgentMessage CreateUnsupportedMessage(string type, JsonElement jsonObject)
